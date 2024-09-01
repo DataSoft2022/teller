@@ -1,0 +1,48 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2024-07-04 09:25:12.602264",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "invoice_name",
+  "receipt_number",
+  "invoice_type",
+  "updated_receipt"
+ ],
+ "fields": [
+  {
+   "fieldname": "invoice_name",
+   "fieldtype": "Data",
+   "label": "Invoice Name"
+  },
+  {
+   "fieldname": "receipt_number",
+   "fieldtype": "Data",
+   "label": "Receipt Number"
+  },
+  {
+   "fieldname": "invoice_type",
+   "fieldtype": "Data",
+   "label": "Invoice Type"
+  },
+  {
+   "fieldname": "updated_receipt",
+   "fieldtype": "Data",
+   "label": "Updated Receipt"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2024-07-04 16:05:03.592023",
+ "modified_by": "Administrator",
+ "module": "Teller Customization",
+ "name": "Receipt Number Details",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

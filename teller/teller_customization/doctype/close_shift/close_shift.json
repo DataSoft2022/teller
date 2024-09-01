@@ -1,0 +1,205 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "Close_shift.####",
+ "creation": "2024-02-28 21:31:49.764786",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_q9za",
+  "amended_from",
+  "section_break_mowb",
+  "start_date",
+  "serial",
+  "status",
+  "column_break_cdxp",
+  "end_date",
+  "current_user",
+  "open_shift",
+  "section_break_ganr",
+  "get_purchase",
+  "section_break_xmut",
+  "purchase_close_table",
+  "invoices_purchase_total_section",
+  "column_break_vtfs",
+  "column_break_pzqx",
+  "total_purchase",
+  "section_break_nbda",
+  "get_invoices",
+  "sales_invoices_section",
+  "sales_invoice",
+  "invoices_sales_total_section",
+  "column_break_lsit",
+  "column_break_ibdu",
+  "total_sales"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_q9za",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Close Shift",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "section_break_mowb",
+   "fieldtype": "Section Break",
+   "label": "Shift Details"
+  },
+  {
+   "fieldname": "start_date",
+   "fieldtype": "Datetime",
+   "label": "Start Date"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Submit\nShift Closed\nSend To Server"
+  },
+  {
+   "fieldname": "column_break_cdxp",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "end_date",
+   "fieldtype": "Datetime",
+   "label": "End Date "
+  },
+  {
+   "fieldname": "current_user",
+   "fieldtype": "Link",
+   "label": "Current User",
+   "options": "User"
+  },
+  {
+   "fieldname": "open_shift",
+   "fieldtype": "Link",
+   "label": "Open Shift",
+   "options": "OPen Shift"
+  },
+  {
+   "fieldname": "serial",
+   "fieldtype": "Int",
+   "label": "Serial",
+   "options": "default=1;increment=1"
+  },
+  {
+   "fieldname": "get_invoices",
+   "fieldtype": "Button",
+   "label": "Get Invoices"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "section_break_xmut",
+   "fieldtype": "Section Break",
+   "label": "Purchase Invoices"
+  },
+  {
+   "fieldname": "invoices_purchase_total_section",
+   "fieldtype": "Section Break",
+   "label": "Invoices Purchase Total"
+  },
+  {
+   "fieldname": "column_break_vtfs",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_pzqx",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "total_purchase",
+   "fieldtype": "Currency",
+   "label": "Total Purchase",
+   "read_only": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "sales_invoices_section",
+   "fieldtype": "Section Break",
+   "label": "Sales Invoices"
+  },
+  {
+   "fieldname": "invoices_sales_total_section",
+   "fieldtype": "Section Break",
+   "label": "Invoices Sales Total"
+  },
+  {
+   "fieldname": "column_break_lsit",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_ibdu",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "total_sales",
+   "fieldtype": "Data",
+   "label": "Total Sales",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_ganr",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "get_purchase",
+   "fieldtype": "Button",
+   "label": "Get Purchase "
+  },
+  {
+   "fieldname": "purchase_close_table",
+   "fieldtype": "Table",
+   "label": "Purchase Close Table",
+   "options": "Purchase Close Table",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_nbda",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "sales_invoice",
+   "fieldtype": "Table",
+   "label": "Sales Invoice",
+   "options": "Shift Sales Child",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2024-07-07 15:53:03.809847",
+ "modified_by": "Administrator",
+ "module": "Teller Customization",
+ "name": "Close Shift",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
