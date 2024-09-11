@@ -15,7 +15,6 @@ def fetch(docname):
         WHERE ac.custom_is_treasury = 1
         AND ac.account_currency != 'EGP'
         GROUP BY ac.account_currency;
-
     """ 
     data = frappe.db.sql(query, as_dict=True)
     doc = frappe.get_doc("InterBank", docname)
