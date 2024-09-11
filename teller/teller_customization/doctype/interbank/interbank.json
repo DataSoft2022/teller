@@ -6,19 +6,32 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "interbank"
+  "interbank",
+  "amended_from"
  ],
  "fields": [
   {
+   "allow_on_submit": 1,
    "fieldname": "interbank",
    "fieldtype": "Table",
    "label": "Interbank",
    "options": "InterBank Details"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "InterBank",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
   }
  ],
  "index_web_pages_for_search": 1,
+ "is_submittable": 1,
  "links": [],
- "modified": "2024-08-25 13:50:51.887879",
+ "modified": "2024-09-11 15:41:27.956478",
  "modified_by": "Administrator",
  "module": "Teller Customization",
  "name": "InterBank",
