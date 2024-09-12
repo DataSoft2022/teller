@@ -3,6 +3,39 @@
 
 frappe.ui.form.on("Teller Invoice", {
   // setup basic inforamation
+  client_type(frm) {
+    if (frm.doc.client_type === "Interbank") {
+      // frappe.msgprint(`mmmmmmmmmmm`);
+      // frm.set_value("company_name", "");
+      frappe.call({
+        method: "frappe.client.get",
+        args: {
+          doctype: "Customer",
+          name: "Bank al-ahly",
+        },
+        callback: function (response) {
+          console.log("response", response.message);
+          frm.set_value("company_name", response.message.name);
+          frm.set_value(
+            "comoany_address",
+            response.message.custom_comany_address1
+          );
+          frm.set_value(
+            "start_registration_date",
+            response.message.custom_start_registration_date
+          );
+          frm.set_value(
+            "end_registration_date",
+            response.message.custom_end_registration_date
+          );
+          frm.set_value("company_legal_form", response.message.custom_legal_form);
+          frm.set_value("company_num", response.message.custom_commercial_no);
+          frm.set_value("company_activity", response.message.custom_company_activity);
+          
+        },
+      });
+    }
+  },
 
   setup: function (frm) {
     // filters accounts with cash ,is group False and account currency not EGY
@@ -107,6 +140,7 @@ frappe.ui.form.on("Teller Invoice", {
 
   refresh(frm) {
     // set the focus on the fetch_national_id field when the doctype is refreshed
+
     setTimeout(function () {
       frm.get_field("fetch_national_id").$input.focus();
     }, 100);
@@ -253,7 +287,52 @@ frappe.ui.form.on("Teller Invoice", {
       };
     });
   },
-
+  custom_special_price_2(frm) {
+    var d = new frappe.ui.Dialog({
+      title: "Booked Special Price",
+      fields: [
+        {
+          label: "Special price document",
+          fieldname: "name",
+          fieldtype: "Link",
+          options: "Special price document",
+          get_query: function() {
+     
+            return {
+                filters: [
+                    ['custom_interbank_type', '=', 'Selling'],
+     
+                ]
+            };
+        }
+        },
+      ],
+      size: "small", // small, large, extra-large
+      primary_action_label: "Submit",
+      primary_action: async function (values) {
+        console.log(values.name);
+        let doc = await frappe.db.get_doc(
+          "Special price document",
+          values.name
+        );
+        console.log(doc.booked_currency);
+        let book_table = doc.booked_currency;
+        for (let item of book_table) {
+          console.log(item.currency);
+          let child = frm.add_child("transactions");
+          child.currency = item.currency;
+          child.currency_code = item.custom_currency_code;
+          child.rate = item.rate;
+          // frm.doc.transactions.forEach((row) => {
+          //   frappe.model.set_value(cdt, cdn, "currency", item.currency);
+          // });
+        }
+        frm.refresh_field("transactions");
+        d.hide();
+      },
+    });
+    d.show();
+  },
   show_general_ledger: function (frm) {
     if (frm.doc.docstatus > 0) {
       frm.add_custom_button(
