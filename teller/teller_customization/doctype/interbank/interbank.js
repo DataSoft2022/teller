@@ -3,21 +3,35 @@
 frappe.ui.form.on("InterBank", {
   refresh: function (frm) {
     frm.add_custom_button(__("Fetch"), function () {
-      frm.call({
-        method: "fetch_data",
-        doc: frm.doc,
-        callback: function (response) {
-          if (response.message) {
-            // Populate your fields here with the fetched data
-            // Example:
-            frm.set_value("field_name", response.message.field_value);
-          }
-        },
+      frm.call("get_currency").then((r) => {
+        if (r && r.message) {
+          console.log("done", r.message);
+          // let funds = r.message;
+          // for (let curr of funds) {
+          //   console.log("curr", curr.account_currency);
+          //   let child = frm.add_child("interbank_details", {
+          //     // Ensure "interbank_details" is the field name
+          //     "currency": curr.account_currency,
+          //   });
+          // }
+
+          frm.refresh_field("interbank_details"); // Refresh using the child table field name
+        }
       });
     });
   },
 });
-
+frappe.ui.form.on("InterBank", {
+  refresh: function (frm) {
+    frm.add_custom_button(__("Book Special Price"), function () {
+      frm.call("create_special_price_document").then((r) => {
+        if (r && r.message) {
+          console.log("done", r.message);
+        }
+      });
+    });
+  },
+});
 // frappe.ui.form.on("InterBank", {
 // 	refresh(frm,cdt,cdn) {
 //         var d = locals[cdt][cdn];
@@ -40,17 +54,27 @@ frappe.ui.form.on("InterBank", {
 //     });
 //   },
 // });
-// frappe.ui.form.on("InterBank Details", {
-//   custom_currency_code(frm, cdt, cdn) {
-//     var d = locals[cdt][cdn];
-//     frm.fields_dict["InterBank Details"].grid.get_field("currency").get_query =
-//       function () {
-//         return {
-//           filters: ["Currency", "!=", "EGP"],
-//         };
-//       };
-//   },
-// });
+frappe.ui.form.on("InterBank Details", {
+  custom_qty(frm, cdt, cdn) {
+    var d = locals[cdt][cdn];
+    frappe.model.set_value(
+      cdt,
+      cdn,
+      "remaining",
+      d.amount - d.rate * d.custom_qty
+    );
+  },
+  rate(frm, cdt, cdn) {
+    var d = locals[cdt][cdn];
+    console.log("Dede", d.remaining);
+    frappe.model.set_value(
+      cdt,
+      cdn,
+      "remaining",
+      d.amount - d.rate * d.custom_qty 
+    );
+  },
+});
 // frappe.ui.form.on("InterBank", "refresh", function (frm) {
 //   frm.fields_dict["InterBank Details"].grid.get_field("currency").get_query =
 //     function (doc, cdt, cdn) {

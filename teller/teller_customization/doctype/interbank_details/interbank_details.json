@@ -15,6 +15,7 @@
  ],
  "fields": [
   {
+   "default": "USD",
    "fieldname": "currency",
    "fieldtype": "Link",
    "label": "Currency",
@@ -51,7 +52,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-09-12 11:01:48.078433",
+ "modified": "2024-10-28 10:12:46.697390",
  "modified_by": "Administrator",
  "module": "Teller Customization",
  "name": "InterBank Details",
