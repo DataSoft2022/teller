@@ -2,18 +2,10 @@
 // For license information, please see license.txt
 frappe.ui.form.on("InterBank", {
   refresh: function (frm) {
-    frm.add_custom_button(__("Fetch"), function () {
+    frm.add_custom_button(__("Fetch your currency"), function () {
       frm.call("get_currency").then((r) => {
         if (r && r.message) {
           console.log("done", r.message);
-          // let funds = r.message;
-          // for (let curr of funds) {
-          //   console.log("curr", curr.account_currency);
-          //   let child = frm.add_child("interbank_details", {
-          //     // Ensure "interbank_details" is the field name
-          //     "currency": curr.account_currency,
-          //   });
-          // }
 
           frm.refresh_field("interbank_details"); // Refresh using the child table field name
         }
@@ -24,11 +16,25 @@ frappe.ui.form.on("InterBank", {
 frappe.ui.form.on("InterBank", {
   refresh: function (frm) {
     frm.add_custom_button(__("Book Special Price"), function () {
-      frm.call("create_special_price_document").then((r) => {
-        if (r && r.message) {
-          console.log("done", r.message);
-        }
-      });
+      frappe.warn(
+        "Are you sure you want to proceed?",
+        "Booking Special Price?",
+
+        // label: __("Yes"),
+        function () {
+          frm.call("create_special_price_document").then((r) => {
+            if (r && r.message) {
+              frappe.msgprint(
+                __("Special price document created: ") + r.message
+              );
+              console.log("done", r.message);
+            }
+          });
+        },
+        // label: __("No"),
+        "Continue",
+        true
+      );
     });
   },
 });
@@ -71,7 +77,7 @@ frappe.ui.form.on("InterBank Details", {
       cdt,
       cdn,
       "remaining",
-      d.amount - d.rate * d.custom_qty 
+      d.amount - d.rate * d.custom_qty
     );
   },
 });

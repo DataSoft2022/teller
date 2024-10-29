@@ -66,25 +66,40 @@ class InterBank(Document):
 
     @frappe.whitelist()
     def create_special_price_document(self):
-        # `self.interbank` is already a list of dictionaries, so no need to parse it as JSON
+        current_doc = frappe.get_doc("InterBank", self.name)
         interbank_list = self.interbank
-        document = frappe.new_doc("Special price document")
-        document.save()
-        print("Document :", document)
-        if len(interbank_list) > 0:
+        list_table = []
+
+        if interbank_list:
             for curr in interbank_list:
-                document.append(
-                    "booked_currency",
-                    {
-                        "currency": curr.get("currency"),
-                        "transaction": curr.get("transaction"),
-                        "custom_qty": curr.get("custom_qty"),
-                        "rate": curr.get("rate"),
-                    },
-                )
-                # # Insert and save the document
-                print("booked_currency :", document)
-                document.save()
-                # document.insert(ignore_permissions=True)
-                # frappe.db.commit()
-                # return _("Special Price Document(s) created successfully!")
+                if curr.get("custom_qty") and curr.get("custom_qty") > 0:
+                    list_table.append(
+                        {
+                            "currency": curr.get("currency"),
+                            "transaction": curr.get("transaction"),
+                            "custom_qty": curr.get("custom_qty"),
+                            "rate": curr.get("rate"),
+                        }
+                    )
+
+            print("booked_currency :", list_table)
+
+            if list_table:  # Ensure there's data to append
+                document = frappe.new_doc("Special price document")
+                for book in list_table:
+                    document.append(
+                        "booked_currency",
+                        {
+                            "currency": book.get("currency"),
+                            "transaction": book.get("transaction"),
+                            "custom_qty": book.get("custom_qty"),
+                            "rate": book.get("rate"),
+                        },
+                    )
+
+                document.insert(ignore_permissions=True)  # Save the document
+                frappe.db.commit()  # Commit the transaction
+
+                return _("Special Price Document(s) created successfully!")
+
+        return _("No valid entries to create Special Price Document.")
