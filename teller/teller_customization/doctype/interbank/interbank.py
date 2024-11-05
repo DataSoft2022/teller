@@ -102,14 +102,13 @@ class InterBank(Document):
                             # if curr.get("remaining")> 0 or curr.get("remaining") < 0:
                             curr.set("remaining", curr.get("remaining")- curr.get("custom_qty"))
                             curr.set("custom_qty", 0)
-                            return current_doc.name
-                            current_doc.save()
-                        if curr.get("remaining") == 0:
-                            # curr.set("remaining", (curr.get("remaining")- curr.get("custom_qty")*-1))
-                            # curr.set("custom_qty", 0)
-                            current_doc.save()
-                            frappe.msgprint('you can not book now ')
-                            break
+                            if curr.get("remaining") == 0:
+                                return "remaining is zero so can not book now "
+                                # curr.set("remaining", (curr.get("remaining")- curr.get("custom_qty")*-1))
+                                # curr.set("custom_qty", 0)
+                                # current_doc.save()
+                                frappe.warn('remaining is zero so can not book now ')
+                                break
                                   
                             
                             # list_table.append(
