@@ -2,6 +2,41 @@
 // For license information, please see license.txt
 frappe.ui.form.on("InterBank", {
   refresh: function (frm) {
+    // Check the field `is_save_disabled` to determine the state on refresh
+    if (frm.doc.custom_is_save_disabled) {
+      cur_frm.disable_save();
+    } else {
+      cur_frm.enable_save();
+    }
+
+    frm.add_custom_button(
+      __("Stop InterBank"),
+      function () {
+        // Disable the save button
+        cur_frm.disable_save();
+        // Update the field to persist the state
+        frm.set_value("custom_is_save_disabled", 1);
+        frm.save(); // Save the form to store the state
+      },
+      __("status")
+    );
+
+    frm.add_custom_button(
+      __("Start InterBank"),
+      function () {
+        // Enable the save button
+        cur_frm.enable_save();
+        // Update the field to persist the state
+        frm.set_value("custom_is_save_disabled", 0);
+        frm.save(); // Save the form to store the state
+      },
+      __("status")
+    );
+  },
+});
+
+frappe.ui.form.on("InterBank", {
+  refresh: function (frm) {
     frm.add_custom_button(__("Fetch your currency"), function () {
       frm.call("get_currency").then((r) => {
         if (r && r.message) {
@@ -63,11 +98,10 @@ frappe.ui.form.on("InterBank", {
 // });
 frappe.ui.form.on("InterBank Details", {
   custom_qty(frm, cdt, cdn) {
-
     var d = locals[cdt][cdn];
-    console.log(d.remaining)
-    if (d.remaining === 0){
-      frappe.msgprint(" Remaining iz zero ")
+    console.log(d.remaining);
+    if (d.remaining === 0) {
+      frappe.msgprint(" Remaining iz zero ");
     }
     // frappe.model.set_value(
     //   cdt,
