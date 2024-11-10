@@ -6,6 +6,7 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "transaction",
   "interbank",
   "amended_from"
  ],
@@ -26,12 +27,18 @@
    "print_hide": 1,
    "read_only": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "transaction",
+   "fieldtype": "Select",
+   "label": "Transaction ",
+   "options": "Purchasing\nSelling"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-09-11 15:41:27.956478",
+ "modified": "2024-11-07 16:02:31.349910",
  "modified_by": "Administrator",
  "module": "Teller Customization",
  "name": "InterBank",

@@ -1,6 +1,58 @@
 // Copyright (c) 2024, Mohamed AbdElsabour and contributors
 // For license information, please see license.txt
 frappe.ui.form.on("InterBank", {
+  before_save: function (frm, cdt, cdn) {
+  
+  },
+
+  
+});
+frappe.ui.form.on("InterBank", {
+  onload: function (frm, cdt, cdn) {
+    frm.fields_dict["interbank"].grid.wrapper.on("change", function (e) {
+      update_row_colors(frm, cdt, cdn);
+    });
+  },
+
+  refresh: function (frm, cdt, cdn) {
+    update_row_colors(frm, cdt, cdn);
+  },
+});
+frappe.ui.form.on("InterBank", {
+  refresh: function (frm) {
+    // Ensure that the interbank table has at least one row
+    if (frm.fields_dict["interbank"].grid.grid_rows[0]) {
+      var tab = frm.fields_dict["interbank"].grid.grid_rows;
+      for (let row of tab) {
+        var amount = row.doc.amount;
+        var curr = row.doc.currency;
+        console.log("amount", amount);
+        if (amount < 0) {
+          // Add a CSS class to set the background color to red
+          $(row.row).css("color", "red");
+          frappe.msgprint(`Clear Amount  <span style="color: red;"> ${amount} </span>For <span style="color: red;"> Currency ${curr} </span>`)
+        } else {
+          $(row.row).css("color", "black");
+        }
+      }
+    }
+  },
+});
+
+function update_row_colors(frm, cdt, cdn) {
+  var d = locals[cdt][cdn];
+  frm.fields_dict["interbank"].grid.grid_rows.forEach((row) => {
+    console.log("amount", d.amount);
+    const rate = d.rate; // Replace 'rate' with the actual field name for the rate
+    if (rate < 0) {
+      row.wrapper.css("background-color", "#FF000A");
+    } else {
+      row.wrapper.css("background-color", ""); // Reset if rate >= 0
+    }
+  });
+}
+
+frappe.ui.form.on("InterBank", {
   refresh: function (frm) {
     // Check the field `is_save_disabled` to determine the state on refresh
     if (frm.doc.custom_is_save_disabled) {
@@ -18,7 +70,7 @@ frappe.ui.form.on("InterBank", {
         frm.set_value("custom_is_save_disabled", 1);
         frm.save(); // Save the form to store the state
       },
-      __("status")
+      __("Setting")
     );
 
     frm.add_custom_button(
@@ -30,7 +82,14 @@ frappe.ui.form.on("InterBank", {
         frm.set_value("custom_is_save_disabled", 0);
         frm.save(); // Save the form to store the state
       },
-      __("status")
+      __("Setting")
+    );
+    frm.add_custom_button(
+      __("Go to  Special booking"),
+      function () {
+        frappe.set_route('List', 'Special price document');
+      },
+      __("Setting")
     );
   },
 });
@@ -119,6 +178,11 @@ frappe.ui.form.on("InterBank Details", {
       "remaining",
       d.amount - d.rate * d.custom_qty
     );
+    // if (d.remaining ===0){frappe.warn("Remaining is 0")}
+    // else{
+    //   return
+    // }
+    
   },
 });
 // frappe.ui.form.on("InterBank", "refresh", function (frm) {
