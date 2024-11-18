@@ -1,0 +1,115 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "IB-Booked_.#####",
+ "creation": "2024-09-11 14:55:20.066138",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "date",
+  "time",
+  "type",
+  "column_break_mu49",
+  "customer",
+  "user",
+  "branch",
+  "section_break_c7vy",
+  "booked_currency",
+  "amended_from",
+  "interbank_refrence"
+ ],
+ "fields": [
+  {
+   "fieldname": "booked_currency",
+   "fieldtype": "Table",
+   "label": "Booked Currency",
+   "options": "Booked Currency"
+  },
+  {
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "label": "Customer",
+   "options": "Customer"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Booking Interbank",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "interbank_refrence",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "InterBank refrence",
+   "options": "InterBank"
+  },
+  {
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "label": "Date"
+  },
+  {
+   "fieldname": "time",
+   "fieldtype": "Time",
+   "label": "Time"
+  },
+  {
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "label": "User",
+   "options": "User"
+  },
+  {
+   "fieldname": "branch",
+   "fieldtype": "Link",
+   "label": "Branch",
+   "options": "Branch"
+  },
+  {
+   "fieldname": "column_break_mu49",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_c7vy",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "type",
+   "fieldtype": "Select",
+   "label": "Type",
+   "options": "Selling\nPurchasing"
+  }
+ ],
+ "in_create": 1,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2024-11-18 14:26:31.220638",
+ "modified_by": "Administrator",
+ "module": "Teller",
+ "name": "Booking Interbank",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "quick_entry": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

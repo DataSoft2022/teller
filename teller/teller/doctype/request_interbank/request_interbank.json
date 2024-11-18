@@ -1,0 +1,135 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2024-11-17 14:41:07.701476",
+ "default_view": "List",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_wgt4",
+  "type",
+  "date",
+  "time",
+  "amended_from",
+  "column_break_dmwz",
+  "user",
+  "branch",
+  "request_deal_interbank_refrence",
+  "customer",
+  "section_break_hone",
+  "items",
+  "interbank_refrence",
+  "special_refrence"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_wgt4",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "type",
+   "fieldtype": "Select",
+   "label": "Type",
+   "options": "Selling\nPurchasing"
+  },
+  {
+   "default": "Today",
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "label": "Date"
+  },
+  {
+   "default": "Now",
+   "fieldname": "time",
+   "fieldtype": "Time",
+   "label": "Time"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Request interbank",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "column_break_dmwz",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "label": "User",
+   "options": "User"
+  },
+  {
+   "fieldname": "branch",
+   "fieldtype": "Link",
+   "label": "Branch",
+   "options": "Branch"
+  },
+  {
+   "fieldname": "section_break_hone",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "request_deal_interbank_refrence",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "Request Deal interbank refrence",
+   "options": "Request Deal interbank"
+  },
+  {
+   "fieldname": "interbank_refrence",
+   "fieldtype": "Link",
+   "label": "Interbank Refrence",
+   "options": "InterBank"
+  },
+  {
+   "fieldname": "special_refrence",
+   "fieldtype": "Link",
+   "label": "Special Refrence",
+   "options": "Booking Interbank"
+  },
+  {
+   "fieldname": "items",
+   "fieldtype": "Table",
+   "label": "items",
+   "options": "Interbank Request Details"
+  },
+  {
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "label": "Customer",
+   "options": "Customer"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2024-11-18 14:09:01.088409",
+ "modified_by": "Administrator",
+ "module": "Teller",
+ "name": "Request interbank",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

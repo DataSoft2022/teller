@@ -5,5 +5,5 @@
 from frappe.model.document import Document
 
 
-class Specialpricedocument(Document):
+class InterbankRequestDetails(Document):
 	pass

@@ -6,10 +6,12 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "currency_code",
   "currency",
-  "transaction",
+  "rate",
   "custom_qty",
-  "rate"
+  "interbank",
+  "booking_qty"
  ],
  "fields": [
   {
@@ -17,12 +19,6 @@
    "fieldtype": "Link",
    "label": "currency",
    "options": "Currency"
-  },
-  {
-   "fieldname": "transaction",
-   "fieldtype": "Select",
-   "label": "transaction",
-   "options": "selling\nbuying"
   },
   {
    "fieldname": "rate",
@@ -33,12 +29,28 @@
    "fieldname": "custom_qty",
    "fieldtype": "Float",
    "label": "QTY"
+  },
+  {
+   "fieldname": "interbank",
+   "fieldtype": "Link",
+   "label": "interbank",
+   "options": "InterBank"
+  },
+  {
+   "fieldname": "booking_qty",
+   "fieldtype": "Float",
+   "label": "Booking Qty"
+  },
+  {
+   "fieldname": "currency_code",
+   "fieldtype": "Int",
+   "label": "Currency Code"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-09-11 16:44:26.249093",
+ "modified": "2024-11-18 14:06:31.174721",
  "modified_by": "Administrator",
  "module": "Teller",
  "name": "Booked Currency",

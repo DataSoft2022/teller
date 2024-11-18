@@ -1,6 +1,6 @@
 {
  "charts": [],
- "content": "[{\"id\":\"iUVF6I8gh0\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Teller System</span>\",\"col\":12}},{\"id\":\"LDjYY7oMV9\",\"type\":\"card\",\"data\":{\"card_name\":\"Master\",\"col\":6}},{\"id\":\"u_uCeIjbql\",\"type\":\"card\",\"data\":{\"card_name\":\" Reports\",\"col\":6}},{\"id\":\"8sf-Mk8Wvp\",\"type\":\"card\",\"data\":{\"card_name\":\"Transactions\",\"col\":6}},{\"id\":\"dbXE2A5fPf\",\"type\":\"card\",\"data\":{\"card_name\":\"Impacts\",\"col\":6}}]",
+ "content": "[{\"id\":\"iUVF6I8gh0\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Teller System</span>\",\"col\":12}},{\"id\":\"AoP52VB1vp\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"\u0641\u0627\u062a\u0648\u0631\u0629 \u0628\u064a\u0639 \u0639\u0645\u0644\u0629\",\"col\":3}},{\"id\":\"RNjhxK771D\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"\u0641\u0627\u062a\u0648\u0631\u0629 \u0634\u0631\u0627\u0621 \u0639\u0645\u0644\u0629\",\"col\":3}},{\"id\":\"MNc0AO_h0g\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"\u0627\u0633\u0639\u0627\u0631 \u0627\u0644\u0639\u0645\u0644\u0627\u062a\",\"col\":3}},{\"id\":\"yxGwZ5HPqu\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"LDjYY7oMV9\",\"type\":\"card\",\"data\":{\"card_name\":\"Master\",\"col\":6}},{\"id\":\"u_uCeIjbql\",\"type\":\"card\",\"data\":{\"card_name\":\" Reports\",\"col\":6}},{\"id\":\"8sf-Mk8Wvp\",\"type\":\"card\",\"data\":{\"card_name\":\"Transactions\",\"col\":6}},{\"id\":\"dbXE2A5fPf\",\"type\":\"card\",\"data\":{\"card_name\":\"Impacts\",\"col\":6}}]",
  "creation": "2024-02-28 14:44:13.853104",
  "custom_blocks": [],
  "docstatus": 0,
@@ -9,7 +9,7 @@
  "hide_custom": 0,
  "idx": 0,
  "indicator_color": "green",
- "is_hidden": 0,
+ "is_hidden": 1,
  "label": "Teller System",
  "links": [
   {
@@ -429,7 +429,7 @@
    "type": "Link"
   }
  ],
- "modified": "2024-07-14 16:06:38.679782",
+ "modified": "2024-11-18 14:39:24.405937",
  "modified_by": "Administrator",
  "module": "Teller Customization",
  "name": "Teller System",
@@ -439,7 +439,32 @@
  "public": 1,
  "quick_lists": [],
  "roles": [],
- "sequence_id": 28.0,
- "shortcuts": [],
+ "sequence_id": 33.0,
+ "shortcuts": [
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "\u0641\u0627\u062a\u0648\u0631\u0629 \u0628\u064a\u0639 \u0639\u0645\u0644\u0629",
+   "link_to": "Teller Invoice",
+   "stats_filter": "[]",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "New",
+   "label": "\u0627\u0633\u0639\u0627\u0631 \u0627\u0644\u0639\u0645\u0644\u0627\u062a",
+   "link_to": "Update Currency Exchange",
+   "stats_filter": "[]",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "New",
+   "label": "\u0641\u0627\u062a\u0648\u0631\u0629 \u0634\u0631\u0627\u0621 \u0639\u0645\u0644\u0629",
+   "link_to": "Teller Purchase",
+   "stats_filter": "[]",
+   "type": "DocType"
+  }
+ ],
  "title": "Teller System"
 }
