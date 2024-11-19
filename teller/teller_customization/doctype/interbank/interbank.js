@@ -18,26 +18,26 @@ frappe.ui.form.on("InterBank", {
     update_row_colors(frm, cdt, cdn);
   },
 });
-frappe.ui.form.on("InterBank", {
-  refresh: function (frm) {
-    // Ensure that the interbank table has at least one row
-    if (frm.fields_dict["interbank"].grid.grid_rows[0]) {
-      var tab = frm.fields_dict["interbank"].grid.grid_rows;
-      for (let row of tab) {
-        var amount = row.doc.amount;
-        var curr = row.doc.currency;
-        console.log("amount", amount);
-        if (amount < 0) {
-          // Add a CSS class to set the background color to red
-          $(row.row).css("color", "red");
-          frappe.msgprint(`Clear Amount  <span style="color: red;"> ${amount} </span>For <span style="color: red;"> Currency ${curr} </span>`)
-        } else {
-          $(row.row).css("color", "black");
-        }
-      }
-    }
-  },
-});
+// frappe.ui.form.on("InterBank", {
+//   refresh: function (frm) {
+//     // Ensure that the interbank table has at least one row
+//     if (frm.fields_dict["interbank"].grid.grid_rows[0]) {
+//       var tab = frm.fields_dict["interbank"].grid.grid_rows;
+//       for (let row of tab) {
+//         var amount = row.doc.amount;
+//         var curr = row.doc.currency;
+//         console.log("amount", amount);
+//         if (amount < 0) {
+//           // Add a CSS class to set the background color to red
+//           $(row.row).css("color", "red");
+//           frappe.msgprint(`Clear Amount  <span style="color: red;"> ${amount} </span>For <span style="color: red;"> Currency ${curr} </span>`)
+//         } else {
+//           $(row.row).css("color", "black");
+//         }
+//       }
+//     }
+//   },
+// });
 
 function update_row_colors(frm, cdt, cdn) {
   var d = locals[cdt][cdn];
