@@ -159,9 +159,9 @@ frappe.ui.form.on("InterBank Details", {
   custom_qty(frm, cdt, cdn) {
     var d = locals[cdt][cdn];
     console.log(d.remaining);
-    if (d.remaining === 0) {
-      frappe.msgprint(" Remaining iz zero ");
-    }
+    // if (d.remaining === 0) {
+    //   frappe.msgprint(" Remaining iz zero ");
+    // }
     // frappe.model.set_value(
     //   cdt,
     //   cdn,
@@ -209,7 +209,7 @@ frappe.ui.form.on("InterBank", {
 });
 
 frappe.ui.form.on("InterBank Details", {
-  custom_currency_code(frm, cdt, cdn) {
+  currency_code(frm, cdt, cdn) {
     var row = locals[cdt][cdn];
     console.log("Row data:", row);
 
@@ -219,7 +219,7 @@ frappe.ui.form.on("InterBank Details", {
       args: {
         doctype: "Currency",
         fields: ["name", "custom_currency_code"],
-        filters: [["custom_currency_code", "=", row.custom_currency_code]],
+        filters: [["custom_currency_code", "=", row.currency_code]],
       },
       callback: function (response) {
         let currencies = response.message || [];
