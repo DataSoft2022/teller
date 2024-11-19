@@ -8,6 +8,9 @@
  "field_order": [
   "customer",
   "transaction",
+  "column_break_e2yj",
+  "status",
+  "section_break_gva1",
   "interbank",
   "amended_from",
   "request_interbank__refrence",
@@ -54,12 +57,28 @@
    "fieldtype": "Link",
    "label": "Special price document Refrence",
    "options": "Booking Interbank"
+  },
+  {
+   "fieldname": "column_break_e2yj",
+   "fieldtype": "Column Break"
+  },
+  {
+   "allow_on_submit": 1,
+   "default": "Watting For Reply",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Watting For Reply\nOn Sent\nSubmitted\nClosed"
+  },
+  {
+   "fieldname": "section_break_gva1",
+   "fieldtype": "Section Break"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-11-18 14:09:00.655932",
+ "modified": "2024-11-19 13:18:19.249822",
  "modified_by": "Administrator",
  "module": "Teller Customization",
  "name": "InterBank",
