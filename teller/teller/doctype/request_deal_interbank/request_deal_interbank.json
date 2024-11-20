@@ -8,10 +8,10 @@
  "field_order": [
   "section_break_ypop",
   "date",
-  "tme",
+  "time",
   "user",
   "branch",
-  "interbank",
+  "deals",
   "description",
   "request_interbank_refrence",
   "amended_from"
@@ -27,11 +27,6 @@
    "label": "Date"
   },
   {
-   "fieldname": "tme",
-   "fieldtype": "Time",
-   "label": "Tme"
-  },
-  {
    "fieldname": "user",
    "fieldtype": "Link",
    "label": "user",
@@ -42,12 +37,6 @@
    "fieldtype": "Link",
    "label": "Branch",
    "options": "Branch"
-  },
-  {
-   "fieldname": "interbank",
-   "fieldtype": "Table",
-   "label": "Interbank",
-   "options": "InterBank Details"
   },
   {
    "fieldname": "description",
@@ -69,6 +58,17 @@
    "fieldtype": "Link",
    "label": "Request interbank Refrence",
    "options": "Request interbank"
+  },
+  {
+   "fieldname": "deals",
+   "fieldtype": "Table",
+   "label": "Deal items",
+   "options": "Deal Details"
+  },
+  {
+   "fieldname": "time",
+   "fieldtype": "Time",
+   "label": "Time"
   }
  ],
  "index_web_pages_for_search": 1,
@@ -79,7 +79,7 @@
    "link_fieldname": "request_deal_interbank_refrence"
   }
  ],
- "modified": "2024-11-18 09:24:04.978443",
+ "modified": "2024-11-19 20:16:06.219533",
  "modified_by": "Administrator",
  "module": "Teller",
  "name": "Request Deal interbank",

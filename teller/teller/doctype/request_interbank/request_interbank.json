@@ -1,6 +1,7 @@
 {
  "actions": [],
  "allow_rename": 1,
+ "autoname": "Interbank_Request_.#####",
  "creation": "2024-11-17 14:41:07.701476",
  "default_view": "List",
  "doctype": "DocType",
@@ -109,10 +110,11 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-11-18 14:09:01.088409",
+ "modified": "2024-11-19 14:58:46.042512",
  "modified_by": "Administrator",
  "module": "Teller",
  "name": "Request interbank",
+ "naming_rule": "Expression (old style)",
  "owner": "Administrator",
  "permissions": [
   {

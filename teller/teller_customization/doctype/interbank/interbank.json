@@ -64,11 +64,11 @@
   },
   {
    "allow_on_submit": 1,
-   "default": "Watting For Reply",
+   "default": "Waiting For Reply",
    "fieldname": "status",
    "fieldtype": "Select",
    "label": "Status",
-   "options": "Watting For Reply\nOn Sent\nSubmitted\nClosed"
+   "options": "\nWaiting For Reply\nOn Sent\nSubmitted\nClosed"
   },
   {
    "fieldname": "section_break_gva1",
@@ -78,7 +78,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-11-19 13:18:19.249822",
+ "modified": "2024-11-20 13:16:49.875886",
  "modified_by": "Administrator",
  "module": "Teller Customization",
  "name": "InterBank",
