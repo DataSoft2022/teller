@@ -7,6 +7,13 @@ import json
 
 
 class InterBank(Document):
+    @frappe.whitelist()
+    def interbank_update_status(self):
+          current_interbank = frappe.get_doc("InterBank", self.name)
+          current_interbank.ignore_validate_update_after_submit = True
+          current_interbank.db_set('status', 'Closed')
+          current_interbank.save()
+          
     # @frappe.whitelist()
     # def fetch_data(self):
     #     # Your logic to fetch data
