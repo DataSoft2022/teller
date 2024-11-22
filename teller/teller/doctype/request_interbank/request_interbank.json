@@ -2,7 +2,7 @@
  "actions": [],
  "allow_rename": 1,
  "autoname": "Interbank_Request_.#####",
- "creation": "2024-11-17 14:41:07.701476",
+ "creation": "2024-11-22 18:24:19.146440",
  "default_view": "List",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -20,7 +20,8 @@
   "section_break_hone",
   "items",
   "interbank_refrence",
-  "special_refrence"
+  "special_refrence",
+  "amended_from"
  ],
  "fields": [
   {
@@ -72,15 +73,27 @@
    "options": "Branch"
   },
   {
-   "fieldname": "section_break_hone",
-   "fieldtype": "Section Break"
-  },
-  {
    "fieldname": "request_deal_interbank_refrence",
    "fieldtype": "Link",
    "hidden": 1,
    "label": "Request Deal interbank refrence",
    "options": "Request Deal interbank"
+  },
+  {
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "label": "Customer",
+   "options": "Customer"
+  },
+  {
+   "fieldname": "section_break_hone",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "items",
+   "fieldtype": "Table",
+   "label": "items",
+   "options": "Interbank Request Details"
   },
   {
    "fieldname": "interbank_refrence",
@@ -95,22 +108,29 @@
    "options": "Booking Interbank"
   },
   {
-   "fieldname": "items",
-   "fieldtype": "Table",
-   "label": "items",
-   "options": "Interbank Request Details"
-  },
-  {
-   "fieldname": "customer",
+   "fieldname": "amended_from",
    "fieldtype": "Link",
-   "label": "Customer",
-   "options": "Customer"
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Request interbank",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
- "links": [],
- "modified": "2024-11-19 14:58:46.042512",
+ "links": [
+  {
+   "link_doctype": "InterBank",
+   "link_fieldname": "request_interbank_reference"
+  },
+  {
+   "link_doctype": "InterBank",
+   "link_fieldname": "request_interbank_reference"
+  }
+ ],
+ "modified": "2024-11-22 18:24:19.146440",
  "modified_by": "Administrator",
  "module": "Teller",
  "name": "Request interbank",

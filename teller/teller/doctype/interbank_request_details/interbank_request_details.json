@@ -9,7 +9,8 @@
   "curency_code",
   "currency",
   "qty",
-  "status"
+  "status",
+  "interbank_reference"
  ],
  "fields": [
   {
@@ -34,12 +35,18 @@
    "fieldtype": "Select",
    "label": "status",
    "options": "Not Reserved\nReserved"
+  },
+  {
+   "fieldname": "interbank_reference",
+   "fieldtype": "Link",
+   "label": "interbank reference",
+   "options": "InterBank"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-11-19 20:14:21.178002",
+ "modified": "2024-11-22 11:17:55.235174",
  "modified_by": "Administrator",
  "module": "Teller",
  "name": "Interbank Request Details",

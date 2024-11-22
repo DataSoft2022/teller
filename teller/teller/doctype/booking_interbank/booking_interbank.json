@@ -87,8 +87,17 @@
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
- "links": [],
- "modified": "2024-11-18 14:26:31.220638",
+ "links": [
+  {
+   "link_doctype": "InterBank",
+   "link_fieldname": "special_price_document_refrence"
+  },
+  {
+   "link_doctype": "Request interbank",
+   "link_fieldname": "special_refrence"
+  }
+ ],
+ "modified": "2024-11-22 11:06:48.377240",
  "modified_by": "Administrator",
  "module": "Teller",
  "name": "Booking Interbank",

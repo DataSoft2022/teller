@@ -2,21 +2,92 @@
  "actions": [],
  "allow_rename": 1,
  "autoname": "Interbank_.#####",
- "creation": "2024-08-25 09:43:07.688176",
+ "creation": "2024-11-22 18:18:10.188255",
+ "default_view": "List",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
   "customer",
   "transaction",
+  "type",
+  "date",
+  "from",
   "column_break_e2yj",
+  "mail",
+  "send_mail",
   "status",
+  "to",
   "section_break_gva1",
   "interbank",
   "amended_from",
-  "request_interbank__refrence",
-  "special_price_document_refrence"
+  "special_price_document_refrence",
+  "request_interbank_reference",
+  "amended_from"
  ],
  "fields": [
+  {
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "label": "customer",
+   "options": "Customer"
+  },
+  {
+   "fieldname": "transaction",
+   "fieldtype": "Select",
+   "label": "Transaction ",
+   "options": "Purchasing\nSelling"
+  },
+  {
+   "fieldname": "type",
+   "fieldtype": "Select",
+   "label": "Type",
+   "options": "Daily\nWeekly"
+  },
+  {
+   "depends_on": "eval:doc.type=='Weekly'",
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "label": "Date "
+  },
+  {
+   "depends_on": "eval:doc.type == 'Daily'",
+   "fieldname": "from",
+   "fieldtype": "Time",
+   "label": "From"
+  },
+  {
+   "fieldname": "column_break_e2yj",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "mail",
+   "fieldtype": "Link",
+   "label": "Mail",
+   "options": "Contact"
+  },
+  {
+   "fieldname": "send_mail",
+   "fieldtype": "Button",
+   "label": "Send Mail"
+  },
+  {
+   "allow_on_submit": 1,
+   "default": "Waiting For Reply",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Open\nWaiting For Reply\nOn Sent\nSubmitted\nClosed"
+  },
+  {
+   "depends_on": "eval:doc.type == 'Daily'",
+   "fieldname": "to",
+   "fieldtype": "Time",
+   "label": "To"
+  },
+  {
+   "fieldname": "section_break_gva1",
+   "fieldtype": "Section Break"
+  },
   {
    "allow_on_submit": 1,
    "fieldname": "interbank",
@@ -35,50 +106,37 @@
    "search_index": 1
   },
   {
-   "fieldname": "transaction",
-   "fieldtype": "Select",
-   "label": "Transaction ",
-   "options": "Purchasing\nSelling"
-  },
-  {
-   "fieldname": "customer",
-   "fieldtype": "Link",
-   "label": "customer",
-   "options": "Customer"
-  },
-  {
-   "fieldname": "request_interbank__refrence",
-   "fieldtype": "Link",
-   "label": "Request Interbank  Refrence",
-   "options": "Request interbank"
-  },
-  {
    "fieldname": "special_price_document_refrence",
    "fieldtype": "Link",
    "label": "Special price document Refrence",
    "options": "Booking Interbank"
   },
   {
-   "fieldname": "column_break_e2yj",
-   "fieldtype": "Column Break"
+   "fieldname": "request_interbank_reference",
+   "fieldtype": "Link",
+   "label": "Request interbank Reference",
+   "options": "Request interbank"
   },
   {
-   "allow_on_submit": 1,
-   "default": "Waiting For Reply",
-   "fieldname": "status",
-   "fieldtype": "Select",
-   "label": "Status",
-   "options": "\nWaiting For Reply\nOn Sent\nSubmitted\nClosed"
-  },
-  {
-   "fieldname": "section_break_gva1",
-   "fieldtype": "Section Break"
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "InterBank",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
- "links": [],
- "modified": "2024-11-20 13:16:49.875886",
+ "links": [
+  {
+   "link_doctype": "Request interbank",
+   "link_fieldname": "interbank_refrence"
+  }
+ ],
+ "modified": "2024-11-22 18:18:10.188255",
  "modified_by": "Administrator",
  "module": "Teller Customization",
  "name": "InterBank",

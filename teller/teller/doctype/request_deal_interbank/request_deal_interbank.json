@@ -11,6 +11,7 @@
   "time",
   "user",
   "branch",
+  "customer",
   "deals",
   "description",
   "request_interbank_refrence",
@@ -69,6 +70,12 @@
    "fieldname": "time",
    "fieldtype": "Time",
    "label": "Time"
+  },
+  {
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "label": "Customer",
+   "options": "Customer"
   }
  ],
  "index_web_pages_for_search": 1,
@@ -77,9 +84,13 @@
   {
    "link_doctype": "Request interbank",
    "link_fieldname": "request_deal_interbank_refrence"
+  },
+  {
+   "link_doctype": "InterBank",
+   "link_fieldname": "request_interbank_reference"
   }
  ],
- "modified": "2024-11-19 20:16:06.219533",
+ "modified": "2024-11-22 18:03:59.259379",
  "modified_by": "Administrator",
  "module": "Teller",
  "name": "Request Deal interbank",

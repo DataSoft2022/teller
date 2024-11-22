@@ -97,14 +97,21 @@ class Requestinterbank(Document):
                     interbank_doc = frappe.get_doc("InterBank", interbank_name)
                     if detail_doc.qty == detail_doc.booking_qty:
                         # interbank_doc.db_set("status", "Closed")
-
+                        print("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC")
                         # Mark items in the currency table as "Reserved"
                         for item in currency_table:
                             if item.currency == currency:
                                 item.db_set("status", "Reserved")
+                                print("Reservedddddddddddddddddddddddddddddddddddddd")
+                                item.db_set("interbank_reference", interbank_name)
+                            else:
+                                print("elseeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee")
+                                item.db_set("interbank_reference", interbank_name)
                     else:
-                        interbank_doc.db_set("status", "Submitted")
-
+                        for item in currency_table:
+                            interbank_doc.db_set("status", "Submitted")
+                            print("yessssssssssssssssssssssssssssssssssssss")
+                            item.db_set("interbank_reference", interbank_name)
                     interbank_doc.save()
 
                     result.append({
