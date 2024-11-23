@@ -1,5 +1,44 @@
 // Copyright (c) 2024, Mohamed AbdElsabour and contributors
 // For license information, please see license.txt
+frappe.ui.form.on("Request interbank", {
+  refresh: function (frm) {
+    const method = "get_open_count";
+    frm.call({
+      type: "GET",
+      method: method,
+      args: {
+        doctype: frm.doctype,
+        name: frm.docname,
+        items: null, // Pass `null` or an array if no specific items are required
+      },
+      callback: function (r) {
+        if (r.message) {
+          // Update heatmap if timeline data exists
+          if (r.message.timeline_data) {
+            frm.dashboard.update_heatmap(r.message.timeline_data);
+          }
+
+          // Update badges with count data
+          if (r.message.count) {
+            frm.dashboard.update_badges(r.message.count);
+          }
+
+          // Store dashboard data
+          frm.dashboard_data = r.message;
+
+          // Trigger dashboard update
+          frm.trigger("dashboard_update");
+        } else {
+          frappe.msgprint(__("No data received from server."));
+        }
+      },
+      error: function (err) {
+        frappe.msgprint(__("Failed to fetch data. Please try again."));
+        console.error(err);
+      },
+    });
+  },
+});
 
 frappe.ui.form.on("Request interbank", {
   on_submit: function (frm) {

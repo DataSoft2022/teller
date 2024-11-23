@@ -21,8 +21,7 @@
   "interbank",
   "amended_from",
   "special_price_document_refrence",
-  "request_interbank_reference",
-  "amended_from"
+  "request_interbank_reference"
  ],
  "fields": [
   {
@@ -114,8 +113,13 @@
   {
    "fieldname": "request_interbank_reference",
    "fieldtype": "Link",
+   "ignore_user_permissions": 1,
+   "in_global_search": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
    "label": "Request interbank Reference",
-   "options": "Request interbank"
+   "options": "Request interbank",
+   "search_index": 1
   },
   {
    "fieldname": "amended_from",
@@ -136,7 +140,7 @@
    "link_fieldname": "interbank_refrence"
   }
  ],
- "modified": "2024-11-22 18:18:10.188255",
+ "modified": "2024-11-22 19:16:36.938541",
  "modified_by": "Administrator",
  "module": "Teller Customization",
  "name": "InterBank",

@@ -20,8 +20,7 @@
   "section_break_hone",
   "items",
   "interbank_refrence",
-  "special_refrence",
-  "amended_from"
+  "special_refrence"
  ],
  "fields": [
   {
@@ -120,17 +119,8 @@
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
- "links": [
-  {
-   "link_doctype": "InterBank",
-   "link_fieldname": "request_interbank_reference"
-  },
-  {
-   "link_doctype": "InterBank",
-   "link_fieldname": "request_interbank_reference"
-  }
- ],
- "modified": "2024-11-22 18:24:19.146440",
+ "links": [],
+ "modified": "2024-11-23 01:26:46.113118",
  "modified_by": "Administrator",
  "module": "Teller",
  "name": "Request interbank",
