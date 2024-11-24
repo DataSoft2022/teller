@@ -11,7 +11,8 @@
   "rate",
   "qty",
   "interbank_reference",
-  "booking_qty"
+  "booking_qty",
+  "request_reference"
  ],
  "fields": [
   {
@@ -45,12 +46,18 @@
    "fieldtype": "Link",
    "label": "interbank Reference",
    "options": "InterBank"
+  },
+  {
+   "fieldname": "request_reference",
+   "fieldtype": "Link",
+   "label": "Request reference",
+   "options": "Request interbank"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-11-24 13:19:52.790284",
+ "modified": "2024-11-24 14:27:38.844430",
  "modified_by": "Administrator",
  "module": "Teller",
  "name": "Booked Currency",
