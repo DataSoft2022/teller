@@ -4,7 +4,7 @@ from frappe.utils import flt
 
 class Requestinterbank(Document):
     @frappe.whitelist()
-    def on_trash(self):
+    def on_cancel(self):
         request_reference = self.name
 
         # Fetch linked Booking Interbank records
@@ -23,8 +23,9 @@ class Requestinterbank(Document):
 
         for record in booking_interbank_records:
             # Delete Booking Interbank record
-            frappe.delete_doc('Booking Interbank', record['name'], force=1)
-
+            # frappe.delete_doc('Booking Interbank', record['name'], force=1)
+            booking_interbank_doc = frappe.get_doc("Booking Interbank",record['name'])
+            booking_interbank_doc.db_set("status","Cancelled")
             # Adjust quantities for the corresponding interbank reference
             for row in self.items:
                 if row.currency == record['currency']:

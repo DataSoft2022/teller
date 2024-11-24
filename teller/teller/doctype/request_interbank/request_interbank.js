@@ -1,25 +1,25 @@
 // Copyright (c) 2024, Mohamed AbdElsabour and contributors
 // For license information, please see license.txt
-frappe.ui.form.on("Request Interbank", {
-  after_cancel: function (frm) {
-    frappe.msgprint("heeeee trashhhhhhhhhhhhhh")
-      frm.events.remove_booking(frm);
-  },
-  remove_booking: function (frm) {
-      frm.call({
-          method: "on_trash",
-          request_reference: frm.doc.name,
-          callback: function (r) {
-              if (r && r.message) {
-                  frappe.msgprint(__("Bookings Deleted: " + r.message));
-                  console.log("Deleted Bookings:", r.message);
-              } else {
-                  frappe.msgprint(__("No Bookings Found for Deletion."));
-              }
-          }
-      });
-  }
-});
+// frappe.ui.form.on("Request Interbank", {
+//   before_cancel: function (frm) {
+//     console.log("heeeee trashhhhhhhhhhhhhh")
+//       // frm.events.remove_booking(frm);
+//   },
+//   remove_booking: function (frm) {
+//       frm.call({
+//           method: "on_trash",
+//           request_reference: frm.doc.name,
+//           callback: function (r) {
+//               if (r && r.message) {
+//                   frappe.msgprint(__("Bookings Deleted: " + r.message));
+//                   console.log("Deleted Bookings:", r.message);
+//               } else {
+//                   frappe.msgprint(__("No Bookings Found for Deletion."));
+//               }
+//           }
+//       });
+//   }
+// });
 
 
 // frappe.ui.form.on("Request interbank", {
