@@ -13,6 +13,7 @@
   "customer",
   "user",
   "branch",
+  "status",
   "section_break_c7vy",
   "booked_currency",
   "amended_from",
@@ -83,6 +84,14 @@
    "fieldtype": "Select",
    "label": "Type",
    "options": "Selling\nPurchasing"
+  },
+  {
+   "default": "Not Paid",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "status",
+   "options": "Not Paid\nPaid\nPartial Paid\nCancelled"
   }
  ],
  "in_create": 1,
@@ -93,7 +102,7 @@
    "link_fieldname": "booking_interbank_refrence"
   }
  ],
- "modified": "2024-11-24 13:17:30.441153",
+ "modified": "2024-11-24 18:30:50.324668",
  "modified_by": "Administrator",
  "module": "Teller",
  "name": "Booking Interbank",
