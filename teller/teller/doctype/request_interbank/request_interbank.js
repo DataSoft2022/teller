@@ -84,6 +84,40 @@ frappe.ui.form.on("Request interbank", {
       // }
   }
 });
+
+frappe.ui.form.on("Interbank Request Details", {
+  curency_code(frm, cdt, cdn) {
+    setTimeout(() => {
+      let row = locals[cdt][cdn];
+      console.log("Triggered for row:", row.name, "Currency:", row.currency);
+
+      // Make the server call
+      frm.call({
+          method: "avaliable_qty",
+          args: {
+              currency: row.currency,
+          },
+          callback: function (r) {
+              if (r && r.message) {
+                  console.log("Server Response:", r.message);
+
+                  // Use setTimeout to delay the UI update slightly
+            
+                      frappe.model.set_value(cdt, cdn, "avaliable_qty", r.message[0].avaliable_qty || 0);
+                      console.log("Updated available quantity:", r.message[0].avaliable_qty);
+              
+              } else {
+                  frappe.msgprint(__(`No available interbank quantity for ${row.currency}`));
+              }
+          },
+          error: function () {
+              frappe.msgprint(__("Error fetching available quantity. Please try again."));
+          },
+      });
+    }, 250); // Delay by 100 milliseconds
+  },
+});
+
 frappe.ui.form.on('Interbank Request Details', {
 	curency_code(frm, cdt, cdn) {
     var row = locals[cdt][cdn];

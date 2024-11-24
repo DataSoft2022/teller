@@ -173,6 +173,35 @@ class Requestinterbank(Document):
 
         return result
 
+@frappe.whitelist()
+def avaliable_qty(currency):
+    sql = """
+        SELECT 
+            ib.name, 
+            ib.status,
+            ibd.currency,
+            ibd.currency_code, 
+            sum(ibd.qty), 
+            sum(ibd.booking_qty),
+            ibd.rate,
+            ibd.creation,
+            sum(ibd.qty) -  sum(ibd.booking_qty) as avaliable_qty
+        FROM 
+            `tabInterBank` ib 
+        LEFT JOIN 
+            `tabInterBank Details` ibd 
+        ON 
+            ibd.parent = ib.name
+        WHERE 
+            ibd.currency = %s
+        AND ib.docstatus = 1
+        AND ib.status != 'Closed'
+        AND ibd.status != 'Closed'
+        ORDER BY ibd.creation ASC
+
+
+      """
+    return frappe.db.sql(sql,(currency, ),as_dict=True)
 
 @frappe.whitelist()
 def get_interbank(currency):
