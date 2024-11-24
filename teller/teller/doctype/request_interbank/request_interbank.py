@@ -10,7 +10,7 @@ class Requestinterbank(Document):
         # Fetch linked Booking Interbank records
         booking_interbank_records = frappe.db.sql(
             """
-            SELECT bi.name, bc.booking_qty, bc.currency 
+            SELECT bi.name, bc.booking_qty, bc.currency,bc.interbank_reference 
             FROM `tabBooking Interbank` bi 
             LEFT JOIN `tabBooked Currency` bc ON bc.parent = bi.name 
             WHERE bc.request_reference = %s
@@ -26,56 +26,24 @@ class Requestinterbank(Document):
             # frappe.delete_doc('Booking Interbank', record['name'], force=1)
             booking_interbank_doc = frappe.get_doc("Booking Interbank",record['name'])
             booking_interbank_doc.db_set("status","Cancelled")
+
+            # frappe.msgprint(f"record issssssssssssssssssss {record['name']}")
             # Adjust quantities for the corresponding interbank reference
-            for row in self.items:
-                if row.currency == record['currency']:
-                    data = get_interbank(currency=row.currency)
-                    for interbank in data:
-                        if interbank.name == row.interbank_reference:
-                            interbank_doc = frappe.get_doc("InterBank",interbank.name)
-                            for r in interbank_doc.interbank:
-                                print("xxxxxxxxxxxx",r)
-                                r.booking_qty -= record['booking_qty']
-                                r.db_set("booking_qty", r.booking_qty)
-                                frappe.msgprint(
-                                    f"Deleted {interbank.booking_qty} Interbank {row.interbank_reference} and updated booking quantity."
-                                )
+            booked__table = booking_interbank_doc.booked_currency
+            for ib in booked__table:
+                ib_name = ib.interbank_reference
+                interbank_doc = frappe.get_doc("InterBank",ib_name)
+                tb_interbank = interbank_doc.interbank
+            #     print(f"inter {ib}")
+                for item in tb_interbank:
+                     if record['interbank_reference'] == ib_name:
+                        if item.currency == record['currency']:
+                            interbank_doc.db_set("status","Submitted")
+                            item.booking_qty -= record['booking_qty']
+                            item.db_set("booking_qty", item.booking_qty)
+                frappe.msgprint(f"Interbank {record.interbank_reference} qty: {item.booking_qty - record['booking_qty']} and updated booking quantity.")
+        frappe.db.commit()
 
-            # # Commit changes after processing all records
-            frappe.db.commit()
-
-            # # Log details of deleted interbanks for debugging
-            if deleted_interbanks:
-                frappe.log_error(
-                    f"Deleted and adjusted interbanks: {', '.join(deleted_interbanks)}"
-                )
-
-    
-    # def on_trash(self):
-    #     request_reference = self.name
-    #     booking_interbank_records = frappe.db.sql(
-    #     """
-    #     SELECT bi.name,bc.booking_qty,bc.currency 
-    #     FROM `tabBooking Interbank` bi 
-    #     LEFT JOIN `tabBooked Currency` bc ON bc.parent = bi.name 
-    #     WHERE bc.request_reference = %s
-    #     """,
-    #     (request_reference,),
-    #     as_dict=True)
-    #     for record in booking_interbank_records:
-    #         frappe.delete_doc('Booking Interbank', record['name'])
-    #         frappe.db.commit()
-    #         # frappe.msgprint(f"Deleted {record['name']} records from Booking Interbank.")
-    #         for row in self.items:
-    #             currency = row.currency
-    #             frappe.msgprint(f"Deleted {row.interbank_reference} Interbank.")
-    #             data = get_interbank(currency=currency)
-    #             for interbank in data:
-    #                 print("dddddddddddd",interbank.name)
-    #                 if interbank.name == row.interbank_reference:
-    #                     # print("interbank",interbank,"booking_qty",interbank.booking_qty)
-    #                     interbank.booking_qty -=  record['booking_qty']
-    #                     print("interbank",interbank,"booking_qty",interbank.booking_qty)
     @frappe.whitelist()
     def create_booking(self):
         currency_table = self.items
