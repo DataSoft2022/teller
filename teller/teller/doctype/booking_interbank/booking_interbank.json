@@ -90,14 +90,10 @@
  "links": [
   {
    "link_doctype": "InterBank",
-   "link_fieldname": "special_price_document_refrence"
-  },
-  {
-   "link_doctype": "Request interbank",
-   "link_fieldname": "special_refrence"
+   "link_fieldname": "booking_interbank_refrence"
   }
  ],
- "modified": "2024-11-22 11:06:48.377240",
+ "modified": "2024-11-24 13:17:30.441153",
  "modified_by": "Administrator",
  "module": "Teller",
  "name": "Booking Interbank",

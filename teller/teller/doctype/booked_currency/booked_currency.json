@@ -10,7 +10,7 @@
   "currency",
   "rate",
   "qty",
-  "interbank",
+  "interbank_reference",
   "booking_qty"
  ],
  "fields": [
@@ -26,12 +26,6 @@
    "label": "Rate"
   },
   {
-   "fieldname": "interbank",
-   "fieldtype": "Link",
-   "label": "interbank",
-   "options": "InterBank"
-  },
-  {
    "fieldname": "booking_qty",
    "fieldtype": "Float",
    "label": "Booking Qty"
@@ -45,12 +39,18 @@
    "fieldname": "qty",
    "fieldtype": "Float",
    "label": "QTY"
+  },
+  {
+   "fieldname": "interbank_reference",
+   "fieldtype": "Link",
+   "label": "interbank Reference",
+   "options": "InterBank"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-11-19 00:45:46.420392",
+ "modified": "2024-11-24 13:19:52.790284",
  "modified_by": "Administrator",
  "module": "Teller",
  "name": "Booked Currency",

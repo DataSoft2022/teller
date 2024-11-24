@@ -13,7 +13,8 @@
   "rate",
   "remaining",
   "booking_qty",
-  "status"
+  "status",
+  "booking_interbank_reference"
  ],
  "fields": [
   {
@@ -68,12 +69,18 @@
    "fieldtype": "Select",
    "label": "status",
    "options": "Closed\nOpen"
+  },
+  {
+   "fieldname": "booking_interbank_reference",
+   "fieldtype": "Link",
+   "label": "Booking Interbank Reference",
+   "options": "Booking Interbank"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-11-20 12:24:22.727056",
+ "modified": "2024-11-24 13:54:41.047802",
  "modified_by": "Administrator",
  "module": "Teller Customization",
  "name": "InterBank Details",
