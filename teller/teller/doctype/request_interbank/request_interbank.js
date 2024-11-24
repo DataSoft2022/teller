@@ -105,6 +105,8 @@ frappe.ui.form.on("Interbank Request Details", {
             
                       frappe.model.set_value(cdt, cdn, "avaliable_qty", r.message[0].avaliable_qty || 0);
                       console.log("Updated available quantity:", r.message[0].avaliable_qty);
+                
+                      
               
               } else {
                   frappe.msgprint(__(`No available interbank quantity for ${row.currency}`));
@@ -116,6 +118,12 @@ frappe.ui.form.on("Interbank Request Details", {
       });
     }, 250); // Delay by 100 milliseconds
   },
+  qty(frm,cdt,cdn){
+    let row = locals[cdt][cdn];
+    if(row.avaliable_qty > 0){
+      frappe.model.set_value(cdt, cdn, "remaining_qty", row.avaliable_qty - row.qty);
+    }
+  }
 });
 
 frappe.ui.form.on('Interbank Request Details', {
