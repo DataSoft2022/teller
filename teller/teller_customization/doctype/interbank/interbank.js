@@ -1,11 +1,10 @@
 // Copyright (c) 2024, Mohamed AbdElsabour and contributors
 // For license information, please see license.txt
 frappe.ui.form.on("InterBank", {
-  before_save: function (frm, cdt, cdn) {
-  
+  send_mail: function (frm) {
+    frm.set_value('status', 'On Sent');
+    frm.save(); // Save the form to persist the change
   },
-
-  
 });
 // frappe.ui.form.on("InterBank", {
 //   onload: function (frm, cdt, cdn) {
