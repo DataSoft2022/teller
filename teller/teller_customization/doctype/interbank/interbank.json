@@ -20,7 +20,7 @@
   "section_break_gva1",
   "interbank",
   "amended_from",
-  "special_price_document_refrence",
+  "booking_interbank_refrence",
   "request_interbank_reference"
  ],
  "fields": [
@@ -105,12 +105,6 @@
    "search_index": 1
   },
   {
-   "fieldname": "special_price_document_refrence",
-   "fieldtype": "Link",
-   "label": "Special price document Refrence",
-   "options": "Booking Interbank"
-  },
-  {
    "fieldname": "request_interbank_reference",
    "fieldtype": "Link",
    "ignore_user_permissions": 1,
@@ -130,17 +124,33 @@
    "print_hide": 1,
    "read_only": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "booking_interbank_refrence",
+   "fieldtype": "Link",
+   "label": "Booking Interbank Refrence",
+   "options": "Booking Interbank"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [
   {
-   "link_doctype": "Request interbank",
-   "link_fieldname": "interbank_refrence"
+   "is_child_table": 1,
+   "link_doctype": "Interbank Request Details",
+   "link_fieldname": "interbank_reference",
+   "parent_doctype": "Request interbank",
+   "table_fieldname": "items"
+  },
+  {
+   "is_child_table": 1,
+   "link_doctype": "Booked Currency",
+   "link_fieldname": "interbank_reference",
+   "parent_doctype": "Booking Interbank",
+   "table_fieldname": "booked_currency"
   }
  ],
- "modified": "2024-11-22 19:16:36.938541",
+ "modified": "2024-11-24 13:20:23.509733",
  "modified_by": "Administrator",
  "module": "Teller Customization",
  "name": "InterBank",

@@ -19,9 +19,7 @@ class Requestinterbank(Document):
             if row.status != 'Reserved':
                 requested_qty = row.qty
                 currency = row.currency
-
                 # frappe.msgprint(f"Processing Currency: {currency}, Qty Requested: {requested_qty}")
-
                 if requested_qty:
                     # Fetch interbank details for the specific currency
                     data = get_interbank(currency=currency)
@@ -51,7 +49,7 @@ class Requestinterbank(Document):
                                 "currency": ib_curr,
                                 "rate": ib_rate,
                                 "qty": append_qty,
-                                "interbank": ib_name,
+                                "interbank_reference": ib_name,
                                 "booking_qty": append_qty
                             })
 
@@ -71,9 +69,9 @@ class Requestinterbank(Document):
     def update_interbank_details(self, booking_table, currency_table):
         result = []
         found_interbank = False
-
+        print("fetchhhhhhhhhhhh",booking_table, currency_table)
         for row in booking_table:
-            interbank_name = row.interbank
+            interbank_name = row.interbank_reference
             currency = row.currency
             booking_amount = row.booking_qty
 
@@ -95,23 +93,27 @@ class Requestinterbank(Document):
                     detail_doc.db_set("booking_qty", detail_doc.booking_qty)
 
                     interbank_doc = frappe.get_doc("InterBank", interbank_name)
+                    print("detail_doc.qty == detail_doc.booking_qty", detail_doc.qty, detail_doc.booking_qty)
                     if detail_doc.qty == detail_doc.booking_qty:
-                        # interbank_doc.db_set("status", "Closed")
+                        interbank_doc.db_set("status", "Closed")
                         print("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC")
                         # Mark items in the currency table as "Reserved"
                         for item in currency_table:
                             if item.currency == currency:
                                 item.db_set("status", "Reserved")
                                 print("Reservedddddddddddddddddddddddddddddddddddddd")
-                                item.db_set("interbank_reference", interbank_name)
-                            else:
-                                print("elseeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee")
-                                item.db_set("interbank_reference", interbank_name)
-                    else:
-                        for item in currency_table:
-                            interbank_doc.db_set("status", "Submitted")
-                            print("yessssssssssssssssssssssssssssssssssssss")
                             item.db_set("interbank_reference", interbank_name)
+                            # else:
+                            #     print("elseeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee")
+                            #     item.db_set("interbank_reference", interbank_name)
+                            #     print("interbank_name interbank_name interbank_name",interbank_name)
+                    else:
+                        interbank_doc.db_set("status", "Submitted")
+                        for item in currency_table:
+                            if item.currency == currency:
+                                print("yessssssssssssssssssssssssssssssssssssss",interbank_name)
+                                item.db_set("interbank_reference", interbank_name)
+                                print("Set interbank_reference for:", item.currency)
                     interbank_doc.save()
 
                     result.append({
