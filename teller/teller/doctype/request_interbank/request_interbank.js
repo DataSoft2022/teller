@@ -1,5 +1,25 @@
 // Copyright (c) 2024, Mohamed AbdElsabour and contributors
 // For license information, please see license.txt
+frappe.ui.form.on('Request interbank', {
+  refresh: function (frm) {
+      // Add a custom button
+      frm.add_custom_button("Frappe Client", function () {
+          frappe.call({
+              method: "teller.get_branch_req_ib.get_branch",
+              callback: function (r) {
+                  if (r && r.message) {
+                      // Display fetched data
+                      frappe.msgprint(__("Frappe Client Response: " , JSON.stringify(r.message)));
+                      console.log("Response:", r.message);
+                  } else {
+                      frappe.msgprint(__("No data fetched"));
+                  }
+              }
+          });
+      });
+  }
+});
+
 // frappe.ui.form.on("Request Interbank", {
 //   before_cancel: function (frm) {
 //     console.log("heeeee trashhhhhhhhhhhhhh")
