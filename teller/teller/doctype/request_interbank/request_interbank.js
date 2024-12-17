@@ -84,7 +84,7 @@ frappe.ui.form.on('Request interbank', {
 
 frappe.ui.form.on("Request interbank", {
   on_submit: function (frm) {
-      frm.events.create_booking(frm);
+      // frm.events.create_booking(frm);
   },
   create_booking: function (frm) {
       // if (frm.doc.docstatus === 1) {

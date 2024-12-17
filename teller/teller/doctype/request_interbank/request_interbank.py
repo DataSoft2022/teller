@@ -3,8 +3,11 @@ from frappe.model.document import Document
 from frappe.utils import flt
 
 class Requestinterbank(Document):
-    @frappe.whitelist()
+    def on_submit(self):
+        self.create_booking()
+        
     def on_cancel(self):
+        
         request_reference = self.name
 
         # Fetch linked Booking Interbank records
@@ -22,6 +25,7 @@ class Requestinterbank(Document):
         deleted_interbanks = []
 
         for record in booking_interbank_records:
+            frappe.msgprint(f" Do you want to cancel")
             # Delete Booking Interbank record
             # frappe.delete_doc('Booking Interbank', record['name'], force=1)
             booking_interbank_doc = frappe.get_doc("Booking Interbank",record['name'])
@@ -99,8 +103,8 @@ class Requestinterbank(Document):
                                 break
 
         if not document.booked_currency:
-            frappe.msgprint("No bookings were created due to insufficient quantities.")
-            return
+            frappe.throw("No bookings were created due to insufficient quantities.")
+            # return
 
         document.insert()
         frappe.msgprint("Booking Interbank document created successfully.")
