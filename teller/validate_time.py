@@ -5,7 +5,7 @@ from datetime import datetime
 def cron_validate_interbank_time():
     cur_time = get_datetime(now()).strftime('%H:%M:%S')
     cur_day = get_datetime(now()).date()
-    stopWatch = f"13:42:00"
+    stopWatch = f"23:59:59"
     print(f"time {cur_time} ad cur day is {cur_day}")
 
     open_interbanks = frappe.get_all('InterBank', filters={'status': 'Open', 'type':'Daily','date':cur_day}, fields=['name','date'])
