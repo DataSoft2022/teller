@@ -43,13 +43,13 @@
    "options": "Daily\nWeekly"
   },
   {
-   "depends_on": "eval:doc.type=='Weekly'",
+   "depends_on": "eval:doc.type=='Daily'",
    "fieldname": "date",
    "fieldtype": "Date",
    "label": "Date "
   },
   {
-   "depends_on": "eval:doc.type == 'Daily'",
+   "depends_on": "eval:doc.type == 'Weekly'",
    "fieldname": "from",
    "fieldtype": "Time",
    "label": "From"
@@ -75,10 +75,10 @@
    "fieldname": "status",
    "fieldtype": "Select",
    "label": "Status",
-   "options": "Open\nWaiting For Reply\nOn Sent\nSubmitted\nClosed"
+   "options": "Open\nWaiting For Reply\nOn Sent\nSubmitted\nClosed\nEnded"
   },
   {
-   "depends_on": "eval:doc.type == 'Daily'",
+   "depends_on": "eval:doc.type == 'Weekly'",
    "fieldname": "to",
    "fieldtype": "Time",
    "label": "To"
@@ -150,7 +150,7 @@
    "table_fieldname": "booked_currency"
   }
  ],
- "modified": "2024-11-24 13:20:23.509733",
+ "modified": "2024-12-17 11:24:25.429217",
  "modified_by": "Administrator",
  "module": "Teller Customization",
  "name": "InterBank",
@@ -158,6 +158,8 @@
  "owner": "Administrator",
  "permissions": [
   {
+   "amend": 1,
+   "cancel": 1,
    "create": 1,
    "delete": 1,
    "email": 1,
@@ -166,7 +168,9 @@
    "read": 1,
    "report": 1,
    "role": "System Manager",
+   "select": 1,
    "share": 1,
+   "submit": 1,
    "write": 1
   }
  ],
