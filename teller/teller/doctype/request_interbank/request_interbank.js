@@ -116,6 +116,7 @@ frappe.ui.form.on("Interbank Request Details", {
           method: "avaliable_qty",
           args: {
               currency: row.currency,
+              purpose:frm.doc.type,
           },
           callback: function (r) {
               if (r && r.message) {

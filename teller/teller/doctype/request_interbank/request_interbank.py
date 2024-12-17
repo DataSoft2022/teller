@@ -178,7 +178,7 @@ class Requestinterbank(Document):
         return result
 
 @frappe.whitelist()
-def avaliable_qty(currency):
+def avaliable_qty(currency, purpose):
     sql = """
         SELECT 
             ib.name, 
@@ -199,13 +199,14 @@ def avaliable_qty(currency):
         WHERE 
             ibd.currency = %s
         AND ib.docstatus = 1
+        AND ib.transaction = %s
         AND ib.status != 'Closed'
         AND ibd.status != 'Closed'
         ORDER BY ibd.creation ASC
 
 
       """
-    return frappe.db.sql(sql,(currency, ),as_dict=True)
+    return frappe.db.sql(sql,(currency, purpose ),as_dict=True)
 
 @frappe.whitelist()
 def get_interbank(currency):
