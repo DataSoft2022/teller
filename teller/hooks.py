@@ -146,7 +146,12 @@ doc_events = {
 # Scheduled Tasks
 # ---------------
 
-# scheduler_events = {
+scheduler_events = {
+  "cron":{
+    "* * * * *":[ 
+    "teller.validate_time.cron_validate_interbank_time"
+  ]
+  }
 # 	"all": [
 # 		"teller.tasks.all"
 # 	],
@@ -162,7 +167,7 @@ doc_events = {
 # 	"monthly": [
 # 		"teller.tasks.monthly"
 # 	],
-# }
+}
 
 # Testing
 # -------
