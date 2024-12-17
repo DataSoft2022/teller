@@ -40,7 +40,7 @@
    "fieldname": "type",
    "fieldtype": "Select",
    "label": "Type",
-   "options": "Daily\nWeekly"
+   "options": "Daily\nHoliday"
   },
   {
    "depends_on": "eval:doc.type=='Daily'",
@@ -49,7 +49,7 @@
    "label": "Date "
   },
   {
-   "depends_on": "eval:doc.type == 'Weekly'",
+   "depends_on": "eval:doc.type == 'Holiday'",
    "fieldname": "from",
    "fieldtype": "Time",
    "label": "From"
@@ -78,7 +78,7 @@
    "options": "Open\nWaiting For Reply\nOn Sent\nSubmitted\nClosed\nEnded"
   },
   {
-   "depends_on": "eval:doc.type == 'Weekly'",
+   "depends_on": "eval:doc.type == 'Holiday'",
    "fieldname": "to",
    "fieldtype": "Time",
    "label": "To"
@@ -150,7 +150,7 @@
    "table_fieldname": "booked_currency"
   }
  ],
- "modified": "2024-12-17 11:24:25.429217",
+ "modified": "2024-12-17 15:24:28.011761",
  "modified_by": "Administrator",
  "module": "Teller Customization",
  "name": "InterBank",
