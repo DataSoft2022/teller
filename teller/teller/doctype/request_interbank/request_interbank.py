@@ -105,8 +105,7 @@ class Requestinterbank(Document):
         if not document.booked_currency:
             frappe.throw("No bookings were created due to insufficient quantities.")
             # return
-
-        document.insert()
+        document.insert(ignore_permissions=True)
         frappe.msgprint("Booking Interbank document created successfully.")
 
         # Update InterBank Details and Parent Status
