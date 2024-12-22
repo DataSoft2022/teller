@@ -19,8 +19,6 @@
   "customer",
   "section_break_hone",
   "items",
-  "interbank_refrence",
-  "special_refrence",
   "amended_from"
  ],
  "fields": [
@@ -32,7 +30,7 @@
    "fieldname": "type",
    "fieldtype": "Select",
    "label": "Type",
-   "options": "Selling\nPurchasing"
+   "options": "Purchasing\nSelling"
   },
   {
    "default": "Today",
@@ -96,18 +94,6 @@
    "options": "Interbank Request Details"
   },
   {
-   "fieldname": "interbank_refrence",
-   "fieldtype": "Link",
-   "label": "Interbank Refrence",
-   "options": "InterBank"
-  },
-  {
-   "fieldname": "special_refrence",
-   "fieldtype": "Link",
-   "label": "Special Refrence",
-   "options": "Booking Interbank"
-  },
-  {
    "fieldname": "amended_from",
    "fieldtype": "Link",
    "label": "Amended From",
@@ -127,7 +113,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-12-18 16:30:27.441190",
+ "modified": "2024-12-22 14:20:13.475493",
  "modified_by": "Administrator",
  "module": "Teller",
  "name": "Request interbank",

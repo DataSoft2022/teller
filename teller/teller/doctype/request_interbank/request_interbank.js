@@ -15,14 +15,14 @@ frappe.ui.form.on('Request interbank', {
   refresh: function (frm,cdt, cdn) {
     let table = frm.doc.items;
     table.forEach(element => {
-      console.log("Triggered for row:",element.currency)
+      console.log("Triggered(1) for row:",element.currency)
       setTimeout(() => {
         let row = locals[cdt][cdn];
-        console.log("Triggered for row:", row.name, "Currency:", row.currency);
+        console.log("Triggered(2) for row:", row.name, "Currency:", row.currency);
   
         // Make the server call
         frm.call({
-            method: "avaliable_qty",
+            method: "avaliable_ib_qty",
             args: {
                 currency: element.currency,
                 purpose:frm.doc.type,
@@ -36,8 +36,6 @@ frappe.ui.form.on('Request interbank', {
                         // frappe.model.set_value(cdt, cdn, "avaliable_qty", r.message[0].avaliable_qty || 0);
                         
                         // console.log("Updated available quantity:", r.message[0].avaliable_qty);
-                  
-                        
                 
                 } else {
                     frappe.msgprint(__(`No available interbank quantity for ${row.currency}`));
@@ -185,7 +183,7 @@ frappe.ui.form.on("Interbank Request Details", {
   curency_code(frm, cdt, cdn) {
     setTimeout(() => {
       let row = locals[cdt][cdn];
-      console.log("Triggered for row:", row.name, "Currency:", row.currency);
+      console.log("Triggered(3) for row:", row.name, "Currency:", row.currency);
 
       // Make the server call
       frm.call({
@@ -196,7 +194,7 @@ frappe.ui.form.on("Interbank Request Details", {
           },
           callback: function (r) {
               if (r && r.message) {
-                  console.log("Server Response:", r.message);
+                  console.log("Server Response (avaliable_ib_qty):", r.message);
 
                   // Use setTimeout to delay the UI update slightly
             
