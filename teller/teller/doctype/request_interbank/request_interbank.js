@@ -64,20 +64,35 @@ frappe.ui.form.on('Request interbank', {
     //   console.log('frm is',n)
     // } 
       // Add a custom button
-      frm.add_custom_button("Frappe Client", function () {
-          frappe.call({
-              method: "teller.get_branch_req_ib.get_branch",
-              callback: function (r) {
-                  if (r && r.message) {
-                      // Display fetched data
-                      frappe.msgprint(__("Frappe Client Response: " , JSON.stringify(r.message)));
-                      console.log("Response:", r.message);
-                  } else {
-                      frappe.msgprint(__("No data fetched"));
-                  }
-              }
-          });
-      });
+
+
+
+// frappe client
+// frappe client
+// frappe client
+// frappe client
+// frappe client
+// frappe client
+// frappe client
+
+
+
+
+
+      // frm.add_custom_button("Frappe Client", function () {
+      //     frappe.call({
+      //         method: "teller.get_branch_req_ib.get_branch",
+      //         callback: function (r) {
+      //             if (r && r.message) {
+      //                 // Display fetched data
+      //                 frappe.msgprint(__("Frappe Client Response: " , JSON.stringify(r.message)));
+      //                 console.log("Response:", r.message);
+      //             } else {
+      //                 frappe.msgprint(__("No data fetched"));
+      //             }
+      //         }
+      //     });
+      // });
   }
 });
 
