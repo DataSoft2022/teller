@@ -8,6 +8,49 @@ import json
 
 class InterBank(Document):
     @frappe.whitelist()
+    def on_submit(self):
+        currency_table = self.interbank
+        if not currency_table:
+            frappe.throw("No bookings were created due to insufficient quantities.")
+        document = frappe.new_doc("Booking Interbank")
+        document.customer = self.customer
+        document.type = self.transaction
+        # if self.type ==
+        # if self.time:
+        #     document.time
+        if self.date:
+            document.date  
+        document.user = self.user
+        document.branch = self.branch
+        for row in currency_table:
+          requested_qty = row.qty
+          currency = row.currency
+          purpose = self.transaction
+          data = create_queue_request(currency, purpose)
+          if data:
+            for record in data:
+                ir_name = record.get("name")
+                ir_curr_code = record.get("currency_code")
+                ir_curr = record.get("currency")
+                ir_qty = record.get("qty")
+                ir_queue_qty = record.get("queue_qty")
+                ir_rate = record.get("rate")
+                if ir_queue_qty <= 0:
+                    continue
+                document.append("booked_currency", {
+                                  "currency_code": ir_curr_code,
+                                  "currency": ir_curr,
+                                  "rate": ir_rate,
+                                  "qty": ir_queue_qty,
+                                  "interbank_reference": ir_name,
+                                  "request_reference":self.name,
+                                  "booking_qty": ir_queue_qty
+                              })
+
+          document.insert(ignore_permissions=True)
+          frappe.msgprint("Booking Interbank document created successfully.")
+        else:
+            return
     def interbank_update_status(self):
           current_interbank = frappe.get_doc("InterBank", self.name)
           current_interbank.ignore_validate_update_after_submit = True
@@ -139,3 +182,27 @@ class InterBank(Document):
                 return _("Special Price Document(s) created successfully!")
 
         return _("No valid entries to create Special Price Document.")
+@frappe.whitelist()
+def create_queue_request(currency, purpose):
+    sql = """
+        select 
+            ri.name,ri.type,
+            ri.status,
+            rid.currency, 
+            rid.curency_code, 
+            rid.qty, rid.avaliable_qty, 
+            (rid.qty - rid.avaliable_qty) AS queue_qty,
+            rid.creation
+        from 
+            `tabRequest interbank` ri 
+        left join 
+            `tabInterbank Request Details` rid 
+        ON rid.parent = ri.name 
+            where ri.status = 'In Queue'
+        AND  rid.currency = %s
+        AND  ri.type = %s
+        ORDER BY rid.creation ASC
+
+          """
+    ri = frappe.db.sql(sql,(currency , purpose), as_dict=True)
+    return ri

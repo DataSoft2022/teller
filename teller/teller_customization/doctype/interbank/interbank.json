@@ -17,6 +17,8 @@
   "send_mail",
   "status",
   "to",
+  "user",
+  "branch",
   "section_break_gva1",
   "interbank",
   "amended_from",
@@ -71,7 +73,7 @@
   },
   {
    "allow_on_submit": 1,
-   "default": "Waiting For Reply",
+   "default": "Open",
    "fieldname": "status",
    "fieldtype": "Select",
    "label": "Status",
@@ -130,6 +132,18 @@
    "fieldtype": "Link",
    "label": "Booking Interbank Refrence",
    "options": "Booking Interbank"
+  },
+  {
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "label": "user",
+   "options": "User"
+  },
+  {
+   "fieldname": "branch",
+   "fieldtype": "Link",
+   "label": "Branch",
+   "options": "Branch"
   }
  ],
  "index_web_pages_for_search": 1,
@@ -150,7 +164,7 @@
    "table_fieldname": "booked_currency"
   }
  ],
- "modified": "2024-12-17 15:24:28.011761",
+ "modified": "2024-12-22 10:07:17.775612",
  "modified_by": "Administrator",
  "module": "Teller Customization",
  "name": "InterBank",
