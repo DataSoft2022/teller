@@ -1,7 +1,68 @@
 // Copyright (c) 2024, Mohamed AbdElsabour and contributors
 // For license information, please see license.txt
 frappe.ui.form.on('Request interbank', {
-  refresh: function (frm) {
+  // setup: function (frm) {
+  //   deplicated = cur_frm.is_dirty();
+  //   n = cur_frm.is_new();
+  //    console.log(typeof(deplicated));
+  //    if (deplicated === true){
+  //      console.log('frm is',deplicated)
+  //    } 
+  //    if (n === 1){
+  //     console.log('frm is',n)
+  //   } 
+  // },
+  refresh: function (frm,cdt, cdn) {
+    let table = frm.doc.items;
+    table.forEach(element => {
+      console.log("Triggered for row:",element.currency)
+      setTimeout(() => {
+        let row = locals[cdt][cdn];
+        console.log("Triggered for row:", row.name, "Currency:", row.currency);
+  
+        // Make the server call
+        frm.call({
+            method: "avaliable_qty",
+            args: {
+                currency: element.currency,
+                purpose:frm.doc.type,
+            },
+            callback: function (r) {
+                if (r && r.message) {
+                    console.log("Server Response:", r.message);
+  
+                    // Use setTimeout to delay the UI update slightly
+              
+                        // frappe.model.set_value(cdt, cdn, "avaliable_qty", r.message[0].avaliable_qty || 0);
+                        
+                        // console.log("Updated available quantity:", r.message[0].avaliable_qty);
+                  
+                        
+                
+                } else {
+                    frappe.msgprint(__(`No available interbank quantity for ${row.currency}`));
+                }
+            },
+            error: function () {
+                frappe.msgprint(__("Error fetching available quantity. Please try again."));
+            },
+        });
+      }, 250); // Delay by 100 milliseconds
+      
+    });
+    // let row = locals[cdt][cdn];
+    // console.log(row)
+    // tabel = row.items
+    // console.log("Triggered for row:", row.name, "Currency:", row.currency);
+    // deplicated = cur_frm.is_dirty();
+    // n = cur_frm.is_new();
+    //  console.log(typeof(deplicated));
+    //  if (deplicated === true){
+    //    console.log('frm is',deplicated)
+    //  } 
+    //  if (n === 1){
+    //   console.log('frm is',n)
+    // } 
       // Add a custom button
       frm.add_custom_button("Frappe Client", function () {
           frappe.call({
@@ -113,7 +174,7 @@ frappe.ui.form.on("Interbank Request Details", {
 
       // Make the server call
       frm.call({
-          method: "avaliable_qty",
+          method: "avaliable_ib_qty",
           args: {
               currency: row.currency,
               purpose:frm.doc.type,
@@ -125,6 +186,7 @@ frappe.ui.form.on("Interbank Request Details", {
                   // Use setTimeout to delay the UI update slightly
             
                       frappe.model.set_value(cdt, cdn, "avaliable_qty", r.message[0].avaliable_qty || 0);
+                      
                       console.log("Updated available quantity:", r.message[0].avaliable_qty);
                 
                       
@@ -143,6 +205,12 @@ frappe.ui.form.on("Interbank Request Details", {
     let row = locals[cdt][cdn];
     if(row.avaliable_qty > 0){
       frappe.model.set_value(cdt, cdn, "remaining_qty", row.avaliable_qty - row.qty);
+    }
+    if(row.qty > row.avaliable_qty){
+      frm.set_value('status','In Queue')
+      // frappe.model.set_value(cdt, cdn, "qty", 0);
+      // frappe.throw(__("Qty is greater than your avaliable"))
+      cur_frm.refresh_fields('items');
     }
   }
 });

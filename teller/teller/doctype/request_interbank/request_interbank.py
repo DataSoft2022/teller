@@ -4,6 +4,7 @@ from frappe.utils import flt
 
 class Requestinterbank(Document):
     def on_submit(self):
+
         self.create_booking()
         
     def on_cancel(self):
@@ -51,8 +52,8 @@ class Requestinterbank(Document):
     @frappe.whitelist()
     def create_booking(self):
         currency_table = self.items
-
-        # Create a new DOCTYPE Booking Interbank
+        if not currency_table:
+            frappe.throw("No bookings were created due to insufficient quantities.")
         document = frappe.new_doc("Booking Interbank")
         document.customer = self.customer
         document.type = self.type
@@ -64,10 +65,11 @@ class Requestinterbank(Document):
             if row.status != 'Reserved':
                 requested_qty = row.qty
                 currency = row.currency
+                purpose = self.type
                 # frappe.msgprint(f"Processing Currency: {currency}, Qty Requested: {requested_qty}")
                 if requested_qty:
                     # Fetch interbank details for the specific currency
-                    data = get_interbank(currency=currency)
+                    data = get_interbank(currency=currency, purpose=purpose)
                     
                     for record in data:
                         ib_name = record.get("name")
@@ -81,7 +83,7 @@ class Requestinterbank(Document):
                             continue
 
                         available_qty = ib_qty - ib_booking_qty
-                        # frappe.msgprint(f"Available Qty: {available_qty} for {ib_curr} in {ib_name}")
+                        frappe.msgprint(f"Available Qty: {available_qty} for {ib_curr} in {ib_name}")
 
                         if currency == ib_curr and ib_rate > 0:
                             # Determine the quantity to book
@@ -101,13 +103,8 @@ class Requestinterbank(Document):
 
                             if requested_qty <= 0:
                                 break
-
-        if not document.booked_currency:
-            frappe.throw("No bookings were created due to insufficient quantities.")
-            # return
         document.insert(ignore_permissions=True)
         frappe.msgprint("Booking Interbank document created successfully.")
-
         # Update InterBank Details and Parent Status
         self.update_interbank_details(document.booked_currency, currency_table)
 
@@ -183,6 +180,7 @@ def avaliable_qty(currency, purpose):
             ib.name, 
             ib.status,
             ibd.currency,
+            ib.transaction,
             ibd.currency_code, 
             sum(ibd.qty), 
             sum(ibd.booking_qty),
@@ -202,16 +200,47 @@ def avaliable_qty(currency, purpose):
         AND ib.status != 'Closed'
         AND ibd.status != 'Closed'
         ORDER BY ibd.creation ASC
+        LIMIT 1;
 
 
       """
     return frappe.db.sql(sql,(currency, purpose ),as_dict=True)
 
 @frappe.whitelist()
-def get_interbank(currency):
+def avaliable_ib_qty(currency, purpose):
+    sql = """
+      SELECT 
+            ib.name, 
+            ib.status,
+            ibd.currency,
+            ib.transaction,
+            ibd.currency_code, 
+            ibd.qty, 
+            ibd.booking_qty,
+            ibd.rate,
+            ibd.creation,
+            ibd.qty -  sum(ibd.booking_qty) as avaliable_qty
+        FROM 
+            `tabInterBank` ib 
+        LEFT JOIN 
+            `tabInterBank Details` ibd 
+        ON 
+            ibd.parent = ib.name
+        WHERE 
+            ibd.currency = %s
+        AND ib.docstatus = 1
+        AND ib.transaction = %s
+        AND ib.status != 'Closed'
+        AND ibd.status != 'Closed'
+        ORDER BY ibd.creation ASC
+        LIMIT 1; """ 
+    return frappe.db.sql(sql,(currency, purpose ),as_dict=True)
+@frappe.whitelist()
+def get_interbank(currency, purpose):
     sql = """
         SELECT 
             ib.name, 
+            ib.transaction,
             ib.status,
             ibd.currency,
             ibd.currency_code, 
@@ -228,11 +257,12 @@ def get_interbank(currency):
         WHERE 
             ibd.currency = %s
         AND ib.docstatus = 1
+        AND ib.transaction = %s
         AND ib.status != 'Closed'
         AND ibd.status != 'Closed'
         ORDER BY ibd.creation ASC
     """
-    return frappe.db.sql(sql, (currency,), as_dict=True)
+    return frappe.db.sql(sql, (currency, purpose), as_dict=True)
 
 
 import frappe
