@@ -2,6 +2,8 @@
 # For license information, please see license.txt
 
 import frappe
+from frappe import _
+import json
 from frappe.model.document import Document
 from frappe.model.mapper import get_mapped_doc
 from frappe.utils import flt
@@ -57,3 +59,47 @@ def make_interbank(source_name, target_doc=None):
 
     return doc
     
+
+@frappe.whitelist()
+def make_si(doc):
+    print("==================================", type(doc))  
+    try:
+        if isinstance(doc, str):
+            bi = json.loads(doc)
+            bi_details = bi.get("booked_currency")
+
+            # return bi_details
+            si = frappe.new_doc("Sales Invoice")
+            si.customer = bi.get("customer")
+            si.due_date = bi.get("date")
+            for i in bi_details:
+                si.append(
+                  "items",
+                  {
+                    "item_code": i.get("currency_code"),
+                    "qty": i.get("booking_qty"),
+                    "rate":i.get("i.rate")
+                  },
+                )
+            si.insert(ignore_permissions=True)   
+            frappe.db.commit()   
+            frappe(f"Sales_invoice Created")
+
+        else:
+            frappe.throw(_("The document is not a valid JSON string"))
+    except json.JSONDecodeError as e:
+        frappe.throw(_("Invalid JSON format: {0}".format(str(e))))
+
+    # si = frappe.new_doc("Sales Invoice")
+    # for i in items:
+    #     print("==================================",i.currency_code)  
+      # si.append(
+      #   "items",
+      #   {
+      #     "item_code": i.item_code,
+      #     "qty": 1,
+      #   },
+      # )
+      
+
+      
