@@ -102,7 +102,7 @@ def get_currency(self):
         ON cu.name = ac.account_currency
         WHERE ac.custom_is_treasury = 1
         AND ac.account_currency != 'EGP'
-        GROUP BY ac.account_currency;
+        GROUP BY ac.custom_currency_code;
     """
     data = frappe.db.sql(query, as_dict=True)
     return data
