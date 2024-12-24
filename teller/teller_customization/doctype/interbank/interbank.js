@@ -95,77 +95,79 @@ frappe.ui.form.on("InterBank", {
 
 frappe.ui.form.on("InterBank", {
   refresh: function (frm) {
-    if (frm.doc.interbank.length == 0){
+  
 
         console.log(frm.doc.type)
         frm.add_custom_button(__("Fetch your currency"), function () {
-          if(frm.doc.type === 'Daily'){
-            frm.save().then(function () {
-                frm.call({
-                  method:"get_currency",
-                  args:{
-                    self: frm.doc
-                  },
-                  callback:function(response){
-                    console.log("fetch currency 2:",response.message)
-                    let data = response.message;
-                    // let table = frm.doc.interbank;
-                    data.forEach(row => {
-                      let child = frm.add_child('interbank');  
-                      child.currency_code = row.custom_currency_code;  
-                      child.currency = row.account_currency; 
-                      child.qty = row.balance; 
-                  });
-                    // for(let row of data){
-                    //   let child = frm.add_child('interbank',{
-      
-                    //   })
-      
-                    // }
-                    frm.refresh_field("interbank");
-                  }
-                })
-            })
-          }
-          if(frm.doc.type === 'Holiday'){
-            console.log("HO",frm.doc.type)
-              frm.save().then(function () {
-                frm.call({
-                  method:"get_currency",
-                  args:{
-                    self: frm.doc
-                  },
-                  callback:function(response){
-                    console.log("fetch currency 3:",response.message)
-                    let data = response.message;
-                    // let table = frm.doc.interbank;
-                    // table = []
-                    data.forEach(row => {
-                      let child = frm.add_child('interbank');  
-                      child.currency_code = row.custom_currency_code;  
-                      child.currency = row.account_currency; 
-                      child.qty = ''; 
-                  });
-                    // for(let row of data){
-                    //   let child = frm.add_child('interbank',{
-      
-                    //   })
-      
-                    // }
-                    frm.refresh_field("interbank");
-                  }
+          if (frm.doc.interbank.length == 0){
+              if(frm.doc.type === 'Daily'){
+                frm.save().then(function () {
+                    frm.call({
+                      method:"get_currency",
+                      args:{
+                        self: frm.doc
+                      },
+                      callback:function(response){
+                        console.log("fetch currency 2:",response.message)
+                        let data = response.message;
+                        // let table = frm.doc.interbank;
+                        data.forEach(row => {
+                          let child = frm.add_child('interbank');  
+                          child.currency_code = row.custom_currency_code;  
+                          child.currency = row.account_currency; 
+                          child.qty = row.balance; 
+                      });
+                        // for(let row of data){
+                        //   let child = frm.add_child('interbank',{
+          
+                        //   })
+          
+                        // }
+                        frm.refresh_field("interbank");
+                      }
+                    })
                 })
               }
-              )
-              
+              if(frm.doc.type === 'Holiday'){
+                console.log("HO",frm.doc.type)
+                  frm.save().then(function () {
+                    frm.call({
+                      method:"get_currency",
+                      args:{
+                        self: frm.doc
+                      },
+                      callback:function(response){
+                        console.log("fetch currency 3:",response.message)
+                        let data = response.message;
+                        // let table = frm.doc.interbank;
+                        // table = []
+                        data.forEach(row => {
+                          let child = frm.add_child('interbank');  
+                          child.currency_code = row.custom_currency_code;  
+                          child.currency = row.account_currency; 
+                          child.qty = ''; 
+                      });
+                        // for(let row of data){
+                        //   let child = frm.add_child('interbank',{
           
-        
+                        //   })
+          
+                        // }
+                        frm.refresh_field("interbank");
+                      }
+                    })
+                  }
+                  )
+                  
+              
+            
+              }
           }
         });
       
 
 
-    }
+
 
   },
 });
