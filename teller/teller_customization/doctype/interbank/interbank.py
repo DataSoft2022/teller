@@ -92,17 +92,17 @@ def get_currency(self):
     doc = frappe.get_doc("InterBank", self.get("name"))
     # return doc.name
     query = """
-        SELECT
+      SELECT
           cu.custom_currency_code,ac.account_currency, 
     SUM(gl.debit_in_account_currency) - SUM(gl.credit_in_account_currency) AS balance
         FROM `tabGL Entry` AS gl
-        INNER JOIN `tabAccount` AS ac
+        right JOIN `tabAccount` AS ac
         ON ac.name = gl.account
         INNER JOIN `tabCurrency` AS cu
         ON cu.name = ac.account_currency
         WHERE ac.custom_is_treasury = 1
         AND ac.account_currency != 'EGP'
-        GROUP BY ac.custom_currency_code;
+        GROUP BY ac.custom_currency_code; 
     """
     data = frappe.db.sql(query, as_dict=True)
     return data
