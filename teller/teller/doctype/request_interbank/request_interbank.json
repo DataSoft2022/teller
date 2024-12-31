@@ -11,11 +11,9 @@
   "type",
   "date",
   "time",
-  "status",
   "column_break_dmwz",
   "user",
   "branch",
-  "request_deal_interbank_refrence",
   "customer",
   "section_break_hone",
   "items",
@@ -71,13 +69,6 @@
    "options": "Branch"
   },
   {
-   "fieldname": "request_deal_interbank_refrence",
-   "fieldtype": "Link",
-   "hidden": 1,
-   "label": "Request Deal interbank refrence",
-   "options": "Request Deal interbank"
-  },
-  {
    "fieldname": "customer",
    "fieldtype": "Link",
    "label": "Customer",
@@ -102,18 +93,12 @@
    "print_hide": 1,
    "read_only": 1,
    "search_index": 1
-  },
-  {
-   "fieldname": "status",
-   "fieldtype": "Select",
-   "label": "Status",
-   "options": "\nIn Queue\nFinish"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-12-22 14:20:13.475493",
+ "modified": "2024-12-31 11:14:28.612965",
  "modified_by": "Administrator",
  "module": "Teller",
  "name": "Request interbank",
