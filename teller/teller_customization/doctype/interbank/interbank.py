@@ -7,55 +7,69 @@ import json
 
 
 class InterBank(Document):
-
-                
-    @frappe.whitelist()
     def on_submit(self):
-        currency_table = self.interbank
         if not self.interbank:
-            frappe.throw("Put interbank table.")
-        for row in currency_table:
+            frappe.throw("Table is Empty")
+        for row in self.interbank:
             if not row.rate or row.rate == 0:
-                frappe.throw(f"Put Rate for currency {row.currency}.")
-        document = frappe.new_doc("Booking Interbank")
-        document.customer = self.customer
-        document.type = self.transaction
-        # if self.type ==
-        # if self.time:
-        #     document.time
-        if self.date:
-            document.date  
-        document.user = self.user
-        document.branch = self.branch
-        for row in currency_table:
-          requested_qty = row.qty
-          currency = row.currency
-          purpose = self.transaction
-          data = create_queue_request(currency, purpose)
-          if data:
-            for record in data:
-                ir_name = record.get("name")
-                ir_curr_code = record.get("currency_code")
-                ir_curr = record.get("currency")
-                ir_qty = record.get("qty")
-                ir_queue_qty = record.get("queue_qty")
-                ir_rate = record.get("rate")
-                if ir_queue_qty <= 0:
-                    continue
-                document.append("booked_currency", {
-                                  "currency_code": ir_curr_code,
-                                  "currency": ir_curr,
-                                  "rate": ir_rate,
-                                  "qty": ir_queue_qty,
-                                  "interbank_reference": ir_name,
-                                  "request_reference":self.name,
-                                  "booking_qty": ir_queue_qty
-                              })
+                frappe.throw(f" Row {row.idx}# can't be rate {row.rate}")
+        self.status = 'Deal'
+        self.save()
+        # currency_table = self.interbank
+        # for row in currency_table:
+  
 
-          document.insert(ignore_permissions=True)
-          frappe.msgprint("Booking Interbank document created successfully.")
-        else:
-            return
+
+    # @frappe.whitelist()
+    # def on_submit(self):
+    #     currency_table = self.interbank
+    #     if not self.interbank:
+    #         frappe.throw("Put interbank table.")
+    #     for row in currency_table:
+    #         if not row.rate or row.rate == 0:
+    #             frappe.throw(f"Put Rate for currency {row.currency}.")
+    #     document = frappe.new_doc("Booking Interbank")
+    #     document.customer = self.customer
+    #     document.type = self.transaction
+    #     # if self.type ==
+    #     # if self.time:
+    #     #     document.time
+    #     if self.date:
+    #         document.date  
+
+    #     document.user = self.user
+    #     document.branch = self.branch
+    #     for row in currency_table:
+    #       requested_qty = row.qty
+    #       currency = row.currency
+    #       purpose = self.transaction
+    #       data = create_queue_request(currency, purpose)
+    #       if data:
+    #         for record in data:
+    #             ir_name = record.get("name")
+    #             ir_curr_code = record.get("currency_code")
+    #             ir_curr = record.get("currency")
+    #             ir_qty = record.get("qty")
+    #             ir_queue_qty = record.get("queue_qty")
+    #             ir_rate = record.get("rate")
+    #             if ir_queue_qty <= 0:
+    #                 continue
+    #             document.append("booked_currency", {
+    #                               "currency_code": ir_curr_code,
+    #                               "currency": ir_curr,
+    #                               "rate": ir_rate,
+    #                               "qty": ir_queue_qty,
+    #                               "interbank_reference": ir_name,
+    #                               "request_reference":self.name,
+    #                               "booking_qty": ir_queue_qty
+    #                           })
+
+    #       document.insert(ignore_permissions=True)
+    #       frappe.msgprint("Booking Interbank document created successfully.")
+    #     else:
+    #         return
+        
+
     @frappe.whitelist()    
     def interbank_update_status(self):
           current_interbank = frappe.get_doc("InterBank", self.name)
@@ -86,41 +100,49 @@ class InterBank(Document):
     #     fetched_data = sr  # Replace with actual fetched data
     #     return fetched_data
 
-@frappe.whitelist()
-def get_currency(self):
-    self = json.loads(self)
-    doc = frappe.get_doc("InterBank", self.get("name"))
-    # return doc.name
-    query = """
-      SELECT
-          cu.custom_currency_code,ac.account_currency, 
-    SUM(gl.debit_in_account_currency) - SUM(gl.credit_in_account_currency) AS balance
-        FROM `tabGL Entry` AS gl
-        right JOIN `tabAccount` AS ac
-        ON ac.name = gl.account
-        INNER JOIN `tabCurrency` AS cu
-        ON cu.name = ac.account_currency
-        WHERE ac.custom_is_treasury = 1
-        AND ac.account_currency != 'EGP'
-        GROUP BY ac.custom_currency_code; 
-    """
-    data = frappe.db.sql(query, as_dict=True)
-    return data
-    doc.set("interbank", [])
-    for record in data:
-        doc.append(
-            "interbank",
-            {
-                "custom_currency_code": record["custom_currency_code"],
-                "currency": record["account_currency"],
-                "remaining": record["balance"],
-                "amount": record["balance"],
-            },
-        )
-    # doc.insert()
-    # doc.save()
-    frappe.db.commit()
-    return data
+    @frappe.whitelist()
+    def get_currency(self):
+        # self = json.loads(self)
+        # doc = frappe.get_doc("InterBank", self.get("name"))
+        # doc = self.name
+        # return doc.name
+        query = """
+          SELECT
+              cu.custom_currency_code,ac.account_currency, 
+        SUM(gl.debit_in_account_currency) - SUM(gl.credit_in_account_currency) AS balance
+            FROM `tabGL Entry` AS gl
+            right JOIN `tabAccount` AS ac
+            ON ac.name = gl.account
+            INNER JOIN `tabCurrency` AS cu
+            ON cu.name = ac.account_currency
+            WHERE ac.custom_is_treasury = 1
+            AND ac.account_currency != 'EGP'
+            GROUP BY ac.custom_currency_code; 
+        """
+        data = frappe.db.sql(query, as_dict=True)
+        for record in data:
+            if self.type == 'Daily':
+                self.append(
+                    "interbank",
+                    {
+                        "currency_code": record["custom_currency_code"],
+                        "currency": record["account_currency"],
+                        "qty": record["balance"],
+                    },
+                )
+            if self.type == 'Holiday':
+                self.append(
+                  "interbank",
+                  {
+                      "currency_code": record["custom_currency_code"],
+                      "currency": record["account_currency"],
+                      "qty": 0,
+                  },
+              )
+        # self.insert()
+        # doc.save()  
+        # frappe.db.commit()
+        return self
 
 @frappe.whitelist()
 def create_special_price_document(self):
