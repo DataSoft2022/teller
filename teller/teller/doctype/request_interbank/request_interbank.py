@@ -15,7 +15,7 @@ from prompt_toolkit.widgets import (
 )
 class Requestinterbank(Document):
     def on_submit(self):
-
+        self.create_queue()
         self.create_booking()
         
     def on_cancel(self):
@@ -173,7 +173,37 @@ class Requestinterbank(Document):
                     frappe.msgprint("Booking Interbank document created successfully.")
                     # Update InterBank Details and Parent Status
                     self.update_interbank_details(document.booked_currency, currency_table)
-                 
+    def create_queue(self):
+        table = self.items
+        queue_table = [{"queue_qty": row.queue_qty, "currency_code": row.currency_code, "currency": row.currency} 
+                       for row in table if row.queue_qty > 0]
+        try:
+          if len(queue_table)> 0:
+              
+              queue_doc= frappe.new_doc("Queue Request")
+              queue_doc.status = 'Queue'
+              queue_doc.type = self.type
+              queue_doc.date = self.date
+              queue_doc.time = self.time
+              queue_doc.user = self.user
+              queue_doc.branch = self.branch
+              queue_doc.customer = self.customer
+              for q in queue_table:
+                  queue_doc.append("items",{
+                      "currency_code":q.get("currency_code"),
+                      "currency":q.get("currency"),
+                      "qty":q.get("queue_qty"),
+                      "status":"Queue",
+                      "request_interbank":self.name
+                  })
+                  
+              queue_doc.insert(ignore_permissions=True)  
+              frappe.msgprint(f"Queue Request is Created {queue_doc.name}") 
+
+          else:
+              return     
+        except Exception:
+             frappe.throw("Failed ")                
 
     def update_interbank_details(self, booking_table, currency_table):
         result = []
