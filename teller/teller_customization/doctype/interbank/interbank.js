@@ -1,6 +1,8 @@
 // Copyright (c) 2024, Mohamed AbdElsabour and contributors
 // For license information, please see license.txt
+/////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////Fetch Currency/////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////
 function fetch (frm){
   if (frm.doc.interbank.length == 0){
           frm.call("get_currency").then((r) => {
@@ -43,7 +45,9 @@ frappe.ui.form.on("InterBank", {
   // },
   
 });
-////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////
 // frappe.ui.form.on("InterBank", {
 //   refresh: function (frm) {
 //     frm.add_custom_button(__("Book Special Price"), function () {
@@ -111,7 +115,6 @@ frappe.ui.form.on("InterBank", {
 frappe.ui.form.on("InterBank Details", {
   qty(frm, cdt, cdn) {
     var d = locals[cdt][cdn];
-    frappe.msgprint(" Remaining is ",parseFloat(d.booking_qty));
     if (d.remaining === undefined || isNaN(d.remaining)) {
       d.remaining = 0;
         //   frappe.msgprint(" Remaining iz zero ");
@@ -129,9 +132,7 @@ frappe.ui.form.on("InterBank Details", {
       d.remaining = 0;
       //   frappe.msgprint(" Remaining iz zero ");
     }
-    console.log(" Remaining iz ",d.booking_qty);
-    console.log(" Remaining is ",parseFloat(d.booking_qty));
-    console.log("Dede", d.amount - parseFloat(d.booking_qty));
+  
     frappe.model.set_value(
       cdt,
       cdn,
@@ -158,18 +159,18 @@ frappe.ui.form.on("InterBank Details", {
 //       };
 //     };
 // });
-// frappe.ui.form.on("InterBank", {
-//   refresh: function (frm) {
-//     frm.fields_dict["interbank"].grid.get_field("currency").get_query =
-//       function (doc, cdt, cdn) {
-//         return {
-//           filters: {
-//             name: ["!=", "EGP"],
-//           },
-//         };
-//       };
-//   },
-// });
+frappe.ui.form.on("InterBank", {
+  refresh: function (frm) {
+    frm.fields_dict["interbank"].grid.get_field("currency").get_query =
+      function (doc, cdt, cdn) {
+        return {
+          filters: {
+            name: ["!=", "EGP"],
+          },
+        };
+      };
+  },
+});
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 // frappe.ui.form.on("InterBank", {
@@ -257,7 +258,9 @@ frappe.ui.form.on("InterBank Details", {
 //     }
 //   });
 // }
-
+/////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////btn stop and resume///////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////
 frappe.ui.form.on("InterBank", {
   refresh: function (frm) {
     // Check the field `is_save_disabled` to determine the state on refresh
@@ -306,3 +309,6 @@ frappe.ui.form.on("InterBank", {
     );
   },
 });
+/////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////
