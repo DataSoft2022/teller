@@ -21,6 +21,7 @@
   {
    "fieldname": "type",
    "fieldtype": "Select",
+   "in_list_view": 1,
    "label": "Type",
    "options": "Purchasing\nSelling"
   },
@@ -69,6 +70,7 @@
   {
    "fieldname": "status",
    "fieldtype": "Select",
+   "in_list_view": 1,
    "label": "status",
    "options": "Queue\nClosed\nEnded"
   }
@@ -76,7 +78,7 @@
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-01-05 15:30:23.198450",
+ "modified": "2025-01-05 18:50:19.234390",
  "modified_by": "Administrator",
  "module": "Teller",
  "name": "Queue Request",
