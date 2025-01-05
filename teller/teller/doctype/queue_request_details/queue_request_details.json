@@ -9,7 +9,8 @@
   "currency_code",
   "currency",
   "qty",
-  "request_interbank"
+  "request_interbank",
+  "status"
  ],
  "fields": [
   {
@@ -33,12 +34,18 @@
    "fieldtype": "Link",
    "label": "Request Interbank",
    "options": "Request interbank"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "status",
+   "options": "Queue\nClosed\nEnded"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-01-05 10:42:56.564404",
+ "modified": "2025-01-05 15:33:14.627359",
  "modified_by": "Administrator",
  "module": "Teller",
  "name": "Queue Request Details",
