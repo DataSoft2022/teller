@@ -155,97 +155,105 @@ frappe.ui.form.on('Request interbank', {
 //     });
 //   },
 // });
-
-frappe.ui.form.on("Request interbank", {
-  refresh: function (frm) {
-    frm.add_custom_button('creat booking',function(){
-      frm.events.create_booking(frm);
-    })
-      // let table = frm.doc.items;
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                                  /////////////////////////////////////////////////////
+                                  // this button create booking make Booing interbank //
+                                  ////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// frappe.ui.form.on("Request interbank", {
+//   refresh: function (frm) {
+//     frm.add_custom_button('create booking',function(){
+//       frm.events.create_booking(frm);
+//     })
+//       // let table = frm.doc.items;
     
-      // for (let row in table){
-      //   console.log("qty",row.qty)
-      //   if(row.qty > avaliable_qty){
-      //     frm.call({
-      //       method: "avaliable_qty",
-      //       currency: row.currency,
-      //       purpose:frm.doc.purpose,
-      //       callback: function (r) {
-      //           if (r && r.message) {
-      //               frappe.msgprint(__("Avaliable Qty is: " + r.message));
-      //               console.log("msg",r.message)
+//       // for (let row in table){
+//       //   console.log("qty",row.qty)
+//       //   if(row.qty > avaliable_qty){
+//       //     frm.call({
+//       //       method: "avaliable_qty",
+//       //       currency: row.currency,
+//       //       purpose:frm.doc.purpose,
+//       //       callback: function (r) {
+//       //           if (r && r.message) {
+//       //               frappe.msgprint(__("Avaliable Qty is: " + r.message));
+//       //               console.log("msg",r.message)
     
-      //           } else {
-      //               frappe.msgprint(__("Booking Not Created"));
-      //           }
-      //       }
-      //     });
-      //   }
-      // }
-      // frm.events.create_booking(frm);
-  },
-  create_booking: function (frm) {
-      // if (frm.doc.docstatus === 1) {
-          frm.call({
-              method: "create_booking",
-              doc: frm.doc,
-              callback: function (r) {
-                  if (r && r.message) {
-                      frappe.msgprint(__("Booking is Created: " + r.message));
-                      console.log("msg",r.message)
+//       //           } else {
+//       //               frappe.msgprint(__("Booking Not Created"));
+//       //           }
+//       //       }
+//       //     });
+//       //   }
+//       // }
+//       // frm.events.create_booking(frm);
+//   },
+//   create_booking: function (frm) {
+//       // if (frm.doc.docstatus === 1) {
+//           frm.call({
+//               method: "create_booking",
+//               doc: frm.doc,
+//               callback: function (r) {
+//                   if (r && r.message) {
+//                       frappe.msgprint(__("Booking is Created: " + r.message));
+//                       console.log("msg",r.message)
 
-                  } else {
-                      frappe.msgprint(__("Booking Not Created"));
-                  }
-              }
-          });
-      // }
-  }
-});
+//                   } else {
+//                       frappe.msgprint(__("Booking Not Created"));
+//                   }
+//               }
+//           });
+//       // }
+//   }
+// });
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 ////////////////// (1) Get Avaliable Qty for currency Trigger is QTY///////////////////////////
 ////////////////// (1) Get Avaliable Qty for currency Trigger is QTY///////////////////////////
 ////////////////// (1) Get Avaliable Qty for currency Trigger is QTY///////////////////////////
 frappe.ui.form.on("Interbank Request Details", {
-  qty(frm, cdt, cdn) {
+  currency_code(frm, cdt, cdn) {
     console.log("KING FOR EVER1")
   
     // if (row.qty < row.avaliable_qty ||row.qty == row.avaliable_qty  ){
-    //   setTimeout(() => {
-    //     let row = locals[cdt][cdn];
-    //     // console.log("Triggered(3) for row:", row.name, "Currency:", row.currency);
+      setTimeout(() => {
+        let row = locals[cdt][cdn];
+        // console.log("Triggered(3) for row:", row.name, "Currency:", row.currency);
   
-    //     // Make the server call
-    //     frm.call({
-    //         method: "avaliable_ib_qty",
-    //         args: {
-    //             currency: row.currency,
-    //             purpose:frm.doc.type,
-    //         },
-    //         callback: function (r) {
-    //             if (r && r.message) {
-    //                 console.log("Server Response (avaliable_ib_qty):", r.message);
+        // Make the server call
+        frm.call({
+            method: "avaliable_ib_qty",
+            args: {
+                currency: row.currency,
+                purpose:frm.doc.type,
+            },
+            callback: function (r) {
+                if (r && r.message) {
+                    console.log("Server Response (avaliable_ib_qty):", r.message);
   
-    //                 // Use setTimeout to delay the UI update slightly
-              
-    //                     frappe.model.set_value(cdt, cdn, "avaliable_qty", r.message[0].avaliable_qty || 0);
+                    // Use setTimeout to delay the UI update slightly
+                    frappe.model.set_value(cdt,cdn,'interbank_balance',r.message[0].qty)
+                        // frappe.model.set_value(cdt, cdn, "avaliable_qty", r.message[0].avaliable_qty || 0);
                         
-    //                     console.log("Updated available quantity:", r.message[0].avaliable_qty);
+                        console.log("Updated available quantity:", r.message[0].avaliable_qty);
                   
                         
                 
-    //             } else {
-    //                 frappe.msgprint(__(`No available interbank quantity for ${row.currency}`));
-    //             }
-    //         },
-    //         error: function () {
-    //             frappe.msgprint(__("Error fetching available quantity. Please try again."));
-    //         },
-    //     });
-    //   }, 250); // Delay by 100 milliseconds
+                } else {
+                    frappe.msgprint(__(`No available interbank quantity for ${row.currency}`));
+                }
+            },
+            error: function () {
+                frappe.msgprint(__("Error fetching available quantity. Please try again."));
+            },
+        });
+      }, 250); // Delay by 100 milliseconds
     // }
 
   },
-  currency_code(frm,cdt,cdn){
+  qty(frm,cdt,cdn){
     console.log("KING FOR EVER2")
     let row = locals[cdt][cdn];
     console.log("KING FOR EVER3")
@@ -260,15 +268,15 @@ frappe.ui.form.on("Interbank Request Details", {
           },
           callback: function (r) {
               if (r && r.message) {
-                console.log(" for all interbank available quantity:", r.message[0].avaliable_qty,row.qty );
+                console.log(" for all interbank available quantity:", r.message[0],row.qty );
                   // console.log("Server Response (avaliable_ib_qty):", r.message);
-                  frappe.model.set_value(cdt,cdn,'interbank_balance',r.message[0].avaliable_qty)
+      
                   let avaliable = r.message[0].avaliable_qty;
                   if (avaliable){
 //(1)                    
 //////////////////////////if there ara avalibe interbank get total avaliable qty for (currency,type)
-                    if(row.qty > avaliable){
-                      frappe.confirm(`you exceed by ${row.qty - avaliable} ${row.currency} , Because InterBank Avaliable Qty ${avaliable} ${row.currency} .Are you sure you want to booking Only for this amount ${avaliable} ${row.currency}?`,
+                    if(row.qty > row.interbank_balance){
+                      frappe.confirm(`You Exceeded InterBank Balance ${row.interbank_balance} ${row.currency} .Do you want to Add Queue ${row.qty - row.interbank_balance} ${row.currency} ?`,
                         () => {
 //(2)                          
 ///////////////////////// if there are more Q > A ////////////////////////////////////////////////
