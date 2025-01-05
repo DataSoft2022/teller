@@ -103,10 +103,10 @@ frappe.ui.form.on("InterBank", {
   refresh(frm){
           let table = frm.doc.interbank;
           for (let row of table) {
-            row.remaining =  row.amount - row.booking_qty
+            row.remaining =  row.qty - row.booking_qty
             // console.log("zzzz3",row.remaining)
             if (row.amount && row.booking_qty) {
-              row.remaining =  row.amount - row.booking_qty
+              row.remaining =  row.qty - row.booking_qty
             }else{return}
           }
           frm.refresh_field("interbank");
@@ -123,7 +123,7 @@ frappe.ui.form.on("InterBank Details", {
       cdt,
       cdn,
       "remaining",
-      d.amount - d.booking_qty
+      d.qty - d.booking_qty
     );
   },
   rate(frm, cdt, cdn) {
@@ -137,7 +137,7 @@ frappe.ui.form.on("InterBank Details", {
       cdt,
       cdn,
       "remaining",
-      d.amount - d.booking_qty
+      d.qty - d.booking_qty
     );
     // if (d.remaining ===0){frappe.warn("Remaining is 0")}
     // else{
@@ -263,52 +263,53 @@ frappe.ui.form.on("InterBank", {
 /////////////////////////////////////////////////////////////////////////////////////////
 frappe.ui.form.on("InterBank", {
   refresh: function (frm) {
-    // Check the field `is_save_disabled` to determine the state on refresh
-    if (frm.doc.custom_is_save_disabled) {
-      cur_frm.disable_save();
-    } else {
-      cur_frm.enable_save();
+    if (frm.doc.docstatus == 1){
+      let mood = frm.doc.status === "Deal" ? "Stop" : "Start";
+      frm.add_custom_button(
+        __(mood),
+        function () {
+          if (frm.doc.status === "Deal") {
+            // Update the form to reflect the "Paused" state
+            frappe.call({
+              method: "frappe.client.set_value",
+              args: {
+                doctype: "InterBank",
+                name: frm.doc.name,
+                fieldname: "status",
+                value: "Paused",
+              },
+              callback: function (r) {
+                // r.message will contain the response from the server
+                console.log(__('Updated: ') + r.message.value);
+                cur_frm.refresh_field("status")
+                cur_frm.reload_doc();
+              },
+            });
+          } else if (frm.doc.status === "Paused") {
+            // Update the form to reflect the "Deal" state
+            frappe.call({
+              method: "frappe.client.set_value",
+              args: {
+                doctype: "InterBank",
+                name: frm.doc.name,
+                fieldname: "status",
+                value: "Deal",
+              },
+              callback: function (r) {
+                // r.message will contain the response from the server
+                console.log(__('Updated: ') + r.message.value);
+                cur_frm.refresh_field("status")
+                cur_frm.reload_doc();
+              },
+            });
+          }
+        }
+      );
     }
-
-    frm.add_custom_button(
-      __("Stop InterBank"),
-      function () { 
-        // Disable the save button
-        // cur_frm.disable_save();
-        // Update the field to persist the state
-        if (frm.doc.status == 'Deal'){
-          frm.set_value("custom_is_save_disabled", 1);
-          frm.set_value("status", "Paused");
-          frm.save(); // Save the form to store the state
-        }
   
-      },
-      __("Setting")
-    );
-
-    frm.add_custom_button(
-      __("Start InterBank"),
-      function () {
-        // Enable the save button
-        // cur_frm.enable_save();
-        // Update the field to persist the state
-        if (frm.doc.status == 'Paused'){
-        frm.set_value("custom_is_save_disabled", 0);
-        frm.set_value("status", "Deal");
-        frm.save(); // Save the form to store the state
-        }
-      },
-      __("Setting")
-    );
-    frm.add_custom_button(
-      __("Go to  Special booking"),
-      function () {
-        frappe.set_route('List', 'Special price document');
-      },
-      __("Setting")
-    );
   },
 });
+
 /////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////

@@ -19,6 +19,14 @@ class InterBank(Document):
                 frappe.throw(f" Row {row.idx}# can't be rate {row.rate}")
         self.status = 'Deal'
         self.save()
+        table = self.interbank
+        for row in table:
+          currency = row.currency
+          purpose  = self.transaction
+          print ("Data  ==========>",currency,purpose)
+          self.close_queue(currency, purpose)
+
+
         # currency_table = self.interbank
         # for row in currency_table:
   
@@ -73,6 +81,72 @@ class InterBank(Document):
     #     else:
     #         return
         
+    def close_queue(self, currency, purpose):
+
+          sql = """
+          select 
+          qr.name,qr.creation,qr.branch,
+          qrd.currency_code,
+          qrd.currency,qrd.qty,qr.type,
+          qrd.request_interbank
+          from `tabQueue Request` qr
+          left join `tabQueue Request Details` qrd  ON qr.name = qrd.parent 
+              where qr.status = 'Queue'
+              AND  qrd.currency = %s
+              AND  qr.type = %s
+              ORDER BY qr.creation ASC
+                      """
+          queue = frappe.db.sql(sql,(currency, purpose), as_dict=True)
+          print ("Data  ***==========>",queue)
+          currency_table = self.interbank
+          for row in currency_table:
+              currency = row.currency
+              purpose = self.transaction
+              # requested_qty = row.qty
+              if not queue:
+                  return frappe.throw("no data")
+              else:
+                  document = frappe.new_doc("Booking Interbank")
+                  document.customer = self.customer
+                  document.type = self.transaction
+                  document.date = self.date
+                  document.user = self.user
+                  
+                  for r in queue:
+                    document.branch = r.get("branch")
+                    print (" **********************************************",r.get("currency") == currency)
+                    print (" **********************************************",purpose , r.get("type"))
+                    if r.get("currency") == currency and purpose == r.get("type") and r.get("qty") < row.qty:
+
+                      print("Row is=======",r)
+                      print("r.get currency ", r.get("currency"))
+                      document.append("booked_currency", {
+                                        "currency_code": r.get("currency_code"),
+                                        "currency": r.get("currency"),
+                                        "rate": row.rate,
+                                        "qty": r.get("qty"),
+                                        "booking_qty": r.get("qty"),
+                                        "request_reference":r.get("request_interbank"),
+                                        "interbank_reference":self.name
+                                    })
+                      document.insert(ignore_permissions=True)
+                      frappe.msgprint("Queue... created successfully.")
+                      self.update_queue(document.booked_currency,queue)
+
+                    else:
+                        return frappe.throw("no data")
+    def update_queue(self,booking_table,queue):
+        for q in queue:
+            queue_name = q.get("name")
+            currency = q.get("currency")
+            queue_details = frappe.get_list(
+                    "Queue Request Details",
+                    fields=["name", "status", "qty", "currency", "parent"],
+                    filters={"parent": queue_name, "currency": currency},
+                )
+            for row in queue_details:
+              detail_doc = frappe.get_doc("Queue Request Details", row.name)
+              detail_doc.db_set("status", "Closed")
 
     @frappe.whitelist()    
     def interbank_update_status(self):
