@@ -1,11 +1,9 @@
 import frappe
 from frappe.frappeclient import FrappeClient
-from frappe.utils import get_url
-
+# from frappe.utils import get_url
+from frappe.utils.data import get_link_to_form, get_url
 @frappe.whitelist()
 def get_branch():
-
-    
     try:
         conn = "http://192.168.1.16:8010"  
         username = frappe.conf.get("external_site_username", "Administrator")
