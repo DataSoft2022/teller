@@ -149,7 +149,8 @@ doc_events = {
 scheduler_events = {
   "cron":{
     "* * * * *":[ 
-    "teller.validate_time.cron_validate_interbank_time"
+    "teller.validate_time.cron_validate_interbank_time",
+    "teller."
   ]
   }
 # 	"all": [
