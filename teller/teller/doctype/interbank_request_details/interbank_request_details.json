@@ -10,7 +10,8 @@
   "currency",
   "qty",
   "status",
-  "interbank_balance"
+  "interbank_balance",
+  "queue_qty"
  ],
  "fields": [
   {
@@ -40,12 +41,17 @@
    "fieldname": "currency_code",
    "fieldtype": "Int",
    "label": "Currency Code"
+  },
+  {
+   "fieldname": "queue_qty",
+   "fieldtype": "Float",
+   "label": "queue qty"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-12-31 16:03:00.552649",
+ "modified": "2025-01-05 11:47:37.527161",
  "modified_by": "Administrator",
  "module": "Teller",
  "name": "Interbank Request Details",
