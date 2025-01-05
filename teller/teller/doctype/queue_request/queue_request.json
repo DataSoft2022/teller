@@ -1,6 +1,7 @@
 {
  "actions": [],
  "allow_rename": 1,
+ "autoname": "Queue Request-.#####",
  "creation": "2025-01-05 10:34:46.725099",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -8,6 +9,7 @@
   "type",
   "date",
   "time",
+  "status",
   "column_break_mvlr",
   "user",
   "branch",
@@ -63,14 +65,22 @@
    "fieldtype": "Table",
    "label": "items",
    "options": "Queue Request Details"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "status",
+   "options": "Queue\nClosed\nEnded"
   }
  ],
+ "in_create": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-01-05 10:45:13.914392",
+ "modified": "2025-01-05 15:30:23.198450",
  "modified_by": "Administrator",
  "module": "Teller",
  "name": "Queue Request",
+ "naming_rule": "Expression (old style)",
  "owner": "Administrator",
  "permissions": [
   {
@@ -86,6 +96,7 @@
    "write": 1
   }
  ],
+ "quick_entry": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": []
