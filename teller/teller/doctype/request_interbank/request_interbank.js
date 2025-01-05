@@ -275,16 +275,17 @@ frappe.ui.form.on("Interbank Request Details", {
                   if (avaliable){
 //(1)                    
 //////////////////////////if there ara avalibe interbank get total avaliable qty for (currency,type)
-                    if(row.qty > row.interbank_balance){
-                      frappe.confirm(`You Exceeded InterBank Balance ${row.interbank_balance} ${row.currency} .Do you want to Add Queue ${row.qty - row.interbank_balance} ${row.currency} ?`,
+                    if(row.qty > avaliable){
+                      frappe.confirm(`You Exceeded InterBank Balance ${row.interbank_balance} ${row.currency} .Do you want to Add Queue ${row.qty - avaliable} ${row.currency} ?`,
                         () => {
 //(2)                          
 ///////////////////////// if there are more Q > A ////////////////////////////////////////////////
-                          frappe.model.set_value(cdt,cdn,'qty',avaliable)
-
+                          // frappe.model.set_value(cdt,cdn,'qty',avaliable)
+                          frappe.model.set_value(cdt,cdn,'queue_qty',row.qty - avaliable)
+                            console.log("queue_qty",row.qty - row.interbank_balance)
                             // action to perform if Yes is selected
                         }, () => {
-                          frappe.model.set_value(cdt,cdn,'qty',0)
+                          frappe.model.set_value(cdt,cdn,'qty',row.interbank_balance)
                             // action to perform if No is selected
                         })
                     
