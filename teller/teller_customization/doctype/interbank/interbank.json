@@ -1,178 +1,178 @@
 {
- "actions": [],
- "allow_rename": 1,
- "autoname": "Interbank_.#####",
- "creation": "2024-11-22 18:18:10.188255",
- "default_view": "List",
- "doctype": "DocType",
- "engine": "InnoDB",
- "field_order": [
-  "workflow_state",
-  "customer",
-  "transaction",
-  "type",
-  "date",
-  "from",
-  "column_break_e2yj",
-  "mail",
-  "send_mail",
-  "status",
-  "to",
-  "user",
-  "section_break_gva1",
-  "interbank",
-  "description",
-  "amended_from",
-  "custom_is_save_disabled"
- ],
- "fields": [
-  {
-   "default": "\u0627\u0644\u0627\u0647\u0644\u064a",
-   "fieldname": "customer",
-   "fieldtype": "Link",
-   "label": "Customer",
-   "options": "Customer"
-  },
-  {
-   "default": "Selling",
-   "fieldname": "transaction",
-   "fieldtype": "Select",
-   "label": "Transaction ",
-   "options": "Purchasing\nSelling"
-  },
-  {
-   "fieldname": "type",
-   "fieldtype": "Select",
-   "label": "Type",
-   "options": "Daily\nHoliday"
-  },
-  {
-   "default": "Today",
-   "fieldname": "date",
-   "fieldtype": "Date",
-   "label": "Date "
-  },
-  {
-   "default": "Now",
-   "depends_on": "eval:doc.type == 'Holiday'",
-   "fieldname": "from",
-   "fieldtype": "Datetime",
-   "label": "From"
-  },
-  {
-   "fieldname": "column_break_e2yj",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fetch_from": "customer.email_id",
-   "fieldname": "mail",
-   "fieldtype": "Data",
-   "label": "Mail"
-  },
-  {
-   "fieldname": "send_mail",
-   "fieldtype": "Button",
-   "label": "Send Mail"
-  },
-  {
-   "allow_on_submit": 1,
-   "default": "Open",
-   "fieldname": "status",
-   "fieldtype": "Select",
-   "label": "Status",
-   "options": "Open\nWaiting For Reply\nOn Sent\nDeal\nClosed\nEnded\nPaused"
-  },
-  {
-   "depends_on": "eval:doc.type == 'Holiday'",
-   "fieldname": "to",
-   "fieldtype": "Datetime",
-   "label": "To"
-  },
-  {
-   "fieldname": "section_break_gva1",
-   "fieldtype": "Section Break"
-  },
-  {
-   "allow_on_submit": 1,
-   "fieldname": "interbank",
-   "fieldtype": "Table",
-   "label": "Interbank",
-   "options": "InterBank Details"
-  },
-  {
-   "fieldname": "amended_from",
-   "fieldtype": "Link",
-   "label": "Amended From",
-   "no_copy": 1,
-   "options": "InterBank",
-   "print_hide": 1,
-   "read_only": 1,
-   "search_index": 1
-  },
-  {
-   "fieldname": "amended_from",
-   "fieldtype": "Link",
-   "label": "Amended From",
-   "no_copy": 1,
-   "options": "InterBank",
-   "print_hide": 1,
-   "read_only": 1,
-   "search_index": 1
-  },
-  {
-   "fieldname": "user",
-   "fieldtype": "Link",
-   "label": "user",
-   "options": "User"
-  },
-  {
-   "fieldname": "description",
-   "fieldtype": "Long Text",
-   "label": "Description"
-  },
-  {
-   "allow_on_submit": 1,
-   "fieldname": "workflow_state",
-   "fieldtype": "Link",
-   "hidden": 1,
-   "label": "Workflow State",
-   "no_copy": 1,
-   "options": "Workflow State"
-  },
-  {
-   "default": "0",
-   "fieldname": "custom_is_save_disabled",
-   "fieldtype": "Check",
-   "hidden": 1,
-   "label": "is_save_disabled"
-  }
- ],
- "index_web_pages_for_search": 1,
- "is_submittable": 1,
- "links": [
-  {
-   "is_child_table": 1,
-   "link_doctype": "Interbank Request Details",
-   "link_fieldname": "interbank_reference",
-   "parent_doctype": "Request interbank",
-   "table_fieldname": "items"
-  },
-  {
-   "is_child_table": 1,
-   "link_doctype": "Booked Currency",
-   "link_fieldname": "interbank_reference",
-   "parent_doctype": "Booking Interbank",
-   "table_fieldname": "booked_currency"
-  }
- ],
- "modified": "2024-12-31 13:07:46.316645",
- "modified_by": "Administrator",
- "module": "Teller Customization",
- "name": "InterBank",
- "naming_rule": "Expression (old style)",
- "owner": "Administrator",
- "permissions": [],
- "sort_field": "modified",
- "sort_order": "DESC",
- "states": []
-}
+  "actions": [],
+  "allow_rename": 1,
+  "autoname": "Interbank_.#####",
+  "creation": "2024-11-22 18:18:10.188255",
+  "default_view": "List",
+  "doctype": "DocType",
+  "engine": "InnoDB",
+  "field_order": [
+   "workflow_state",
+   "customer",
+   "transaction",
+   "type",
+   "date",
+   "from",
+   "column_break_e2yj",
+   "mail",
+   "send_mail",
+   "status",
+   "to",
+   "user",
+   "section_break_gva1",
+   "interbank",
+   "description",
+   "amended_from",
+   "custom_is_save_disabled"
+  ],
+  "fields": [
+   {
+    "default": "\u0627\u0644\u0627\u0647\u0644\u064a",
+    "fieldname": "customer",
+    "fieldtype": "Link",
+    "label": "Customer",
+    "options": "Customer"
+   },
+   {
+    "default": "Selling",
+    "fieldname": "transaction",
+    "fieldtype": "Select",
+    "label": "Transaction ",
+    "options": "Purchasing\nSelling"
+   },
+   {
+    "fieldname": "type",
+    "fieldtype": "Select",
+    "label": "Type",
+    "options": "Daily\nHoliday"
+   },
+   {
+    "default": "Today",
+    "fieldname": "date",
+    "fieldtype": "Date",
+    "label": "Date "
+   },
+   {
+    "default": "Now",
+    "depends_on": "eval:doc.type == 'Holiday'",
+    "fieldname": "from",
+    "fieldtype": "Datetime",
+    "label": "From"
+   },
+   {
+    "fieldname": "column_break_e2yj",
+    "fieldtype": "Column Break"
+   },
+   {
+    "fetch_from": "customer.email_id",
+    "fieldname": "mail",
+    "fieldtype": "Data",
+    "label": "Mail"
+   },
+   {
+    "fieldname": "send_mail",
+    "fieldtype": "Button",
+    "label": "Send Mail"
+   },
+   {
+    "allow_on_submit": 1,
+    "default": "Open",
+    "fieldname": "status",
+    "fieldtype": "Select",
+    "label": "Status",
+    "options": "Open\nWaiting For Reply\nOn Sent\nDeal\nClosed\nEnded\nPaused"
+   },
+   {
+    "depends_on": "eval:doc.type == 'Holiday'",
+    "fieldname": "to",
+    "fieldtype": "Datetime",
+    "label": "To"
+   },
+   {
+    "fieldname": "section_break_gva1",
+    "fieldtype": "Section Break"
+   },
+   {
+    "allow_on_submit": 1,
+    "fieldname": "interbank",
+    "fieldtype": "Table",
+    "label": "Interbank",
+    "options": "InterBank Details"
+   },
+   {
+    "fieldname": "amended_from",
+    "fieldtype": "Link",
+    "label": "Amended From",
+    "no_copy": 1,
+    "options": "InterBank",
+    "print_hide": 1,
+    "read_only": 1,
+    "search_index": 1
+   },
+   {
+    "fieldname": "amended_from",
+    "fieldtype": "Link",
+    "label": "Amended From",
+    "no_copy": 1,
+    "options": "InterBank",
+    "print_hide": 1,
+    "read_only": 1,
+    "search_index": 1
+   },
+   {
+    "fieldname": "user",
+    "fieldtype": "Link",
+    "label": "user",
+    "options": "User"
+   },
+   {
+    "fieldname": "description",
+    "fieldtype": "Long Text",
+    "label": "Description"
+   },
+   {
+    "allow_on_submit": 1,
+    "fieldname": "workflow_state",
+    "fieldtype": "Link",
+    "hidden": 1,
+    "label": "Workflow State",
+    "no_copy": 1,
+    "options": "Workflow State"
+   },
+   {
+    "default": "0",
+    "fieldname": "custom_is_save_disabled",
+    "fieldtype": "Check",
+    "hidden": 1,
+    "label": "is_save_disabled"
+   }
+  ],
+  "index_web_pages_for_search": 1,
+  "is_submittable": 1,
+  "links": [
+   {
+    "is_child_table": 1,
+    "link_doctype": "Interbank Request Details",
+    "link_fieldname": "interbank_reference",
+    "parent_doctype": "Request interbank",
+    "table_fieldname": "items"
+   },
+   {
+    "is_child_table": 1,
+    "link_doctype": "Booked Currency",
+    "link_fieldname": "interbank_reference",
+    "parent_doctype": "Booking Interbank",
+    "table_fieldname": "booked_currency"
+   }
+  ],
+  "modified": "2024-12-31 13:07:46.316645",
+  "modified_by": "Administrator",
+  "module": "Teller Customization",
+  "name": "InterBank",
+  "naming_rule": "Expression (old style)",
+  "owner": "Administrator",
+  "permissions": [],
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "states": []
+ }

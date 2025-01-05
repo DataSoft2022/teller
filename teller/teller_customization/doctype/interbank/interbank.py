@@ -7,6 +7,10 @@ import json
 
 
 class InterBank(Document):
+    def validate(self):
+        if self.type == 'Holiday':
+          if self.to_date < self.from_date:
+            frappe.throw(f" To Date field Should be Greater than From Date")
     def on_submit(self):
         if not self.interbank:
             frappe.throw("Table is Empty")
