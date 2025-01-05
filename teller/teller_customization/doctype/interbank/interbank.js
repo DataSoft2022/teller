@@ -92,36 +92,62 @@ frappe.ui.form.on("InterBank", {
 //     });
 //   },
 // });
-// frappe.ui.form.on("InterBank Details", {
-//   custom_qty(frm, cdt, cdn) {
-//     var d = locals[cdt][cdn];
-//     console.log(d.remaining);
-//     // if (d.remaining === 0) {
-//     //   frappe.msgprint(" Remaining iz zero ");
-//     // }
-//     // frappe.model.set_value(
-//     //   cdt,
-//     //   cdn,
-//     //   "remaining",
-//     //   d.amount - d.rate * d.custom_qty
-//     // );
-//   },
-//   rate(frm, cdt, cdn) {
-//     var d = locals[cdt][cdn];
-//     console.log("Dede", d.remaining);
-//     frappe.model.set_value(
-//       cdt,
-//       cdn,
-//       "remaining",
-//       d.amount - d.rate * d.custom_qty
-//     );
-//     // if (d.remaining ===0){frappe.warn("Remaining is 0")}
-//     // else{
-//     //   return
-//     // }
+///////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////// Remaining Calculation /////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////
+frappe.ui.form.on("InterBank", {
+  refresh(frm){
+          let table = frm.doc.interbank;
+          for (let row of table) {
+            row.remaining =  row.amount - row.booking_qty
+            // console.log("zzzz3",row.remaining)
+            if (row.amount && row.booking_qty) {
+              row.remaining =  row.amount - row.booking_qty
+            }else{return}
+          }
+          frm.refresh_field("interbank");
+  }
+})
+frappe.ui.form.on("InterBank Details", {
+  qty(frm, cdt, cdn) {
+    var d = locals[cdt][cdn];
+    frappe.msgprint(" Remaining is ",parseFloat(d.booking_qty));
+    if (d.remaining === undefined || isNaN(d.remaining)) {
+      d.remaining = 0;
+        //   frappe.msgprint(" Remaining iz zero ");
+    }
+    frappe.model.set_value(
+      cdt,
+      cdn,
+      "remaining",
+      d.amount - d.booking_qty
+    );
+  },
+  rate(frm, cdt, cdn) {
+    var d = locals[cdt][cdn];
+    if (d.remaining === undefined || isNaN(d.remaining)) {
+      d.remaining = 0;
+      //   frappe.msgprint(" Remaining iz zero ");
+    }
+    console.log(" Remaining iz ",d.booking_qty);
+    console.log(" Remaining is ",parseFloat(d.booking_qty));
+    console.log("Dede", d.amount - parseFloat(d.booking_qty));
+    frappe.model.set_value(
+      cdt,
+      cdn,
+      "remaining",
+      d.amount - d.booking_qty
+    );
+    // if (d.remaining ===0){frappe.warn("Remaining is 0")}
+    // else{
+    //   return
+    // }
     
-//   },
-// });
+  },
+});
+///////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////
 // frappe.ui.form.on("InterBank", "refresh", function (frm) {
 //   frm.fields_dict["InterBank Details"].grid.get_field("currency").get_query =
 //     function (doc, cdt, cdn) {
