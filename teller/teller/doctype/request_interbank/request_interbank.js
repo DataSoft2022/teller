@@ -393,3 +393,33 @@ frappe.ui.form.on('Interbank Request Details', {
     });
   },
 })
+/////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////
+frappe.ui.form.on('Request interbank', {
+	type(frm) {
+    let type =frm.doc.type;
+    if (frm.doc.items.length == 0){
+      setTimeout(() => {
+        // Make the server call
+        frm.call({
+            method: "get_all_avaliale_currency",
+            args: {
+                "type": type,
+            },
+            callback: function (r) {
+                if (r && r.message) {
+                    console.log("Server Response:", r.message);
+  
+                } else {
+                    frappe.msgprint(__(`No available interbank quantity for ${row.currency}`));
+                }
+            },
+            error: function () {
+                frappe.msgprint(__("Error fetching available quantity. Please try again."));
+            },
+        });
+      }, 250); // Delay by 100 milliseconds
+      
+    }
+  }
+});
