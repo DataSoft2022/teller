@@ -396,30 +396,43 @@ frappe.ui.form.on('Interbank Request Details', {
 /////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////
 frappe.ui.form.on('Request interbank', {
-	type(frm) {
-    let type =frm.doc.type;
-    if (frm.doc.items.length == 0){
-      setTimeout(() => {
-        // Make the server call
-        frm.call({
-            method: "get_all_avaliale_currency",
-            args: {
-                "type": type,
-            },
-            callback: function (r) {
-                if (r && r.message) {
-                    console.log("Server Response:", r.message);
-  
-                } else {
-                    frappe.msgprint(__(`No available interbank quantity for ${row.currency}`));
-                }
-            },
-            error: function () {
-                frappe.msgprint(__("Error fetching available quantity. Please try again."));
-            },
-        });
-      }, 250); // Delay by 100 milliseconds
-      
+    type(frm) {
+        const type = frm.doc.type;
+
+        // Clear the items table
+        frappe.model.clear_table(frm.doc, "items");
+
+        // Ensure the items table is empty before proceeding
+        if (frm.doc.items.length === 0) {
+            setTimeout(() => {
+                frm.call({
+                    method: "get_all_avaliale_currency",
+                    args: { type },
+                    callback: function (r) {
+                        if (r && r.message && Array.isArray(r.message)) {
+                            const data = r.message.filter(row => row && Object.values(row).some(value => value !== null));
+                            
+                            if (data.length > 0) {
+                                data.forEach(row => {
+                                    const child = frm.add_child("items");
+                                    child.currency_code = row.currency_code;
+                                    child.currency = row.currency;
+                                    child.qty = row.qty;
+                                });
+                                frm.refresh_field("items");
+                            } else {
+                              cur_frm.set_value('items', []);
+                                frappe.msgprint(__("No available interbank quantities found."));
+                            }
+                        } else {
+                            frappe.msgprint(__("No data returned from the server."));
+                        }
+                    },
+                    error: function () {
+                        frappe.msgprint(__("Error fetching available quantities. Please try again."));
+                    },
+                });
+            }, 250); // Delay for smoother user experience
+        }
     }
-  }
 });
