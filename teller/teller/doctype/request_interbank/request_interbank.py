@@ -341,29 +341,40 @@ def get_all_avaliale_currency(type):
     """Server-side function that is triggered when the user clicks 'Yes'."""
     sql = """
         SELECT 
-            ib.name, 
-            ib.status,
-            ibd.currency,
-            ib.transaction,
-            ibd.currency_code, 
-            ibd.qty, 
-            ibd.booking_qty,
-            ibd.rate,
-            ibd.creation,
-            ibd.qty -  sum(ibd.booking_qty) as avaliable_qty
-        FROM 
-            `tabInterBank` ib 
-        LEFT JOIN 
-            `tabInterBank Details` ibd 
-        ON 
-            ibd.parent = ib.name
-        WHERE 
-        ib.docstatus = 1
+    ib.name, 
+    ib.status,
+    ibd.currency,
+    ib.transaction,
+    ibd.currency_code, 
+    ibd.qty, 
+    ibd.booking_qty,
+    ibd.rate,
+    ibd.creation,
+    ibd.qty - SUM(ibd.booking_qty) AS available_qty
+FROM 
+    `tabInterBank` ib 
+LEFT JOIN 
+    `tabInterBank Details` ibd 
+ON 
+    ibd.parent = ib.name
+WHERE 
+      ib.docstatus = 1
         AND ib.transaction = %s
         AND ib.status = 'Deal'
         AND ib.status != 'Closed'
         AND ibd.status != 'Closed'
-        ORDER BY ibd.creation ASC """
+GROUP BY 
+    ib.name, 
+    ib.status,
+    ibd.currency,
+    ib.transaction,
+    ibd.currency_code, 
+    ibd.qty, 
+    ibd.booking_qty,
+    ibd.rate,
+    ibd.creation
+Order by ibd.creation ASC;    
+ """
     data = frappe.db.sql(sql,(type, ),as_dict=True)
     return data
 

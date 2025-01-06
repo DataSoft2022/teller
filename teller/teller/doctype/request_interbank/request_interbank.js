@@ -417,7 +417,7 @@ frappe.ui.form.on('Request interbank', {
                                     const child = frm.add_child("items");
                                     child.currency_code = row.currency_code;
                                     child.currency = row.currency;
-                                    child.qty = row.qty;
+                                    child.interbank_balance = row.qty;
                                 });
                                 frm.refresh_field("items");
                             } else {
