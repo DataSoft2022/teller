@@ -104,7 +104,7 @@ frappe.ui.form.on("InterBank", {
           let table = frm.doc.interbank;
           for (let row of table) {
             row.remaining =  row.qty - row.booking_qty
-            // console.log("zzzz3",row.remaining)
+            console.log("zzzz3",row.remaining)
             if (row.amount && row.booking_qty) {
               row.remaining =  row.qty - row.booking_qty
             }else{return}
@@ -313,3 +313,40 @@ frappe.ui.form.on("InterBank", {
 /////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////
+
+/////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////// Cosed Status /////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////
+frappe.ui.form.on("InterBank", {
+  refresh: function (frm) {
+    if(frm.doc.docstatus == 1){
+      let all_closed = true;
+      frm.doc.interbank.forEach((row)=>{
+        if(row.status !== 'Closed'){
+          all_closed = false;
+          console.log("Not all Closed")
+        }
+  
+      })
+      if(all_closed){
+        frappe.call({
+          method: "frappe.client.set_value",
+          args: {
+            doctype: "InterBank",
+            name: frm.doc.name,
+            fieldname: "status",
+            value: "Closed",
+          },
+          freeze: true,
+          callback: (r) => {
+            console.log(" all Closed")
+            // frappe.msgprint(__("Successfully Set Status"));
+          },
+        });
+        // frm.set_value("status","Closed")
+        // frm.save();
+      }
+    }
+  
+  }
+});
