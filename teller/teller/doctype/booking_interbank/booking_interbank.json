@@ -94,7 +94,6 @@
    "options": "Not Paid\nPaid\nPartial Paid\nCancelled"
   }
  ],
- "in_create": 1,
  "index_web_pages_for_search": 1,
  "links": [
   {
@@ -102,7 +101,7 @@
    "link_fieldname": "booking_interbank_refrence"
   }
  ],
- "modified": "2024-11-24 18:30:50.324668",
+ "modified": "2025-01-06 11:07:07.827529",
  "modified_by": "Administrator",
  "module": "Teller",
  "name": "Booking Interbank",
