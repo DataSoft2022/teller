@@ -17,3 +17,6 @@ def cron_validate_interbank_time():
           ib = frappe.get_doc("InterBank",interbank.name,update_modified=True)
           ib.db_set('status', 'Ended')  
           return "yes"
+@frappe.whitelist()
+def cron_validate_queue_time():
+   return
