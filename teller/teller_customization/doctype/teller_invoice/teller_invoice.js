@@ -11,7 +11,8 @@ frappe.ui.form.on("Teller Invoice", {
         method: "frappe.client.get",
         args: {
           doctype: "Customer",
-          name: "Bank al-ahly",
+          // name: "Bank al-ahly", 
+          name: "الاهلي",
         },
         callback: function (response) {
           console.log("response", response.message);
@@ -1021,41 +1022,41 @@ frappe.ui.form.on("Teller Invoice", {
   /////////////////////////////////////////////
 
   // set special price
-  special_price: function (frm) {
-    if (frm.doc.docstatus == 0) {
-      let total_currency_amount = 0;
+  // special_price: function (frm) {
+  //   if (frm.doc.docstatus == 0) {
+  //     let total_currency_amount = 0;
 
-      frm.doc.transactions.forEach((row) => {
-        if (row.paid_from) {
-          frappe.call({
-            method:
-              "teller.teller_customization.doctype.teller_invoice.teller_invoice.get_currency",
-            args: {
-              account: row.paid_from,
-            },
-            callback: function (r) {
-              console.log(r.message[2]);
-              selling_special_rate = r.message[2];
-              row.rate = selling_special_rate;
-              console.log(r.message[2]);
-              let currency_total = row.rate * row.usd_amount;
-              row.total_amount = currency_total;
+  //     frm.doc.transactions.forEach((row) => {
+  //       if (row.paid_from) {
+  //         frappe.call({
+  //           method:
+  //             "teller.teller_customization.doctype.teller_invoice.teller_invoice.get_currency",
+  //           args: {
+  //             account: row.paid_from,
+  //           },
+  //           callback: function (r) {
+  //             console.log(r.message[2]);
+  //             selling_special_rate = r.message[2];
+  //             row.rate = selling_special_rate;
+  //             console.log(r.message[2]);
+  //             let currency_total = row.rate * row.usd_amount;
+  //             row.total_amount = currency_total;
 
-              console.log(
-                `the total of ${row.currency} is ${row.total_amount}`
-              );
+  //             console.log(
+  //               `the total of ${row.currency} is ${row.total_amount}`
+  //             );
 
-              total_currency_amount += currency_total;
-              console.log("from loop: " + total_currency_amount);
-              frm.refresh_field("transactions");
-              frm.set_value("total", total_currency_amount);
-            },
-          });
-        }
-      });
-      console.log("from outer loop: " + total_currency_amount);
-    }
-  },
+  //             total_currency_amount += currency_total;
+  //             console.log("from loop: " + total_currency_amount);
+  //             frm.refresh_field("transactions");
+  //             frm.set_value("total", total_currency_amount);
+  //           },
+  //         });
+  //       }
+  //     });
+  //     console.log("from outer loop: " + total_currency_amount);
+  //   }
+  // },
 
   egy: (frm) => {
     if (frm.doc.egy) {
@@ -1551,3 +1552,101 @@ function validateRegistrationDateExpiration(frm, end) {
     }
   }
 }
+//////////////////////////////////////Ahmed Reda //////////////////////////////////////////
+//////////////////////////////////////Ahmed Reda //////////////////////////////////////////
+//////////////////////////////////////Ahmed Reda //////////////////////////////////////////
+
+////////////////////////////test====/////////////////////////////////////////////////////////
+frappe.ui.form.on('Teller Invoice', {
+  refresh: function(frm) {
+    frm.add_custom_button(
+      __("Booking Interbank"),
+      function () {
+        if (!frm.doc.client_type || frm.doc.client_type !== 'Interbank') {
+          frappe.throw({title: __("Mandatory"),message: __("Please Select a Client Type Interbank")});
+        }else{
+          cur_frm.clear_table("transactions");
+        }
+        
+  /////////////////////////1
+  let query_args = {
+    // query:"dotted.path.to.method",
+    filters: { docstatus: ["!=", 2], customer: cur_frm.doc.company_name }
+}
+///////////////////////////2.
+  new frappe.ui.form.MultiSelectDialog({
+    doctype: "Booking Interbank",
+    target: cur_frm,
+    setters: {
+        type: 'Selling',
+        branch: null,
+        customer:'الاهلي',
+    },
+    add_filters_group: 1,
+    date_field: "date",
+    allow_child_item_selection: 1,
+    child_columns: ["currency","qty","rate"],
+    child_fieldname:"booked_currency",
+    columns: ["name", "type", "status","date"],
+    get_query() {
+        return query_args;
+    },
+    action(selections,args) {
+      // console.log("children",args.filtered_children);
+      // console.log("selections",selections);
+    
+        selections.forEach(function(booking_ib){
+          console.log("ib",booking_ib)
+          if (booking_ib){
+              frappe.call({
+                method:"frappe.client.get",
+                args:{
+                  "doctype":"Booking Interbank",
+                    filters:{
+                      "name":booking_ib
+                    }
+                },callback:function(response){
+                    if(response){
+                      // response
+                      console.log("Response",response.message)
+                      response.message.booked_currency.forEach(function(item){
+                        var bo_items = args.filtered_children;
+                        if(bo_items.length){
+                          frappe.msgprint("Table Booked Currency  => Selected")
+                          bo_items.forEach(function(bo_item){
+                            if(bo_item == item.name){
+                                var child = frm.add_child("transactions");
+                                    child.currency = item.currency;
+                                    child.qty = item.qty;
+                                    child.rate = item.rate;
+                            }
+                          })
+                        }else{
+                          frappe.msgprint("Booking Interbank => Selected")
+                          var child = frm.add_child("transactions");
+                          child.currency = item.currency;
+                          child.qty = item.qty;
+                          child.rate = item.rate;
+                        }
+                      
+                      })
+                      frm.refresh_field("transactions")
+                      cur_dialog.hide();
+                    }
+                  }
+                
+              })            
+          }
+        })
+    }
+    })
+    
+  
+
+    
+    
+      },
+      __("Get Items From")
+    );
+  },
+});

@@ -10,7 +10,8 @@ frappe.ui.form.on("Teller Purchase", {
         method: "frappe.client.get",
         args: {
           doctype: "Customer",
-          name: "Bank al-ahly",
+          // name: "Bank al-ahly",
+          name: "الاهلي",
         },
         callback: function (response) {
           console.log("response", response.message);
@@ -1390,3 +1391,84 @@ function validateRegistrationDateExpiration(frm, end) {
 //     });
 //   }
 // }
+//////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////Get Item From////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////
+frappe.ui.form.on("Teller Purchase",{
+  refresh(frm){
+
+
+      frm.add_custom_button(__("Booking Interbank"),function(){
+        if (!frm.doc.category_of_buyer || frm.doc.category_of_buyer !== 'Interbank'){
+          frappe.throw({
+            title:__("Mandatory"),
+            message:__(" Mandatory to Select a Category of Buyer as Interbank")
+          })
+        }else{
+          cur_frm.clear_table("transactions");
+        }
+        new frappe.ui.form.MultiSelectDialog({
+          doctype:"Booking Interbank",
+          target:cur_frm,
+          setters: {
+            type: 'Purchasing',
+            branch: null,
+            customer:'الاهلي',
+        },
+        allow_child_item_selection: 1,
+        child_columns: ["currency","qty","rate"],
+        child_fieldname:"booked_currency",
+        columns: ["name", "type", "status","date"],
+        action(selections,args) {
+          // console.log("children",args.filtered_children);
+          // console.log("selections",selections);
+        
+            selections.forEach(function(booking_ib){
+              console.log("ib",booking_ib)
+              if (booking_ib){
+                  frappe.call({
+                    method:"frappe.client.get",
+                    args:{
+                      "doctype":"Booking Interbank",
+                        filters:{
+                          "name":booking_ib
+                        }
+                    },callback:function(response){
+                        if(response){
+                          // response
+                          console.log("Response",response.message)
+                          response.message.booked_currency.forEach(function(item){
+                            var bo_items = args.filtered_children;
+                            if(bo_items.length){
+                              frappe.msgprint("Table Booked Currency  => Selected")
+                              bo_items.forEach(function(bo_item){
+                                if(bo_item == item.name){
+                                    var child = frm.add_child("transactions");
+                                        child.currency = item.currency;
+                                        child.qty = item.qty;
+                                        child.usd_amount = item.rate;
+                                }
+                              })
+                            }else{
+                              frappe.msgprint("Booking Interbank => Selected")
+                              var child = frm.add_child("transactions");
+                              child.currency = item.currency;
+                              child.qty = item.qty;
+                              child.rate = item.rate;
+                            }
+                          
+                          })
+                          frm.refresh_field("transactions")
+                          cur_dialog.hide();
+                        }
+                      }
+                    
+                  })            
+              }
+            })
+        }
+        })
+      
+      },__("Get Item From"))
+  }
+})
