@@ -86,12 +86,12 @@
    "options": "Selling\nPurchasing"
   },
   {
-   "default": "Not Paid",
+   "default": "Not Billed",
    "fieldname": "status",
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "status",
-   "options": "Not Paid\nPaid\nPartial Paid\nCancelled"
+   "options": "Not Billed\nBilled\nPartial Billed"
   }
  ],
  "index_web_pages_for_search": 1,
@@ -101,7 +101,7 @@
    "link_fieldname": "booking_interbank_refrence"
   }
  ],
- "modified": "2025-01-06 11:07:07.827529",
+ "modified": "2025-01-09 12:19:45.759773",
  "modified_by": "Administrator",
  "module": "Teller",
  "name": "Booking Interbank",
