@@ -51,7 +51,7 @@
    "fieldname": "usd_amount",
    "fieldtype": "Float",
    "in_list_view": 1,
-   "label": "Currency No",
+   "label": "QTY",
    "reqd": 1
   },
   {
@@ -84,7 +84,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-01-08 14:40:20.500825",
+ "modified": "2025-01-13 16:29:04.266081",
  "modified_by": "Administrator",
  "module": "Teller Customization",
  "name": "Entry Child",
