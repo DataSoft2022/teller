@@ -12,7 +12,8 @@
   "qty",
   "interbank_reference",
   "booking_qty",
-  "request_reference"
+  "request_reference",
+  "status"
  ],
  "fields": [
   {
@@ -52,12 +53,18 @@
    "fieldtype": "Link",
    "label": "Request reference",
    "options": "Request interbank"
+  },
+  {
+   "description": "Not Billed\nBilled\nPartial Billed",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-11-24 14:27:38.844430",
+ "modified": "2025-01-13 16:52:56.885773",
  "modified_by": "Administrator",
  "module": "Teller",
  "name": "Booked Currency",
