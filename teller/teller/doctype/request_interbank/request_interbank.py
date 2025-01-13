@@ -5,6 +5,11 @@ from frappe import _
 
 class Requestinterbank(Document):
     def on_submit(self):
+        if not self.items:
+            frappe.throw("Table is Empty")
+        for row in self.items:
+            if not row.qty or row.qty == 0:
+                frappe.throw(f" Row {row.idx}# can't be rate {row.qty}")
         self.create_queue()
         self.create_booking()
         
@@ -340,40 +345,37 @@ def get_interbank(currency, purpose):
 def get_all_avaliale_currency(type):
     """Server-side function that is triggered when the user clicks 'Yes'."""
     sql = """
-        SELECT 
-    ib.name, 
-    ib.status,
-    ibd.currency,
-    ib.transaction,
-    ibd.currency_code, 
-    ibd.qty, 
-    ibd.booking_qty,
-    ibd.rate,
-    ibd.creation,
-    ibd.qty - SUM(ibd.booking_qty) AS available_qty
-FROM 
-    `tabInterBank` ib 
-LEFT JOIN 
-    `tabInterBank Details` ibd 
-ON 
-    ibd.parent = ib.name
-WHERE 
-      ib.docstatus = 1
+WITH LatestCurrency AS (
+    SELECT 
+        ib.name, 
+        ib.status,
+        ibd.currency,
+        ib.transaction,
+        ibd.currency_code, 
+        ibd.qty, 
+        ibd.booking_qty,
+        ibd.rate,
+        ibd.creation,
+        ibd.qty - ibd.booking_qty AS available_qty,
+        ROW_NUMBER() OVER (PARTITION BY ibd.currency ORDER BY ibd.creation ASC) AS row_num
+    FROM 
+        `tabInterBank` ib 
+    LEFT JOIN 
+        `tabInterBank Details` ibd 
+    ON 
+        ibd.parent = ib.name
+    WHERE 
+        ib.docstatus = 1
         AND ib.transaction = %s
         AND ib.status = 'Deal'
         AND ib.status != 'Closed'
         AND ibd.status != 'Closed'
-GROUP BY 
-    ib.name, 
-    ib.status,
-    ibd.currency,
-    ib.transaction,
-    ibd.currency_code, 
-    ibd.qty, 
-    ibd.booking_qty,
-    ibd.rate,
-    ibd.creation
-Order by ibd.creation ASC;    
+    
+)
+SELECT *
+FROM LatestCurrency
+WHERE row_num = 1
+ORDER BY currency_code,creation ASC;  
  """
     data = frappe.db.sql(sql,(type, ),as_dict=True)
     return data
