@@ -43,18 +43,23 @@ frappe.ui.form.on("Booking Interbank", {
     
     
     if(frm.doc.type === 'Selling'){
-      name = 'Sales Invoice';
+      name = 'Teller Invoice';
     } else if(frm.doc.type === 'Purchasing'){
-      name = 'Purchase Invoice';
+      name = 'Teller Purchase';
     }
 
     // Add custom button if a valid name is set
     if(name) {
       frm.add_custom_button(__(name), function() {
         // console.log(name + " button clicked");
+        if (name === 'Teller Invoice') {
+          method = "make_teller_invoice"; 
+      } else if (name === 'Teller Purchase') {
+          method = "make_purchase_invoice";  
+      }
         let items = frm.doc.booked_currency;
         frm.call({
-            method:'make_si',
+            method:method,
             args:{
               "doc" : cur_frm.doc,
             },
