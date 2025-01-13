@@ -46,7 +46,7 @@
   },
   {
    "fieldname": "currency_code",
-   "fieldtype": "Float",
+   "fieldtype": "Data",
    "label": "Currency Code",
    "reqd": 1
   },
@@ -79,7 +79,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-01-13 10:39:38.918738",
+ "modified": "2025-01-13 17:05:57.445158",
  "modified_by": "Administrator",
  "module": "Teller Customization",
  "name": "InterBank Details",

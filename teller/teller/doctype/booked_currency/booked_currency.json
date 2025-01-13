@@ -34,7 +34,7 @@
   },
   {
    "fieldname": "currency_code",
-   "fieldtype": "Int",
+   "fieldtype": "Data",
    "label": "Currency Code"
   },
   {
@@ -64,7 +64,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-01-13 16:52:56.885773",
+ "modified": "2025-01-13 17:06:50.116480",
  "modified_by": "Administrator",
  "module": "Teller",
  "name": "Booked Currency",

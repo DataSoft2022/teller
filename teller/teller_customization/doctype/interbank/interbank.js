@@ -359,10 +359,17 @@ frappe.ui.form.on("InterBank", {
 /////////////////////////////////////////////////////////////////////////////////////////
 frappe.ui.form.on("InterBank", {
   refresh(frm) {
+    let total_percentage = 0;
     var table = frm .doc.interbank;
     table.forEach((item)=>{
-      var precentage = item.booking_qty / item.qty
-      console.log("Precentage :",precentage)
-      frappe.model.set_value(item.doctype,item.name,"booking_precentage",precentage*100)
+      var percentage = item.booking_qty / item.qty
+      console.log("Precentage :",percentage)
+      frappe.model.set_value(item.doctype,item.name,"booking_precentage",percentage*100)
+      total_percentage += percentage;
     })
+    let average_percentage = table.length ? total_percentage / table.length : 0;
+    console.log("average_percentage",average_percentage)
+
+    // Set the average percentage to the parent field
+    frm.set_value("booking_precentage", average_percentage);
   }});
