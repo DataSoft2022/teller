@@ -357,12 +357,12 @@ frappe.ui.form.on("InterBank", {
 /////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////// Booking Precentage /////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////
-// frappe.ui.form.on("InterBank", {
-//   refresh(frm) {
-//     var table = frm .doc.interbank;
-//     table.forEach((item)=>{
-//       var precentage = item.booking_qty / item.qty
-//       console.log("Precentage :",precentage)
-//       frappe.model.set_value(item.doctype,item.name,"booking_precentage",100)
-//     })
-//   }});
+frappe.ui.form.on("InterBank", {
+  refresh(frm) {
+    var table = frm .doc.interbank;
+    table.forEach((item)=>{
+      var precentage = item.booking_qty / item.qty
+      console.log("Precentage :",precentage)
+      frappe.model.set_value(item.doctype,item.name,"booking_precentage",precentage*100)
+    })
+  }});
