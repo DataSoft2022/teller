@@ -328,7 +328,7 @@ frappe.ui.form.on("InterBank", {
         }
   
       })
-      if(all_closed){
+      if(all_closed && frm.doc.status !== "Closed"){
         frappe.call({
           method: "frappe.client.set_value",
           args: {
