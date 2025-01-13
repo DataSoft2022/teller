@@ -62,7 +62,7 @@ class Requestinterbank(Document):
             frappe.throw("There No booking. Please Add Table for Booking")
             
         else: 
-            # frappe.msgprint("Hello(1)???")
+            frappe.msgprint("Create Booking Function ???")
             for row in currency_table:
                  currency = row.currency
                  purpose = self.type
@@ -160,6 +160,7 @@ class Requestinterbank(Document):
               # Update InterBank Details and Parent Status
               self.update_interbank_details(document.booked_currency, currency_table)
     def create_queue(self):
+        frappe.msgprint("Create Queue Function ...")
         table = self.items
         queue_table = [{"queue_qty": row.queue_qty, "currency_code": row.currency_code, "currency": row.currency} 
                        for row in table if row.queue_qty > 0]
@@ -206,7 +207,7 @@ class Requestinterbank(Document):
                 found_interbank = True
                 # ignore_permissions=True,
                 # Fetch interbank details filtered by parent and currency
-                interbank_details = frappe.db.get_list(
+                interbank_details = frappe.db.get_all(
                     "InterBank Details",
                     fields=["name", "booking_qty", "qty", "currency", "parent"],
                     filters={"parent": interbank_name, "currency": currency},

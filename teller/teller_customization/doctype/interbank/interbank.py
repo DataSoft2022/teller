@@ -93,6 +93,7 @@ class InterBank(Document):
           left join `tabQueue Request Details` qrd  ON qr.name = qrd.parent 
               where qr.status = 'Queue'
               AND  qrd.currency = %s
+              AND  qrd.status = 'Queue'
               AND  qr.type = %s
               ORDER BY qr.creation ASC
                       """
@@ -145,15 +146,15 @@ class InterBank(Document):
             queue_name = q.get("name")
             currency = q.get("currency")
             queue_qty = q.get("qty")
-            queue_details = frappe.get_list(
+            queue_details = frappe.get_all(
                     "Queue Request Details",
                     fields=["name", "status", "qty", "currency", "parent"],
-                    filters={"parent": queue_name, "currency": currency},
+                    filters={"parent": queue_name, "currency": currency, "status":"Queue"},
                 )
             for row in queue_details:
               detail_doc = frappe.get_doc("Queue Request Details", row.name)
               detail_doc.db_set("status", "Closed")
-            ib_details = frappe.get_list(
+            ib_details = frappe.get_all(
                     "InterBank Details",
                     fields=["name", "status", "qty", "currency", "parent"],
                     filters={"parent": self.name, "currency": currency},
