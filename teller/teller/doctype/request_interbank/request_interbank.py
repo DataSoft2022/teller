@@ -10,7 +10,7 @@ class Requestinterbank(Document):
         for row in self.items:
             if not row.qty or row.qty == 0:
                 frappe.throw(f" Row {row.idx}# can't be rate {row.qty}")
-        self.create_queue()
+        # self.create_queue()
         self.create_booking()
         
     def on_cancel(self):
@@ -64,101 +64,118 @@ class Requestinterbank(Document):
         else: 
             frappe.msgprint("Create Booking Function ???")
             for row in currency_table:
-                 currency = row.currency
-                 purpose = self.transaction
-                 requested_qty = row.qty
-                 print("currency and purpose",purpose,currency)
-                 avaliable_ib = avaliable_ib_qty(currency, purpose)
-                 interbank_balance = avaliable_ib[0].avaliable_qty
-                 print("ib qty     is ==============",avaliable_ib[0].avaliable_qty)
-            if row.qty > interbank_balance:
-                print(" interbank_balance Nnonon=====",interbank_balance)
-                print(" row.qtyrerer======",row.qty)
-                # Get interbanks by first creation
-                document = frappe.new_doc("Booking Interbank")
-                
-                document.customer = self.customer
-                document.transaction = self.transaction
-                document.date = self.date
-                document.time = self.time
-                document.user = self.user
-                document.branch = self.branch
-                interbanks = get_interbank(currency=currency, purpose=purpose)
-                for interbank in interbanks:
-                    ib_name = interbank.get("name")
-                    ib_qty = interbank.get("qty")
-                    ib_rate = interbank.get("rate")
-                    ib_booking_qty = interbank.get("booking_qty")
-                    ib_available_qty = interbank.get("qty") - interbank.get("booking_qty") 
-                    append_qty = min(ib_available_qty, requested_qty)
-                    requested_qty -= append_qty
-                    document.append("booked_currency", {
-                                      "currency_code": row.currency_code,
-                                      "currency": row.currency,
-                                      "rate": ib_rate,
-                                      "qty": append_qty,
-                                      "interbank_reference": ib_name,
-                                      "request_reference":self.name,
-                                      "booking_qty": append_qty
-                                  })
-                document.insert(ignore_permissions=True)
-                self.update_interbank_details(document.booked_currency, currency_table)
-                return document
-                 #################################
-                 #################################
-            if row.qty <= interbank_balance:
-              document = frappe.new_doc("Booking Interbank")
-              # frappe.msgprint("yayay")
-              document.customer = self.customer
-              document.transaction = self.transaction
-              document.date = self.date
-              document.time = self.time
-              document.user = self.user
-              document.branch = self.branch
-              for row in currency_table:
-                  if row.status != 'Reserved':
-                      requested_qty = row.qty
-                      currency = row.currency
-                      purpose = self.transaction
-                      # frappe.msgprint(f"Processing Currency: {currency}, Qty Requested: {requested_qty}")
-                      data = avaliable_ib_qty(currency=currency, purpose=purpose)
-          #             print("data++++++++",data)
-                      for record in data:
-                          ib_name = record.get("name")
-                          ib_curr_code = record.get("currency_code")
-                          ib_curr = record.get("currency")
-                          ib_qty = record.get("qty")
-                          ib_rate = record.get("rate")
-                          ib_booking_qty = record.get("booking_qty")
-
-                          if ib_qty <= 0:
-                              continue
-
-                          available_qty = ib_qty - ib_booking_qty
-                          # frappe.msgprint(f"IB avalisblr Qty {available_qty} for {ib_curr} in {ib_name}")
-
-                          if currency == ib_curr and ib_rate > 0:
-                              # Determine the quantity to book
-                              append_qty = min(available_qty, requested_qty)
+                currency = row.currency
+                purpose = self.transaction
+                requested_qty = row.qty
+                print("currency and purpose",purpose,currency)
+              # (1)# avaliable_ib ==> is avaliable Qty from first open interbank for (currency, purpose)
+                avaliable = avaliable_ib_qty(currency, purpose)
+                avaliable_ib = avaliable[0].avaliable_qty
+              
+                total = get_total(currency, purpose)
+                total_ib = total[0].total
+              # (2)# get_totalfun ==> if requested_qty > total_ib
+                if requested_qty > total_ib:
+                    
+                    frappe.msgprint(f"requested_qty > total_ib {total_ib}")
+                    # (2) if requested_qty > avaliable_ib:
+                    if requested_qty > avaliable_ib:
+                      self.create_queue()
+                      frappe.msgprint(f"(3)requested_qty{requested_qty} > avaliable_ib{avaliable_ib}")
+                      interbanks = get_interbank(currency=currency, purpose=purpose)
+                      document = frappe.new_doc("Booking Interbank")
+                      document.customer = self.customer
+                      document.transaction = self.transaction
+                      document.date = self.date
+                      document.time = self.time
+                      document.user = self.user
+                      document.branch = self.branch
+                      for row in currency_table:
+                          currency = row.currency
+                          purpose = self.transaction
+                          print(" currency ======> ",currency)
+                          print(" purpose ======> ",purpose)
+                          interbanks = get_interbank(currency=currency, purpose=purpose)
+                          for interbank in interbanks:
+                              print("interbank ======> ",interbanks)
+                              print(" length interbanks ======> ",len(interbanks))
+                              ib_name = interbank.get("name")
+                              ib_qty = interbank.get("qty")
+                              ib_rate = interbank.get("rate")
+                              ib_booking_qty = interbank.get("booking_qty")
+                              ib_available_qty = interbank.get("qty") - interbank.get("booking_qty")
+                              append_qty = min(ib_available_qty, requested_qty)
                               requested_qty -= append_qty
-                              # frappe.msgprint(f"booked Qty: {ib_curr} ,in {ib_name} you append {append_qty}")
-                              # Append booking details to the document
                               document.append("booked_currency", {
-                                  "currency_code": ib_curr_code,
-                                  "currency": ib_curr,
-                                  "rate": ib_rate,
-                                  "qty": append_qty,
-                                  "interbank_reference": ib_name,
-                                  "request_reference":self.name,
-                                  "booking_qty": append_qty
-                              })
-                              self.status = 'Finish'
-                              if requested_qty <= 0:
-                                  break
-              document.insert(ignore_permissions=True)
-              # frappe.msgprint("Booking Interbank document created successfully.")
-              # Update InterBank Details and Parent Status
-              self.update_interbank_details(document.booked_currency, currency_table)
+                                                "currency_code": row.currency_code,
+                                                "currency": row.currency,
+                                                "rate": ib_rate,
+                                                "qty": append_qty,
+                                                "interbank_reference": ib_name,
+                                                "request_reference":self.name,
+                                                "booking_qty": append_qty
+                                            })     
+                      document.insert(ignore_permissions=True)
+                      self.update_interbank_details(document.booked_currency, currency_table)
+                      return document
+                if requested_qty < total_ib:
+                    if requested_qty > avaliable_ib:
+                        frappe.throw(f"requested_qty{requested_qty} > avaliable_ib{avaliable_ib}")      
+                    else:
+                        # frappe.throw(f"(5)requested_qty{requested_qty} < avaliable_ib{avaliable_ib}")
+                        frappe.msgprint(f"(5)requested_qty{requested_qty}< avaliable_ib{avaliable_ib}")
+                        document = frappe.new_doc("Booking Interbank")
+                        document.customer = self.customer
+                        document.transaction = self.transaction
+                        document.date = self.date
+                        document.time = self.time
+                        document.user = self.user
+                        document.branch = self.branch
+                        for row in currency_table:
+                            if row.status != 'Reserved':
+                                requested_qty = row.qty
+                                currency = row.currency
+                                purpose = self.transaction
+                                # frappe.msgprint(f"Processing Currency: {currency}, Qty Requested: {requested_qty}")
+                                data = avaliable_ib_qty(currency=currency, purpose=purpose)
+                    #             print("data++++++++",data)
+                                for record in data:
+                                    ib_name = record.get("name")
+                                    ib_curr_code = record.get("currency_code")
+                                    ib_curr = record.get("currency")
+                                    ib_qty = record.get("qty")
+                                    ib_rate = record.get("rate")
+                                    ib_booking_qty = record.get("booking_qty")
+
+                                    if ib_qty <= 0:
+                                        continue
+
+                                    available_qty = ib_qty - ib_booking_qty
+                                    # frappe.msgprint(f"IB avalisblr Qty {available_qty} for {ib_curr} in {ib_name}")
+
+                                    if currency == ib_curr and ib_rate > 0:
+                                        # Determine the quantity to book-
+                                        append_qty = min(available_qty, requested_qty)
+                                        frappe.msgprint(f" available_qty: {available_qty} ,requested_qty {requested_qty}")
+                                        requested_qty -= append_qty
+                                        frappe.msgprint(f"booked Qty: {ib_curr} ,in {ib_name} you append {append_qty}")
+                                        # Append booking details to the document
+                                        document.append("booked_currency", {
+                                            "currency_code": ib_curr_code,
+                                            "currency": ib_curr,
+                                            "rate": ib_rate,
+                                            "qty": append_qty,
+                                            "interbank_reference": ib_name,
+                                            "request_reference":self.name,
+                                            "booking_qty": append_qty
+                                        })
+                                        self.status = 'Finish'
+                                        if requested_qty <= 0:
+                                            break
+                        document.insert(ignore_permissions=True)
+                        # frappe.msgprint("Booking Interbank document created successfully.")
+                        # Update InterBank Details and Parent Status
+                        self.update_interbank_details(document.booked_currency, currency_table)
     def create_queue(self):
         frappe.msgprint("Create Queue Function ...")
         table = self.items
@@ -307,6 +324,7 @@ def avaliable_ib_qty(currency, purpose):
         AND ib.docstatus = 1
         AND ib.transaction = %s
         AND ib.status = 'Deal'
+        AND ib.type = 'Daily'
         AND ib.status != 'Closed'
         AND ibd.status != 'Closed'
         ORDER BY ibd.creation ASC
@@ -318,6 +336,7 @@ def get_interbank(currency, purpose):
     sql = """
         SELECT 
             ib.name, 
+             ib.type, 
             ib.transaction,
             ib.status,
             ibd.currency,
@@ -336,10 +355,43 @@ def get_interbank(currency, purpose):
             ibd.currency = %s
         AND ib.docstatus = 1
         AND ib.transaction = %s
+        AND ib.type = 'Daily'
         AND ib.status != 'Closed'
         AND ibd.status != 'Closed'
         ORDER BY ibd.creation ASC
     """
+    return frappe.db.sql(sql, (currency, purpose), as_dict=True)
+
+@frappe.whitelist(allow_guest=True)
+def get_total(currency, purpose):
+    sql="""
+    SELECT 
+            ib.name, 
+             ib.type, 
+            ib.transaction,
+            ib.status,
+            ibd.currency,
+            ibd.currency_code, 
+            sum(ibd.qty) AS total_qty, 
+            ibd.booking_qty,
+            ibd.rate,
+            ibd.creation,
+            sum( ibd.booking_qty)As total_booking_qty,
+            sum( ibd.qty) - sum( ibd.booking_qty) AS total
+            
+        FROM 
+            `tabInterBank` ib 
+        LEFT JOIN 
+            `tabInterBank Details` ibd 
+        ON 
+            ibd.parent = ib.name
+        WHERE 
+            ibd.currency = %s
+        AND ib.docstatus = 1
+        AND ib.transaction = %s
+        AND ib.status != 'Closed'
+        AND ibd.status != 'Closed'
+        ORDER BY ibd.creation ASC"""
     return frappe.db.sql(sql, (currency, purpose), as_dict=True)
 
 @frappe.whitelist(allow_guest=True)
@@ -369,6 +421,7 @@ WITH LatestCurrency AS (
         ib.docstatus = 1
         AND ib.transaction = %s
         AND ib.status = 'Deal'
+        AND ib.type = 'Daily'
         AND ib.status != 'Closed'
         AND ibd.status != 'Closed'
     
