@@ -1,8 +1,8 @@
 {
  "actions": [],
  "allow_rename": 1,
- "autoname": "Interbank_Request_.#####",
- "creation": "2024-11-22 18:24:19.146440",
+ "autoname": "Return_Interbank_Request_.#####",
+ "creation": "2025-01-14 10:58:53.085984",
  "default_view": "List",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -17,6 +17,7 @@
   "customer",
   "section_break_hone",
   "items",
+  "amended_from",
   "amended_from"
  ],
  "fields": [
@@ -41,16 +42,6 @@
    "fieldname": "time",
    "fieldtype": "Time",
    "label": "Time"
-  },
-  {
-   "fieldname": "amended_from",
-   "fieldtype": "Link",
-   "label": "Amended From",
-   "no_copy": 1,
-   "options": "Request interbank",
-   "print_hide": 1,
-   "read_only": 1,
-   "search_index": 1
   },
   {
    "fieldname": "column_break_dmwz",
@@ -93,15 +84,25 @@
    "print_hide": 1,
    "read_only": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Return Request Interbank",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-01-14 10:57:50.592525",
+ "modified": "2025-01-14 10:58:53.085984",
  "modified_by": "Administrator",
  "module": "Teller",
- "name": "Request interbank",
+ "name": "Return Request Interbank",
  "naming_rule": "Expression (old style)",
  "owner": "Administrator",
  "permissions": [
