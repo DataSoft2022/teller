@@ -25,7 +25,7 @@ frappe.ui.form.on('Request interbank', {
             method: "avaliable_ib_qty",
             args: {
                 currency: element.currency,
-                purpose:frm.doc.type,
+                purpose:frm.doc.transaction,
             },
             callback: function (r) {
                 if (r && r.message) {
@@ -227,7 +227,7 @@ frappe.ui.form.on("Interbank Request Details", {
             method: "avaliable_ib_qty",
             args: {
                 currency: row.currency,
-                purpose:frm.doc.type,
+                purpose:frm.doc.transaction,
             },
             callback: function (r) {
                 if (r && r.message) {
@@ -269,7 +269,7 @@ frappe.ui.form.on("Interbank Request Details", {
           method: "avaliable_qty",
           args: {
               currency: row.currency,
-              purpose:frm.doc.type,
+              purpose:frm.doc.transaction,
           },
           callback: function (r) {
               if (r && r.message) {
@@ -279,7 +279,7 @@ frappe.ui.form.on("Interbank Request Details", {
                   let avaliable = r.message[0].avaliable_qty;
                   if (avaliable){
 //(1)                    
-//////////////////////////if there ara avalibe interbank get total avaliable qty for (currency,type)
+//////////////////////////if there ara avalibe interbank get total avaliable qty for (currency,transaction)
                     if(row.qty > avaliable){
                       frappe.confirm(`You Exceeded InterBank Balance ${row.interbank_balance} ${row.currency} .Do you want to Add Queue ${row.qty - avaliable} ${row.currency} ?`,
                         () => {
@@ -307,7 +307,7 @@ frappe.ui.form.on("Interbank Request Details", {
                           method: "avaliable_ib_qty",
                           args: {
                               currency: row.currency,
-                              purpose:frm.doc.type,
+                              purpose:frm.doc.transaction,
                           },
                           callback: function (response) {
                             frappe.model.set_value(cdt,cdn,'interbank_balance',response.message[0].qty)
@@ -401,8 +401,8 @@ frappe.ui.form.on('Interbank Request Details', {
 /////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////
 frappe.ui.form.on('Request interbank', {
-    type(frm) {
-        const type = frm.doc.type;
+  transaction(frm) {
+        var transaction = frm.doc.transaction;
 
         // Clear the items table
         frappe.model.clear_table(frm.doc, "items");
@@ -412,7 +412,7 @@ frappe.ui.form.on('Request interbank', {
             setTimeout(() => {
                 frm.call({
                     method: "get_all_avaliale_currency",
-                    args: { type },
+                    args: { transaction },
                     callback: function (r) {
                         if (r && r.message && Array.isArray(r.message)) {
                             const data = r.message.filter(row => row && Object.values(row).some(value => value !== null));
@@ -441,3 +441,22 @@ frappe.ui.form.on('Request interbank', {
         }
     }
 });
+////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////Return Request Interbank ///////////////////////////
+frappe.ui.form.on('Request interbank', {
+  refresh:function(frm){
+    frm.add_custom_button(__('Return Request'),function(){
+      frm.call({
+        method:"return_request",
+        args: {
+          doc: frm.doc,
+        
+      },
+        callback:function(response){
+        console.log("return request",response.message)
+
+      }});
+    })
+  }
+
+})

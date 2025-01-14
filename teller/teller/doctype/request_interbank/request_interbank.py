@@ -2,7 +2,7 @@ import frappe
 from frappe.model.document import Document
 from frappe.utils import flt
 from frappe import _
-
+from frappe import whitelist
 class Requestinterbank(Document):
     def on_submit(self):
         if not self.items:
@@ -65,7 +65,7 @@ class Requestinterbank(Document):
             frappe.msgprint("Create Booking Function ???")
             for row in currency_table:
                  currency = row.currency
-                 purpose = self.type
+                 purpose = self.transaction
                  requested_qty = row.qty
                  print("currency and purpose",purpose,currency)
                  avaliable_ib = avaliable_ib_qty(currency, purpose)
@@ -78,7 +78,7 @@ class Requestinterbank(Document):
                 document = frappe.new_doc("Booking Interbank")
                 
                 document.customer = self.customer
-                document.type = self.type
+                document.transaction = self.transaction
                 document.date = self.date
                 document.time = self.time
                 document.user = self.user
@@ -110,7 +110,7 @@ class Requestinterbank(Document):
               document = frappe.new_doc("Booking Interbank")
               # frappe.msgprint("yayay")
               document.customer = self.customer
-              document.type = self.type
+              document.transaction = self.transaction
               document.date = self.date
               document.time = self.time
               document.user = self.user
@@ -119,7 +119,7 @@ class Requestinterbank(Document):
                   if row.status != 'Reserved':
                       requested_qty = row.qty
                       currency = row.currency
-                      purpose = self.type
+                      purpose = self.transaction
                       # frappe.msgprint(f"Processing Currency: {currency}, Qty Requested: {requested_qty}")
                       data = avaliable_ib_qty(currency=currency, purpose=purpose)
           #             print("data++++++++",data)
@@ -169,7 +169,7 @@ class Requestinterbank(Document):
               
               queue_doc= frappe.new_doc("Queue Request")
               queue_doc.status = 'Queue'
-              queue_doc.type = self.type
+              queue_doc.transaction = self.transaction
               queue_doc.date = self.date
               queue_doc.time = self.time
               queue_doc.user = self.user
@@ -343,7 +343,7 @@ def get_interbank(currency, purpose):
     return frappe.db.sql(sql, (currency, purpose), as_dict=True)
 
 @frappe.whitelist(allow_guest=True)
-def get_all_avaliale_currency(type):
+def get_all_avaliale_currency(transaction):
     """Server-side function that is triggered when the user clicks 'Yes'."""
     sql = """
 WITH LatestCurrency AS (
@@ -378,12 +378,34 @@ FROM LatestCurrency
 WHERE row_num = 1
 ORDER BY currency_code,creation ASC;  
  """
-    data = frappe.db.sql(sql,(type, ),as_dict=True)
+    data = frappe.db.sql(sql,(transaction, ),as_dict=True)
     return data
 
 
+@frappe.whitelist(allow_guest=True)
+def return_request(doc):  
+  request_ib = json.loads(doc)
+  req_table = request_ib.get("items")
+  return_request = frappe.new_doc("Return Request Interbank")
+  return_request.transaction = request_ib.get("transaction")
+  return_request.request_reference = request_ib.get("name") 
+  return_request.user = request_ib.get("user")
+  return_request.branch = request_ib.get("branch") 
+  return_request.customer = request_ib.get("customer") 
+  return_request.date = request_ib.get("date") 
+  return_request.time = request_ib.get("time") 
 
-
+  for item in req_table:
+    return_request.append('items',{
+        "currency_code":item.get("currency_code"),
+        "currency":item.get("currency"),
+        "request_qty":item.get("qty"),
+        "status":item.get("status"),
+        "interbank_balance":item.get("interbank_balance"),
+        "queue_qty":item.get("queue_qty"),
+    })
+  return_request.insert(ignore_permissions=True)
+  return return_request
 
 
 
