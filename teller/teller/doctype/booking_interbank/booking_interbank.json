@@ -8,7 +8,7 @@
  "field_order": [
   "date",
   "time",
-  "type",
+  "transaction",
   "column_break_mu49",
   "customer",
   "user",
@@ -85,17 +85,6 @@
    "fieldtype": "Section Break"
   },
   {
-   "fieldname": "type",
-   "fieldtype": "Select",
-   "in_filter": 1,
-   "in_global_search": 1,
-   "in_list_view": 1,
-   "in_preview": 1,
-   "in_standard_filter": 1,
-   "label": "Type",
-   "options": "Selling\nPurchasing"
-  },
-  {
    "default": "Not Billed",
    "fieldname": "status",
    "fieldtype": "Select",
@@ -106,6 +95,17 @@
    "in_standard_filter": 1,
    "label": "status",
    "options": "Not Billed\nBilled\nPartial Billed"
+  },
+  {
+   "fieldname": "transaction",
+   "fieldtype": "Select",
+   "in_filter": 1,
+   "in_global_search": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_standard_filter": 1,
+   "label": "Transaction",
+   "options": "Selling\nPurchasing"
   }
  ],
  "index_web_pages_for_search": 1,
@@ -115,7 +115,7 @@
    "link_fieldname": "booking_interbank_refrence"
   }
  ],
- "modified": "2025-01-09 14:49:40.859979",
+ "modified": "2025-01-14 13:33:37.471231",
  "modified_by": "Administrator",
  "module": "Teller",
  "name": "Booking Interbank",

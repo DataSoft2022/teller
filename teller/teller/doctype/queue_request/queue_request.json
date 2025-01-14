@@ -6,10 +6,11 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "type",
+  "transaction",
   "date",
   "time",
   "status",
+  "type",
   "column_break_mvlr",
   "user",
   "branch",
@@ -18,13 +19,6 @@
   "items"
  ],
  "fields": [
-  {
-   "fieldname": "type",
-   "fieldtype": "Select",
-   "in_list_view": 1,
-   "label": "Type",
-   "options": "Purchasing\nSelling"
-  },
   {
    "fieldname": "date",
    "fieldtype": "Date",
@@ -73,12 +67,25 @@
    "in_list_view": 1,
    "label": "status",
    "options": "Queue\nClosed\nEnded"
+  },
+  {
+   "fieldname": "transaction",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Transaction",
+   "options": "Purchasing\nSelling"
+  },
+  {
+   "fieldname": "type",
+   "fieldtype": "Select",
+   "label": "Type",
+   "options": "Daily\nHoliday"
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-01-05 18:50:19.234390",
+ "modified": "2025-01-14 16:11:51.027302",
  "modified_by": "Administrator",
  "module": "Teller",
  "name": "Queue Request",

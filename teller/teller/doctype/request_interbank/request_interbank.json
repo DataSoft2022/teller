@@ -8,9 +8,10 @@
  "engine": "InnoDB",
  "field_order": [
   "section_break_wgt4",
-  "type",
+  "transaction",
   "date",
   "time",
+  "type",
   "column_break_dmwz",
   "user",
   "branch",
@@ -23,12 +24,6 @@
   {
    "fieldname": "section_break_wgt4",
    "fieldtype": "Section Break"
-  },
-  {
-   "fieldname": "type",
-   "fieldtype": "Select",
-   "label": "Type",
-   "options": "Purchasing\nSelling"
   },
   {
    "default": "Today",
@@ -93,12 +88,24 @@
    "print_hide": 1,
    "read_only": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "transaction",
+   "fieldtype": "Select",
+   "label": "Transaction",
+   "options": "Purchasing\nSelling"
+  },
+  {
+   "fieldname": "type",
+   "fieldtype": "Select",
+   "label": "Type",
+   "options": "Daily\nHoliday"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-01-14 10:57:50.592525",
+ "modified": "2025-01-14 16:11:22.159232",
  "modified_by": "Administrator",
  "module": "Teller",
  "name": "Request interbank",
