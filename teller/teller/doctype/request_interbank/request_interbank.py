@@ -78,7 +78,7 @@ class Requestinterbank(Document):
                 if requested_qty > total_ib:
                     
                     frappe.msgprint(f"requested_qty > total_ib {total_ib}")
-                    # (2) if requested_qty > avaliable_ib:
+              # (3)# if (Splice requested_qty ) requested_qty > avaliable_ib:
                     if requested_qty > avaliable_ib:
                       self.create_queue()
                       frappe.msgprint(f"(3)requested_qty{requested_qty} > avaliable_ib{avaliable_ib}")
@@ -118,11 +118,12 @@ class Requestinterbank(Document):
                       document.insert(ignore_permissions=True)
                       self.update_interbank_details(document.booked_currency, currency_table)
                       return document
+              # (4)# (Validation)total_ib > requested_qty > avaliable_ib:
                 if requested_qty < total_ib:
                     if requested_qty > avaliable_ib:
                         frappe.throw(f"requested_qty{requested_qty} > avaliable_ib{avaliable_ib}")      
                     else:
-                        # frappe.throw(f"(5)requested_qty{requested_qty} < avaliable_ib{avaliable_ib}")
+              # (5)# requested_qty < avaliable_ib
                         frappe.msgprint(f"(5)requested_qty{requested_qty}< avaliable_ib{avaliable_ib}")
                         document = frappe.new_doc("Booking Interbank")
                         document.customer = self.customer
