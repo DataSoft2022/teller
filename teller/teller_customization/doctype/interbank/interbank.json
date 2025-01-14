@@ -166,6 +166,7 @@
    "label": "To Date"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "booking_precentage",
    "fieldtype": "Percent",
    "label": "Booking precentage"
@@ -174,7 +175,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-01-13 16:55:23.008424",
+ "modified": "2025-01-14 15:07:29.277826",
  "modified_by": "Administrator",
  "module": "Teller Customization",
  "name": "InterBank",
