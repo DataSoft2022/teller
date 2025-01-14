@@ -368,8 +368,8 @@ frappe.ui.form.on("InterBank", {
       total_percentage += percentage;
     })
     let average_percentage = table.length ? total_percentage / table.length : 0;
-    console.log("average_percentage",average_percentage)
+    console.log("average_percentage",average_percentage,total_percentage,table.length)
 
     // Set the average percentage to the parent field
-    frm.set_value("booking_precentage", average_percentage);
+    frm.set_value("booking_precentage", average_percentage );
   }});
