@@ -8,28 +8,23 @@
  "engine": "InnoDB",
  "field_order": [
   "section_break_wgt4",
-  "type",
+  "transaction",
   "date",
   "time",
+  "request_reference",
+  "type",
   "column_break_dmwz",
   "user",
   "branch",
   "customer",
   "section_break_hone",
   "items",
-  "amended_from",
   "amended_from"
  ],
  "fields": [
   {
    "fieldname": "section_break_wgt4",
    "fieldtype": "Section Break"
-  },
-  {
-   "fieldname": "type",
-   "fieldtype": "Select",
-   "label": "Type",
-   "options": "Purchasing\nSelling"
   },
   {
    "default": "Today",
@@ -73,7 +68,7 @@
    "fieldname": "items",
    "fieldtype": "Table",
    "label": "items",
-   "options": "Interbank Request Details"
+   "options": "Return Request Details"
   },
   {
    "fieldname": "amended_from",
@@ -90,16 +85,34 @@
    "fieldtype": "Link",
    "label": "Amended From",
    "no_copy": 1,
-   "options": "Return Request Interbank",
+   "options": "Request interbank",
    "print_hide": 1,
    "read_only": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "transaction",
+   "fieldtype": "Select",
+   "label": "Transaction",
+   "options": "Purchasing\nSelling"
+  },
+  {
+   "fieldname": "request_reference",
+   "fieldtype": "Link",
+   "label": "Request reference",
+   "options": "Request interbank"
+  },
+  {
+   "fieldname": "type",
+   "fieldtype": "Select",
+   "label": "Type",
+   "options": "Daily\nHoliday"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-01-14 10:58:53.085984",
+ "modified": "2025-01-14 16:12:06.012024",
  "modified_by": "Administrator",
  "module": "Teller",
  "name": "Return Request Interbank",
