@@ -408,9 +408,9 @@ def get_total(currency, purpose):
         AND ibd.status != 'Closed'
         ORDER BY ibd.creation ASC"""
     return frappe.db.sql(sql, (currency, purpose), as_dict=True)
-
+#function get avaliable currency balance on click tranaction 
 @frappe.whitelist(allow_guest=True)
-def get_all_avaliale_currency(transaction):
+def get_all_avalialegit_currency(transaction):
     """Server-side function that is triggered when the user clicks 'Yes'."""
     sql = """
 WITH LatestCurrency AS (
@@ -422,6 +422,7 @@ WITH LatestCurrency AS (
         ibd.currency_code, 
         ibd.qty, 
         ibd.booking_qty,
+        ibd.remaining,
         ibd.rate,
         ibd.creation,
         ibd.qty - ibd.booking_qty AS available_qty,
