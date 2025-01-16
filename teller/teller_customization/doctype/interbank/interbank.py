@@ -25,7 +25,8 @@ class InterBank(Document):
           purpose  = self.transaction
           queue_type = self.type
           print ("Data  ==========>",currency,purpose)
-          self.close_queue(currency, purpose, queue_type)
+          if self.type == 'Daily':
+              self.close_queue(currency, purpose, queue_type)
 
 
         # currency_table = self.interbank
