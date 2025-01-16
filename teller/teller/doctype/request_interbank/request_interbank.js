@@ -257,10 +257,14 @@ frappe.ui.form.on("Interbank Request Details", {
     console.log("KING FOR EVER2")
     let row = locals[cdt][cdn];
     console.log("KING FOR EVER3")
-    if(row.qty > row.interbank_balance || row.qty === 0){
-      frappe.model.set_value(cdt,cdn,"qty",0)
-      frappe.throw("Qty is Greater than Interbank Balance")
+    if(frm.doc.type =='Daily'){
+      if(row.qty > row.interbank_balance || row.qty === 0){
+        console.log("Type is",frm.doc.type)
+        frappe.model.set_value(cdt,cdn,"qty",0)
+        frappe.throw("Qty is Greater than Interbank Balance")
+      }
     }
+  
 
     setTimeout(() => {
       let row = locals[cdt][cdn];

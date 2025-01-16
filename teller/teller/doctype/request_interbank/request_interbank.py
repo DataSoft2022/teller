@@ -140,7 +140,7 @@ class Requestinterbank(Document):
         document.branch = self.branch         
         for row in currency_table:
             requested_qty = row.qty
-            if requested_qty > row.interbank_balance:
+            if requested_qty > row.interbank_balance and self.type =='Daily':
                 frappe.throw(f"Row {row.idx}: Requested Qty exceeds Interbank balance.")
             
             currency = row.currency
