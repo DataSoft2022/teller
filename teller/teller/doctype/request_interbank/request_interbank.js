@@ -419,10 +419,13 @@ frappe.ui.form.on('Request interbank', {
                             
                             if (data.length > 0) {
                                 data.forEach(row => {
+                                    console.log("row y king",row)
                                     const child = frm.add_child("items");
                                     child.currency_code = row.currency_code;
                                     child.currency = row.currency;
                                     child.interbank_balance = row.qty;
+                                    child.rate = row.rate;
+                                    child.remaining = row.remaining;
                                 });
                                 frm.refresh_field("items");
                             } else {
