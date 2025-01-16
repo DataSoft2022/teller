@@ -61,6 +61,57 @@ class Requestinterbank(Document):
         if not currency_table:
             frappe.throw("There No booking. Please Add Table for Booking")
             # Helper function to handle interbank logic for booking
+        def process_interbank_booking_holiday(currency, purpose, requested_qty, document):
+            interbanks = get_interbank_holiday(currency=currency, purpose=purpose)
+            bookings = []
+            idx = 0  
+            while idx < len(interbanks):
+                interbank =interbanks[idx]
+                ib_name = interbank.get("name")
+                ib_qty = interbank.get("qty")
+                ib_currency= interbank.get("currency")
+                currency_code = interbank.get("currency_code")
+                ib_rate = interbank.get("rate")
+                ib_booking_qty = interbank.get("booking_qty")
+
+                # #(1)# caluclate  (ib_balance_qty) 
+                # ib_balance_qty = ib_qty - ib_booking_qty
+                # if ib_balance_qty > 0 and ib_remain > 0:
+                #     if ib_balance_qty >= ib_remain:
+                #         append_qty = ib_remain 
+                #         ib_remain = 0 
+                #     else:
+                #         append_qty = ib_balance_qty 
+                #         ib_remain -= append_qty  
+
+                # Append the booking to the bookings list
+                bookings.append({
+                    "currency_code": currency_code,
+                    "currency": currency,
+                    "rate": ib_rate,
+                    "qty": requested_qty,
+                    "interbank_reference": ib_name,
+                    "request_reference": self.name,
+                    "booking_qty": requested_qty
+                })
+                print(f"Booked {requested_qty} of {currency} from interbank {ib_name}.")
+
+                # If there's remaining quantity, add it to the queue
+                # if ib_remain > 0:
+                #     if currency not in queued_qty:
+                #         queued_qty[currency] = 0  # Initialize if the currency is not yet in the dictionary
+                #     queued_qty[currency] = ib_remain  # Update the remaining quantity for this currency
+
+                
+                idx += 1     
+            for booking in bookings:
+                print("bookingsssssssss",len(bookings))
+                print("bookingsssssssss",bookings)
+                document.append("booked_currency", booking)       
+            return requested_qty
+
+  
+          
         def process_interbank_booking(currency, purpose, requested_qty, document):
             interbanks = get_interbank(currency=currency, purpose=purpose)    
             ib_remain = requested_qty
@@ -184,7 +235,7 @@ class Requestinterbank(Document):
                 frappe.throw("You need to queue interbank entries.")
             else:
                 frappe.msgprint(f"yesssssssssss HOliday ")
-                requested_qty = process_interbank_booking(currency, purpose, requested_qty, document)
+                requested_qty = process_interbank_booking_holiday(currency, purpose, requested_qty, document)
         document.insert(ignore_permissions=True)
         frappe.msgprint("Document inserted successfully.")
         
@@ -378,7 +429,37 @@ def get_interbank(currency, purpose):
         ORDER BY ibd.creation ASC
     """
     return frappe.db.sql(sql, (currency, purpose), as_dict=True)
+@frappe.whitelist(allow_guest=True)
+def get_interbank_holiday(currency, purpose):
+    sql = """
+        SELECT 
+            ib.name, 
+             ib.type, 
+            ib.transaction,
+            ib.status,
+            ibd.currency,
+            ibd.currency_code, 
+            ibd.qty, 
+            ibd.booking_qty,
+            ibd.rate,
+            ibd.creation
+        FROM 
+            `tabInterBank` ib 
+        LEFT JOIN 
+            `tabInterBank Details` ibd 
+        ON 
+            ibd.parent = ib.name
+        WHERE 
+            ibd.currency = %s
+        AND ib.docstatus = 1
+        AND ib.transaction = %s
+        AND ib.type = 'Holiday'
+        AND ib.status != 'Closed'
+        AND ibd.status != 'Closed'
+        ORDER BY ibd.creation ASC
 
+      """
+    return frappe.db.sql(sql, (currency, purpose), as_dict=True)    
 @frappe.whitelist(allow_guest=True)
 def get_total(currency, purpose):
     sql="""

@@ -281,7 +281,7 @@ frappe.ui.form.on("Interbank Request Details", {
                   // console.log("Server Response (avaliable_ib_qty):", r.message);
       
                   let avaliable = r.message[0].avaliable_qty;
-                  if (avaliable){
+                  if (avaliable && frm.doc.type === 'Daily'){
 //(1)                    
 //////////////////////////if there ara avalibe interbank get total avaliable qty for (currency,transaction)
                     if(row.qty > avaliable){
