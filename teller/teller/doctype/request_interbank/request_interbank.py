@@ -55,7 +55,6 @@ class Requestinterbank(Document):
                 # frappe.msgprint(f"Interbank {record.interbank_reference} qty: {item.booking_qty - record['booking_qty']} and updated booking quantity.")
         # frappe.db.commit()
 
-    @frappe.whitelist(allow_guest=True)
     def create_booking(self):
         currency_table = self.items
         if not currency_table:
