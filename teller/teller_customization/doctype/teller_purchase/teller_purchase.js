@@ -108,31 +108,31 @@ frappe.ui.form.on("Teller Purchase", {
     }
   },
   // filters accounts with cash ,is group False and account currency not EGY
-  setup: function (frm) {
-    frm.fields_dict["transactions"].grid.get_field("paid_from").get_query =
-      function () {
-        var account_types = ["Cash"];
-        return {
-          filters: {
-            account_type: ["in", account_types],
-            account_currency: ["!=", "EGP"],
-            is_group: 0,
-          },
-        };
-      };
+  // setup: function (frm) {
+  //   frm.fields_dict["transactions"].grid.get_field("paid_from").get_query =
+  //     function () {
+  //       var account_types = ["Cash"];
+  //       return {
+  //         filters: {
+  //           account_type: ["in", account_types],
+  //           account_currency: ["!=", "EGP"],
+  //           is_group: 0,
+  //         },
+  //       };
+  //     };
 
-    // set query to show only codes that belongs to session user
+  //   // set query to show only codes that belongs to session user
 
-    frm.fields_dict["transactions"].grid.get_field("currency_code").get_query =
-      function () {
-        let session = frappe.session.logged_in_user;
-        return {
-          filters: {
-            user: session,
-          },
-        };
-      };
-  },
+  //   frm.fields_dict["transactions"].grid.get_field("currency_code").get_query =
+  //     function () {
+  //       let session = frappe.session.logged_in_user;
+  //       return {
+  //         filters: {
+  //           user: session,
+  //         },
+  //       };
+  //     };
+  // },
 
   refresh(frm) {
     // Automatically refresh the form after duplication
@@ -948,143 +948,144 @@ frappe.ui.form.on("Teller Purchase", {
 });
 // currency transactions table
 
-frappe.ui.form.on("Teller Purchase Child", {
-  paid_from: function (frm, cdt, cdn) {
-    var row = locals[cdt][cdn];
-    if (row.paid_from) {
-      frappe.call({
-        method:
-          "teller.teller_customization.doctype.teller_purchase.teller_purchase.get_currency",
-        args: {
-          account: row.paid_from,
-        },
-        callback: function (r) {
-          console.log(r.message);
-          console.log(r.message[0]);
-          let curr = r.message[0];
-          let currency_rate = r.message[1];
-          let currencyCode = r.message[3];
-          console.log("the currency code is " + currencyCode);
+// frappe.ui.form.on("Teller Purchase Child", {
+//   paid_from: function (frm, cdt, cdn) {
+//     var row = locals[cdt][cdn];
+//     if (row.paid_from) {
+//       frappe.call({
+//         method:
+//           "teller.teller_customization.doctype.teller_purchase.teller_purchase.get_currency",
+//         args: {
+//           account: row.paid_from,
+//         },
+//         callback: function (r) {
+//           console.log(r.message);
+//           console.log(r.message[0]);
+//           let curr = r.message[0];
+//           let currency_rate = r.message[1];
+//           let currencyCode = r.message[3];
+//           console.log("the currency code is " + currencyCode);
 
-          frappe.model.set_value(cdt, cdn, "currency", curr);
-          frappe.model.set_value(cdt, cdn, "rate", currency_rate);
-          frappe.model.set_value(cdt, cdn, "code", currencyCode);
-          // frm.set_df_property("paid_from", "hidden", 1);
+//           frappe.model.set_value(cdt, cdn, "currency", curr);
+//           frappe.model.set_value(cdt, cdn, "rate", currency_rate);
+//           frappe.model.set_value(cdt, cdn, "code", currencyCode);
+//           // frm.set_df_property("paid_from", "hidden", 1);
 
-          // Hide paid_from field in the child table row
-          // if (row.code) {
-          //   frm.fields_dict["transactions"].grid.grid_rows_by_docname[
-          //     row.name
-          //   ].toggle_display("paid_from", false);
-          // } else {
-          //   frm.fields_dict[cdt].grid.grid_rows_by_docname[cdn].toggle_display(
-          //     "paid_from",
-          //     true
-          //   );
-          // }
-        },
-      });
+//           // Hide paid_from field in the child table row
+//           // if (row.code) {
+//           //   frm.fields_dict["transactions"].grid.grid_rows_by_docname[
+//           //     row.name
+//           //   ].toggle_display("paid_from", false);
+//           // } else {
+//           //   frm.fields_dict[cdt].grid.grid_rows_by_docname[cdn].toggle_display(
+//           //     "paid_from",
+//           //     true
+//           //   );
+//           // }
+//         },
+//       });
 
-      frappe.call({
-        method:
-          "teller.teller_customization.doctype.teller_purchase.teller_purchase.account_from_balance",
-        args: {
-          paid_from: row.paid_from,
-          // company: frm.doc.company,
-        },
-        callback: function (r) {
-          if (r.message) {
-            console.log(r.message);
-            let from_balance = r.message;
+//       frappe.call({
+//         method:
+//           "teller.teller_customization.doctype.teller_purchase.teller_purchase.account_from_balance",
+//         args: {
+//           paid_from: row.paid_from,
+//           // company: frm.doc.company,
+//         },
+//         callback: function (r) {
+//           if (r.message) {
+//             console.log(r.message);
+//             let from_balance = r.message;
 
-            frappe.model.set_value(cdt, cdn, "balance", from_balance);
-          } else {
-            console.log("not found");
-          }
-        },
-      });
-    }
-  },
+//             frappe.model.set_value(cdt, cdn, "balance", from_balance);
+//           } else {
+//             console.log("not found");
+//           }
+//         },
+//       });
+//     }
+//   },
 
-  currency_code(frm, cdt, cdn) {
-    var row = locals[cdt][cdn];
-    console.log("currency_code is " + row.currency_code);
+//   currency_code(frm, cdt, cdn) {
+//     var row = locals[cdt][cdn];
+//     console.log("currency_code is " + row.currency_code);
 
-    let current_user = frappe.session.logged_in_user;
-    frappe.call({
-      method:
-        "teller.teller_customization.doctype.teller_purchase.teller_purchase.get_list_currency_code",
-      args: {
-        session_user: current_user,
-        code: row.currency_code,
-      },
-      callback: function (r) {
-        if (r.message) {
-          console.log(
-            "codes.teller_customization.doctype",
-            r.message[0]["account"]
-          );
-          let account = r.message[0]["account"];
-          if (account) {
-            frappe.model.set_value(cdt, cdn, "paid_from", account);
-            // frm.set_value("receipt_number2", account);
-          }
-        }
-      },
-    });
-  },
+//     let current_user = frappe.session.logged_in_user;
+//     console.log("USer....",current_user)
+//     frappe.call({
+//       method:
+//         "teller.teller_customization.doctype.teller_purchase.teller_purchase.get_list_currency_code",
+//       args: {
+//         session_user: current_user,
+//         code: row.currency_code,
+//       },
+//       callback: function (r) {
+//         if (r.message) {
+//           console.log(
+//             "codes.teller_customization.doctype",
+//             r.message[0]["account"]
+//           );
+//           let account = r.message[0]["account"];
+//           if (account) {
+//             frappe.model.set_value(cdt, cdn, "paid_from", account);
+//             // frm.set_value("receipt_number2", account);
+//           }
+//         }
+//       },
+//     });
+//   },
 
-  usd_amount: function (frm, cdt, cdn) {
-    var row = locals[cdt][cdn];
+//   usd_amount: function (frm, cdt, cdn) {
+//     var row = locals[cdt][cdn];
 
-    if (row.paid_from && row.usd_amount) {
-      let total = row.usd_amount * row.rate;
+//     if (row.paid_from && row.usd_amount) {
+//       let total = row.usd_amount * row.rate;
 
-      frappe.model.set_value(cdt, cdn, "total_amount", total);
-      frappe.model.set_value(cdt, cdn, "received_amount", total);
+//       frappe.model.set_value(cdt, cdn, "total_amount", total);
+//       frappe.model.set_value(cdt, cdn, "received_amount", total);
 
-      //received_amount
+//       //received_amount
 
-      // Update currency balances
+//       // Update currency balances
 
-      // frappe.call({
-      //   method:
-      //     "teller.teller_customization.doctype.teller_purchase.teller_purchase.account_from_balance",
-      //   args: {
-      //     paid_from: row.paid_from,
-      //     // company: frm.doc.company,
-      //   },
-      //   callback: function (r) {
-      //     if (r.message) {
-      //       console.log(r.message);
-      //       let from_balance = r.message;
+//       // frappe.call({
+//       //   method:
+//       //     "teller.teller_customization.doctype.teller_purchase.teller_purchase.account_from_balance",
+//       //   args: {
+//       //     paid_from: row.paid_from,
+//       //     // company: frm.doc.company,
+//       //   },
+//       //   callback: function (r) {
+//       //     if (r.message) {
+//       //       console.log(r.message);
+//       //       let from_balance = r.message;
 
-      //       frappe.model.set_value(cdt, cdn, "balance", from_balance);
-      //     } else {
-      //       console.log("not found");
-      //     }
-      //   },
-      // });
-    } else {
-      frappe.throw("Amount and Account From  are required");
-    }
-  },
-  total_amount: (frm, cdt, cdn) => {
-    let total = 0;
-    frm.doc.transactions.forEach((item) => {
-      total += item.total_amount;
-    });
-    frm.set_value("total", total);
-  },
-  transactions_remove: (frm, cdt, cdn) => {
-    let total = 0;
-    frm.doc.transactions.forEach((item) => {
-      total += item.total_amount;
-    });
-    frm.set_value("total", total);
-    console.log(`after remove ${total}`);
-  },
-});
+//       //       frappe.model.set_value(cdt, cdn, "balance", from_balance);
+//       //     } else {
+//       //       console.log("not found");
+//       //     }
+//       //   },
+//       // });
+//     } else {
+//       frappe.throw("Amount and Account From  are required");
+//     }
+//   },
+//   total_amount: (frm, cdt, cdn) => {
+//     let total = 0;
+//     frm.doc.transactions.forEach((item) => {
+//       total += item.total_amount;
+//     });
+//     frm.set_value("total", total);
+//   },
+//   transactions_remove: (frm, cdt, cdn) => {
+//     let total = 0;
+//     frm.doc.transactions.forEach((item) => {
+//       total += item.total_amount;
+//     });
+//     frm.set_value("total", total);
+//     console.log(`after remove ${total}`);
+//   },
+// });
 // function to setup branch and shift
 function set_branch_and_shift(frm) {
   // set the branch
@@ -1472,3 +1473,89 @@ frappe.ui.form.on("Teller Purchase",{
       },__("Get Item From"))
   }
 })
+  //////////////////////////////////////////////////////////////////////////////////////////
+                              //  Filter paid_from //
+  //////////////////////////////////////////////////////////////////////////////////////////
+  frappe.ui.form.on("Teller Purchase Child", {
+    // filter accounts
+  
+    code: function (frm, cdt, cdn) {
+      var row = locals[cdt][cdn];
+      console.log(row)
+      var code = row.code;
+      var curr = row.currency;
+      
+          frm.fields_dict["transactions"].grid.get_field("paid_from").get_query =
+      function () {
+
+
+        return {
+          filters: {
+          
+            account_currency: ["!=", "EGP"],
+            is_group: 0,
+            custom_currency_number: row.code,
+          },
+        };
+      };
+    },
+    paid_from: function (frm, cdt, cdn) {
+      var row = locals[cdt][cdn];
+      console.log(row)
+      var code = row.code;
+      var curr = row.currency;
+
+          frm.fields_dict["transactions"].grid.get_field("paid_from").set_query =
+      function () {
+
+
+        return {
+          filters: {
+          
+            account_currency: ["!=", "EGP"],
+            is_group: 0,
+            custom_currency_number: row.code,
+          },
+        };
+      };
+    },
+    
+  })
+
+    //////////////////////////////////////////////////////////////////////////////////////////
+                              //  Fetch Currency  //
+  //////////////////////////////////////////////////////////////////////////////////////////
+
+  frappe.ui.form.on("Teller Purchase Child", {
+    code(frm, cdt, cdn) {
+      var row = locals[cdt][cdn];
+      frappe.call({
+        method: "frappe.client.get_list",
+        args: {
+          doctype: "Currency",
+          fields: ["name", "custom_currency_code"],
+          filters: [["custom_currency_code", "=", row.code]],
+        },
+        callback: function (response) {
+          let currencies = response.message || [];
+          // console.log("Fetched currencies:", currencies);
+  
+          // Assuming you need to update something based on these currencies
+          if (currencies.length > 0) {
+            // Update the form field with the first currency's details as an example
+            let currency = currencies[0]; // Take the first matched currency
+            // console.log("Selected currency:", currency);
+  
+            // Example: Update a field in the current row
+            frappe.model.set_value(cdt, cdn, "currency_code", currency.name);
+            frappe.model.set_value(cdt, cdn, "currency", currency.name);
+
+            // Optionally, you can set additional fields if needed
+            // frappe.model.set_value(cdt, cdn, "another_field", currency.another_field);
+          } else {
+            console.log("No matching currencies found.");
+          }
+        },
+      });
+    },
+  });
