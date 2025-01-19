@@ -6,9 +6,9 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "paid_from",
-  "currency_code",
   "code",
+  "currency_code",
+  "paid_from",
   "currency",
   "usd_amount",
   "rate",
@@ -18,9 +18,12 @@
  ],
  "fields": [
   {
+   "allow_in_quick_entry": 1,
    "fieldname": "paid_from",
    "fieldtype": "Link",
    "in_list_view": 1,
+   "in_preview": 1,
+   "in_standard_filter": 1,
    "label": "Teller",
    "options": "Account",
    "reqd": 1
@@ -28,10 +31,10 @@
   {
    "fieldname": "currency",
    "fieldtype": "Link",
+   "hidden": 1,
    "label": "Currency",
    "options": "Currency",
-   "read_only": 1,
-   "reqd": 1
+   "read_only": 1
   },
   {
    "fieldname": "rate",
@@ -70,21 +73,21 @@
   {
    "fieldname": "code",
    "fieldtype": "Data",
-   "label": "Code",
-   "read_only": 1
+   "label": "Code"
   },
   {
+   "fetch_from": "currency.currency_name",
    "fieldname": "currency_code",
    "fieldtype": "Link",
-   "label": "Currency Code",
-   "options": "Currency Code",
-   "reqd": 1
+   "label": "Currency ",
+   "options": "Currency",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-01-13 16:29:04.266081",
+ "modified": "2025-01-19 16:48:31.876988",
  "modified_by": "Administrator",
  "module": "Teller Customization",
  "name": "Entry Child",

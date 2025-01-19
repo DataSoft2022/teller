@@ -6,9 +6,9 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "paid_from",
-  "currency_code",
   "code",
+  "currency_code",
+  "paid_from",
   "currency",
   "usd_amount",
   "rate",
@@ -63,20 +63,19 @@
   {
    "fieldname": "code",
    "fieldtype": "Data",
-   "label": "Code",
-   "read_only": 1
+   "label": "Code"
   },
   {
    "fieldname": "currency_code",
    "fieldtype": "Link",
-   "label": "Currency Code",
-   "options": "Currency Code"
+   "label": "Currency",
+   "options": "Currency"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-07-18 13:47:29.238116",
+ "modified": "2025-01-19 17:39:16.882675",
  "modified_by": "Administrator",
  "module": "Teller Customization",
  "name": "Teller Purchase Child",
