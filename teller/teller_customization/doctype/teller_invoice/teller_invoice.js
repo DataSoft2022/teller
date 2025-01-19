@@ -1569,80 +1569,80 @@ frappe.ui.form.on('Teller Invoice', {
           cur_frm.clear_table("transactions");
         }
         
-  /////////////////////////1
-  let query_args = {
-    // query:"dotted.path.to.method",
-    filters: { docstatus: ["!=", 2], customer: cur_frm.doc.company_name }
-}
-///////////////////////////2.
-  new frappe.ui.form.MultiSelectDialog({
-    doctype: "Booking Interbank",
-    target: cur_frm,
-    setters: {
-        type: 'Selling',
-        branch: null,
-        customer:'الاهلي',
-    },
-    add_filters_group: 1,
-    date_field: "date",
-    allow_child_item_selection: 1,
-    child_columns: ["currency","qty","rate"],
-    child_fieldname:"booked_currency",
-    columns: ["name", "type", "status","date"],
-    get_query() {
-        return query_args;
-    },
-    action(selections,args) {
-      // console.log("children",args.filtered_children);
-      // console.log("selections",selections);
-    
-        selections.forEach(function(booking_ib){
-          console.log("ib",booking_ib)
-          if (booking_ib){
-              frappe.call({
-                method:"frappe.client.get",
-                args:{
-                  "doctype":"Booking Interbank",
-                    filters:{
-                      "name":booking_ib
-                    }
-                },callback:function(response){
-                    if(response){
-                      // response
-                      console.log("Response",response.message)
-                      response.message.booked_currency.forEach(function(item){
-                        var bo_items = args.filtered_children;
-                        if(bo_items.length){
-                          frappe.msgprint("Table Booked Currency  => Selected")
-                          bo_items.forEach(function(bo_item){
-                            if(bo_item == item.name){
+        /////////////////////////1
+        let query_args = {
+          // query:"dotted.path.to.method",
+          filters: { docstatus: ["!=", 2], customer: cur_frm.doc.company_name }
+      }
+      // ///////////////////////////2.
+        new frappe.ui.form.MultiSelectDialog({
+          doctype: "Booking Interbank",
+          target: cur_frm,
+          setters: {
+            transaction: 'Selling',
+              branch: null,
+              customer:'الاهلي',
+          },
+          add_filters_group: 1,
+          date_field: "date",
+          allow_child_item_selection: 1,
+          child_columns: ["currency","qty","rate"],
+          child_fieldname:"booked_currency",
+          columns: ["name", "transaction", "status","date"],
+          get_query() {
+              return query_args;
+          },
+          action(selections,args) {
+            // console.log("children",args.filtered_children);
+            console.log("selections",selections);
+          
+              selections.forEach(function(booking_ib){
+                console.log("ib",booking_ib)
+                if (booking_ib){
+                    frappe.call({
+                      method:"frappe.client.get",
+                      args:{
+                        "doctype":"Booking Interbank",
+                          filters:{
+                            "name":booking_ib
+                          }
+                      },callback:function(response){
+                          if(response){
+                            // response
+                            console.log("Response Get ITEM:",response.message)
+                            response.message.booked_currency.forEach(function(item){
+                              var bo_items = args.filtered_children;
+                              if(bo_items.length){
+                                frappe.msgprint("Table Booked Currency  => Selected")
+                                bo_items.forEach(function(bo_item){
+                                  if(bo_item == item.name){
+                                      var child = frm.add_child("transactions");
+                                          child.currency = item.currency;
+                                          child.qty = item.qty;
+                                          child.rate = item.rate;
+                                  }
+                                })
+                              }else{
+                                frappe.msgprint("Booking Interbank => Selected")
                                 var child = frm.add_child("transactions");
-                                    child.currency = item.currency;
-                                    child.qty = item.qty;
-                                    child.rate = item.rate;
-                            }
-                          })
-                        }else{
-                          frappe.msgprint("Booking Interbank => Selected")
-                          var child = frm.add_child("transactions");
-                          child.currency = item.currency;
-                          child.qty = item.qty;
-                          child.rate = item.rate;
+                                child.currency = item.currency;
+                                child.qty = item.qty;
+                                child.rate = item.rate;
+                              }
+                            
+                            })
+                            frm.refresh_field("transactions")
+                            cur_dialog.hide();
+                          }
                         }
                       
-                      })
-                      frm.refresh_field("transactions")
-                      cur_dialog.hide();
-                    }
-                  }
-                
-              })            
+                    })            
+                }
+              })
           }
-        })
-    }
-    })
-    
-  
+          })
+          
+        
 
     
     

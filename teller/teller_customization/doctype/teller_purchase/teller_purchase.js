@@ -1412,14 +1412,14 @@ frappe.ui.form.on("Teller Purchase",{
           doctype:"Booking Interbank",
           target:cur_frm,
           setters: {
-            type: 'Purchasing',
+            transaction: 'Purchasing',
             branch: null,
             customer:'الاهلي',
         },
         allow_child_item_selection: 1,
         child_columns: ["currency","qty","rate"],
         child_fieldname:"booked_currency",
-        columns: ["name", "type", "status","date"],
+        columns: ["name", "transaction", "status","date"],
         action(selections,args) {
           // console.log("children",args.filtered_children);
           // console.log("selections",selections);
@@ -1484,7 +1484,7 @@ frappe.ui.form.on("Teller Purchase",{
       console.log(row)
       var code = row.code;
       var curr = row.currency;
-      
+
           frm.fields_dict["transactions"].grid.get_field("paid_from").get_query =
       function () {
 
