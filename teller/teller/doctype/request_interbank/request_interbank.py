@@ -9,7 +9,7 @@ class Requestinterbank(Document):
             frappe.throw("Table is Empty")
         for row in self.items:
             if not row.qty or row.qty == 0:
-                frappe.throw(f" Row {row.idx}# can't be rate {row.qty}")
+                frappe.throw(f" Row {row.idx}# can't be {row.qty}")
         # self.create_queue()
         self.create_booking()
         
