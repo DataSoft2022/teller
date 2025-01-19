@@ -1,6 +1,7 @@
 {
  "actions": [],
  "allow_rename": 1,
+ "autoname": "Branch-INT-Request-.#####",
  "creation": "2025-01-19 12:51:43.215253",
  "default_view": "List",
  "doctype": "DocType",
@@ -91,10 +92,11 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-01-19 13:16:44.318104",
+ "modified": "2025-01-19 13:30:45.638609",
  "modified_by": "Administrator",
  "module": "Teller",
  "name": "Branch Interbank Request",
+ "naming_rule": "Expression (old style)",
  "owner": "Administrator",
  "permissions": [
   {
