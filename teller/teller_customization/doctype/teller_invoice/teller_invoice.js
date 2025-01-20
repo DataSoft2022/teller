@@ -1585,9 +1585,9 @@ function validateRegistrationDateExpiration(frm, end) {
 //     },
 //     add_filters_group: 1,
 //     date_field: "date",
-//     allow_child_item_selection: 1,
-//     child_columns: ["currency","qty","rate"],
-//     child_fieldname:"booked_currency",
+  //     allow_child_item_selection: 1,
+  //     child_columns: ["currency","qty","rate"],
+  //     child_fieldname:"booked_currency",
 //     columns: ["name", "type", "status","date"],
 //     get_query() {
 //         return query_args;

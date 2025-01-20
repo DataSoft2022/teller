@@ -165,7 +165,7 @@ class TellerInvoice(Document):
         # create Gl entry on submit
 
         for row in self.get("transactions"):
-            if row.paid_from and self.egy and row.usd_amount and row.received_amount:
+            if row.paid_from and self.egy and row.usd_amount:
                 account_from = get_doc(
                     {
                         "doctype": "GL Entry",
