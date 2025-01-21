@@ -1609,7 +1609,7 @@ frappe.ui.form.on('Teller Invoice', {
                       },callback:function(response){
                           if(response){
                             // response
-                            console.log("Response Get ITEM:",response.message)
+                            console.log("Res booked_currency:",response.message.booked_currency)
                             response.message.booked_currency.forEach(function(item){
                               var bo_items = args.filtered_children;
                               if(bo_items.length){
@@ -1617,7 +1617,8 @@ frappe.ui.form.on('Teller Invoice', {
                                 bo_items.forEach(function(bo_item){
                                   if(bo_item == item.name){
                                       var child = frm.add_child("transactions");
-                                          child.currency = item.currency;
+                                          child.code = item.currency_code;
+                                          child.currency_code = item.currency;
                                           child.qty = item.qty;
                                           child.rate = item.rate;
                                   }
@@ -1625,7 +1626,8 @@ frappe.ui.form.on('Teller Invoice', {
                               }else{
                                 frappe.msgprint("Booking Interbank => Selected")
                                 var child = frm.add_child("transactions");
-                                child.currency = item.currency;
+                                child.code = item.currency_code;
+                                child.currency_code = item.currency;
                                 child.qty = item.qty;
                                 child.rate = item.rate;
                               }
@@ -1643,7 +1645,7 @@ frappe.ui.form.on('Teller Invoice', {
           })
           
         
-
+          
     
     
       },
@@ -1744,17 +1746,19 @@ if (row.code) {
       args: {
           doctype: "User Permission",
           filters: {
+            // user: 'andrew@datasofteg.com',
               user: frappe.session.user, // Filter by the current user
               allow: "Account" // Ensure permissions are for the Account doctype
           },
           fields: ["for_value"]
       },
       callback: function(permissionResponse) {
-          console.log("User Permission response:", permissionResponse);
+          console.log("User Permission (response):", permissionResponse.message);
 
           if (permissionResponse.message && permissionResponse.message.length > 0) {
+            console.log("for_value:", permissionResponse.message);
               let userAccounts = permissionResponse.message.map(record => record.for_value);
-              console.log("Accounts from User Permission:", userAccounts);
+              console.log("Accounts from User Permission (userAccounts):", userAccounts);
 
               // Step 2: Check each user-permitted account for matching custom_currency_code
               frappe.call({
@@ -1763,7 +1767,7 @@ if (row.code) {
                       doctype: "Account",
                       filters: {
                           parent_account: ["in", userAccounts], // Accounts must be under the parent_account from User Permission
-                          custom_currency_code: row.code // Match custom_currency_code with the entered code
+                          // custom_currency_code: row.code // Match custom_currency_code with the entered code
                       },
                       fields: ["name", "custom_currency_code", "parent_account"]
                   },
@@ -1771,11 +1775,17 @@ if (row.code) {
                       console.log("Account fetch response:", accountResponse);
 
                       if (accountResponse.message && accountResponse.message.length > 0) {
-                          let matchingAccount = accountResponse.message[0]; // Use the first match
+                          let matchingAccount = accountResponse.message; // Use the first match
                           console.log("Matching Account Found:", matchingAccount);
-
+                          for (let cur of matchingAccount){
+                            if (cur.custom_currency_code === row.code){
+                              console.log("ssss",cur.name)
+                              frappe.model.set_value(cdt, cdn, "paid_from", cur.name);
+  
+                            }
+                          }
+  
                           // Set the account name in the paid_from field
-                          frappe.model.set_value(cdt, cdn, "paid_from", matchingAccount.name);
                       } else {
                           console.log(`No matching Account found for code: ${row.code}`);
                           frappe.msgprint(`No matching Account found for code: ${row.code}`);
