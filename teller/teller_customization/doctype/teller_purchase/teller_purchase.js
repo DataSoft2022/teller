@@ -1557,5 +1557,68 @@ frappe.ui.form.on("Teller Purchase",{
           }
         },
       });
+      ////////////////////////////////Fixing User Permission\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+            
+      if (row.code) {
+        console.log("Code entered:", row.code);
+
+        // Step 1: Fetch User Permissions for Accounts
+        frappe.call({
+            method: "frappe.client.get_list",
+            args: {
+                doctype: "User Permission",
+                filters: {
+                    user: frappe.session.user, // Filter by the current user
+                    allow: "Account" // Ensure permissions are for the Account doctype
+                },
+                fields: ["for_value"]
+            },
+            callback: function(permissionResponse) {
+                console.log("User Permission response:", permissionResponse);
+
+                if (permissionResponse.message && permissionResponse.message.length > 0) {
+                    let userAccounts = permissionResponse.message.map(record => record.for_value);
+                    console.log("Accounts from User Permission:", userAccounts);
+
+                    // Step 2: Check each user-permitted account for matching custom_currency_code
+                    frappe.call({
+                        method: "frappe.client.get_list",
+                        args: {
+                            doctype: "Account",
+                            filters: {
+                                parent_account: ["in", userAccounts], // Accounts must be under the parent_account from User Permission
+                                custom_currency_code: row.code // Match custom_currency_code with the entered code
+                            },
+                            fields: ["name", "custom_currency_code", "parent_account"]
+                        },
+                        callback: function(accountResponse) {
+                            console.log("Account fetch response:", accountResponse);
+
+                            if (accountResponse.message && accountResponse.message.length > 0) {
+                                let matchingAccount = accountResponse.message[0]; // Use the first match
+                                console.log("Matching Account Found:", matchingAccount);
+
+                                // Set the account name in the paid_from field
+                                frappe.model.set_value(cdt, cdn, "paid_from", matchingAccount.name);
+                            } else {
+                                console.log(`No matching Account found for code: ${row.code}`);
+                                frappe.msgprint(`No matching Account found for code: ${row.code}`);
+                                frappe.model.set_value(cdt, cdn, "paid_from", null); // Clear the field
+                            }
+                        }
+                    });
+                } else {
+                    console.log("No User Permissions found for Accounts.");
+                    frappe.msgprint("No User Permissions found for Accounts.");
+                    frappe.model.set_value(cdt, cdn, "paid_from", null); // Clear the field
+                }
+            }
+        });
+    } else {
+        console.log("Code field is empty. No action taken.");
+    }
+
+
+
     },
   });
