@@ -217,7 +217,7 @@
    "fieldname": "company_commercial_no",
    "fieldtype": "Data",
    "label": "Company Commercial No ",
-   "mandatory_depends_on": "eval: (doc.client_type === \"Company\" || doc.client_type === \"Interbank\")",
+   "mandatory_depends_on": "eval:doc.client_type === \"Company\"",
    "read_only": 1
   },
   {
@@ -713,7 +713,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-01-09 00:06:17.436897",
+ "modified": "2025-01-21 12:06:20.472300",
  "modified_by": "Administrator",
  "module": "Teller Customization",
  "name": "Teller Invoice",

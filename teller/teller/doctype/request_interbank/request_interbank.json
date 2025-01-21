@@ -93,7 +93,7 @@
    "fieldname": "transaction",
    "fieldtype": "Select",
    "label": "Transaction",
-   "options": "Purchasing\nSelling"
+   "options": "\nPurchasing\nSelling"
   },
   {
    "fieldname": "type",
@@ -105,7 +105,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-01-14 16:11:22.159232",
+ "modified": "2025-01-21 12:02:20.865743",
  "modified_by": "Administrator",
  "module": "Teller",
  "name": "Request interbank",
