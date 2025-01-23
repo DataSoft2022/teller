@@ -12,7 +12,7 @@ frappe.ui.form.on("Teller Invoice", {
         args: {
           doctype: "Customer",
           // name: "Bank al-ahly", 
-          name: "الاهلي",
+          name: "البنك الاهلي",
         },
         callback: function (response) {
           console.log("response", response.message);
@@ -41,7 +41,7 @@ frappe.ui.form.on("Teller Invoice", {
   // setup: function (frm) {
   //   // filters accounts with cash ,is group False and account currency not EGY
 
-  //   frm.fields_dict["transactions"].grid.get_field("paid_from").get_query =
+  //   frm.fields_dict["teller_invoice_details"].grid.get_field("paid_from").get_query =
   //     function () {
   //       var account_types = ["Cash"];
   //       return {
@@ -54,7 +54,7 @@ frappe.ui.form.on("Teller Invoice", {
   //     };
 
   //   // get query for codes the belongs to currenct user
-  //   frm.fields_dict["transactions"].grid.get_field("currency_code").get_query =
+  //   frm.fields_dict["teller_invoice_details"].grid.get_field("currency_code").get_query =
   //     function () {
   //       let currentUser = frappe.session.logged_in_user;
   //       return {
@@ -320,15 +320,15 @@ frappe.ui.form.on("Teller Invoice", {
         let book_table = doc.booked_currency;
         for (let item of book_table) {
           console.log(item.currency);
-          let child = frm.add_child("transactions");
+          let child = frm.add_child("teller_invoice_details");
           child.currency = item.currency;
           child.currency_code = item.custom_currency_code;
           child.rate = item.rate;
-          // frm.doc.transactions.forEach((row) => {
+          // frm.doc.teller_invoice_details.forEach((row) => {
           //   frappe.model.set_value(cdt, cdn, "currency", item.currency);
           // });
         }
-        frm.refresh_field("transactions");
+        frm.refresh_field("teller_invoice_details");
         d.hide();
       },
     });
@@ -1026,7 +1026,7 @@ frappe.ui.form.on("Teller Invoice", {
   //   if (frm.doc.docstatus == 0) {
   //     let total_currency_amount = 0;
 
-  //     frm.doc.transactions.forEach((row) => {
+  //     frm.doc.teller_invoice_details.forEach((row) => {
   //       if (row.paid_from) {
   //         frappe.call({
   //           method:
@@ -1048,7 +1048,7 @@ frappe.ui.form.on("Teller Invoice", {
 
   //             total_currency_amount += currency_total;
   //             console.log("from loop: " + total_currency_amount);
-  //             frm.refresh_field("transactions");
+  //             frm.refresh_field("teller_invoice_details");
   //             frm.set_value("total", total_currency_amount);
   //           },
   //         });
@@ -1085,9 +1085,10 @@ frappe.ui.form.on("Teller Invoice", {
       // check if the total is exceeded
       isExceededLimit(frm, frm.doc.client, frm.doc.total);
     } else {
+      // teller_invoice_details
       frappe.msgprint({
         message:
-          '<div style="background-color: #f8d7da; color: #721c24; padding: 10px; border-radius: 5px; font-family: Arial, sans-serif; font-size: 14px;">Please enter Customer to validate the transaction</div>',
+          '<div style="background-color: #f8d7da; color: #721c24; padding: 10px; border-radius: 5px; font-family: Arial, sans-serif; font-size: 14px;">Pleases enter Customer to validate the transaction</div>',
         title: "Missing Data Error",
         indicator: "red",
       });
@@ -1131,8 +1132,8 @@ frappe.ui.form.on("Teller Invoice", {
   },
 });
 
-//  Transactions currency table
-frappe.ui.form.on("Entry Child", {
+//  teller_invoice_details currency table
+frappe.ui.form.on("Teller Invoice Details", {
   // filter accounts
 
   // paid_from: function (frm, cdt, cdn) {
@@ -1207,15 +1208,15 @@ frappe.ui.form.on("Entry Child", {
     let total = 0;
     let currency_total = 0;
     if (row.total_amount) {
-      frm.doc.transactions.forEach((item) => {
+      frm.doc.teller_invoice_details.forEach((item) => {
         total += item.total_amount;
       });
       frm.set_value("total", total);
     }
   },
-  transactions_remove: function (frm) {
+  teller_invoice_details_remove: function (frm) {
     let total = 0;
-    frm.doc.transactions.forEach((item) => {
+    frm.doc.teller_invoice_details.forEach((item) => {
       total += item.total_amount;
     });
     frm.set_value("total", total);
@@ -1566,13 +1567,23 @@ frappe.ui.form.on('Teller Invoice', {
         if (!frm.doc.client_type || frm.doc.client_type !== 'Interbank') {
           frappe.throw({title: __("Mandatory"),message: __("Please Select a Client Type Interbank")});
         }else{
-          cur_frm.clear_table("transactions");
+          cur_frm.clear_table("teller_invoice_details");
         }
         
         /////////////////////////1
         let query_args = {
           // query:"dotted.path.to.method",
-          filters: { docstatus: ["!=", 2], customer: cur_frm.doc.company_name }
+          filters: { 
+            docstatus: ["!=", 2], 
+            customer: cur_frm.doc.company_name,
+            
+            // booked_currency: [
+            //   {
+            //     doctype: "Booked Currency",
+            //     status:"Not Billed"
+            //   },
+            // ],
+           }
       }
       // ///////////////////////////2.
         new frappe.ui.form.MultiSelectDialog({
@@ -1581,13 +1592,19 @@ frappe.ui.form.on('Teller Invoice', {
           setters: {
             transaction: 'Selling',
               branch: null,
-              customer:'الاهلي',
+              customer:'البنك الاهلي',
           },
           add_filters_group: 1,
           date_field: "date",
-          allow_child_item_selection: 1,
-          child_columns: ["currency","qty","rate"],
+          // allow_child_item_selection: 1,
+          child_columns: ["currency","qty","rate","status"],
           child_fieldname:"booked_currency",
+          // booked_currency: [
+          //   {
+          //     doctype: "Booked Currency",
+          //     status:"Not Billed"
+          //   },
+          // ],
           columns: ["name", "transaction", "status","date"],
           get_query() {
               return query_args;
@@ -1604,7 +1621,8 @@ frappe.ui.form.on('Teller Invoice', {
                       args:{
                         "doctype":"Booking Interbank",
                           filters:{
-                            "name":booking_ib
+                            "name":booking_ib,
+                            "status": ["in", ["Partial Billed", "Not Billed"]],
                           }
                       },callback:function(response){
                           if(response){
@@ -1612,28 +1630,35 @@ frappe.ui.form.on('Teller Invoice', {
                             console.log("Res booked_currency:",response.message.booked_currency)
                             response.message.booked_currency.forEach(function(item){
                               var bo_items = args.filtered_children;
-                              if(bo_items.length){
-                                frappe.msgprint("Table Booked Currency  => Selected")
-                                bo_items.forEach(function(bo_item){
-                                  if(bo_item == item.name){
-                                      var child = frm.add_child("transactions");
-                                          child.code = item.currency_code;
-                                          child.currency_code = item.currency;
-                                          child.qty = item.qty;
-                                          child.rate = item.rate;
-                                  }
-                                })
-                              }else{
-                                frappe.msgprint("Booking Interbank => Selected")
-                                var child = frm.add_child("transactions");
-                                child.code = item.currency_code;
-                                child.currency_code = item.currency;
-                                child.qty = item.qty;
-                                child.rate = item.rate;
+                              if (item.status === "Not Billed") {
+
+                                if(bo_items.length){
+                                  frappe.msgprint("Table Booked Currency  => Selected")
+                                  bo_items.forEach(function(bo_item){
+                                    if(bo_item == item.name){
+                                        var child = frm.add_child("teller_invoice_details");
+                                            child.code = item.currency_code;
+                                            child.currency_code = item.currency;
+                                            child.usd_amount = item.qty;
+                                            child.rate = item.rate;
+                                            child.booking_interbank = booking_ib
+                                            get_account (frm, child)
+                                            child.booking_interbank = booking_ib
+                                    }
+                                  })
+                                }else{
+                                  frappe.msgprint("Booking Interbank => Selected")
+                                  var child = frm.add_child("teller_invoice_details");
+                                  child.code = item.currency_code;
+                                  get_account (frm, child)
+                                  child.booking_interbank = booking_ib
+                                  child.currency_code = item.currency;
+                                  child.usd_amount = item.qty;
+                                  child.rate = item.rate;
+                                }
                               }
-                            
                             })
-                            frm.refresh_field("transactions")
+                            frm.refresh_field("teller_invoice_details")
                             cur_dialog.hide();
                           }
                         }
@@ -1656,7 +1681,7 @@ frappe.ui.form.on('Teller Invoice', {
   //////////////////////////////////////////////////////////////////////////////////////////
                               //  Filter paid_from //
   //////////////////////////////////////////////////////////////////////////////////////////
-  frappe.ui.form.on("Entry Child", {
+  frappe.ui.form.on("Teller Invoice Details", {
     // filter accounts
   
     code: function (frm, cdt, cdn) {
@@ -1665,7 +1690,7 @@ frappe.ui.form.on('Teller Invoice', {
       var code = row.code;
       var curr = row.currency;
 
-          frm.fields_dict["transactions"].grid.get_field("paid_from").get_query =
+          frm.fields_dict["teller_invoice_details"].grid.get_field("paid_from").get_query =
       function () {
 
 
@@ -1685,7 +1710,7 @@ frappe.ui.form.on('Teller Invoice', {
       var code = row.code;
       var curr = row.currency;
 
-          frm.fields_dict["transactions"].grid.get_field("paid_from").get_query =
+          frm.fields_dict["teller_invoice_details"].grid.get_field("paid_from").get_query =
       function () {
 
 
@@ -1704,7 +1729,7 @@ frappe.ui.form.on('Teller Invoice', {
 
   //////////////////////////////////////////////////////////////////////////////////
 
-  frappe.ui.form.on("Entry Child", {
+  frappe.ui.form.on("Teller Invoice Details", {
     code(frm, cdt, cdn) {
       var row = locals[cdt][cdn];
       frappe.call({
@@ -1735,6 +1760,7 @@ frappe.ui.form.on('Teller Invoice', {
           }
         },
       });
+///////////////////////////////Fixing for user permission\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 ///////////////////////////////Fixing for user permission\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
       
 if (row.code) {
@@ -1767,7 +1793,7 @@ if (row.code) {
                       doctype: "Account",
                       filters: {
                           parent_account: ["in", userAccounts], // Accounts must be under the parent_account from User Permission
-                          // custom_currency_code: row.code // Match custom_currency_code with the entered code
+                          custom_currency_code: row.code // Match custom_currency_code with the entered code
                       },
                       fields: ["name", "custom_currency_code", "parent_account"]
                   },
@@ -1809,4 +1835,76 @@ if (row.code) {
 
     },
   });
+///////////////////////////////Function get account by User\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+///////////////////////////////Function get account by User\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
+function get_account (frm, child){
+
+  if (child.code) {
+    console.log("Code entered222222:", child);
+  
+  //   // Step 1: Fetch User Permissions for Accounts
+    frappe.call({
+        method: "frappe.client.get_list",
+        args: {
+            doctype: "User Permission",
+            filters: {
+              user: 'andrew@datasofteg.com',
+                // user: frappe.session.user, // Filter by the current user
+                allow: "Account" // Ensure permissions are for the Account doctype
+            },
+            fields: ["for_value"]
+        },
+        callback: function(permissionResponse) {
+            console.log("User Permission (response):", permissionResponse.message);
+  
+            if (permissionResponse.message && permissionResponse.message.length > 0) {
+              console.log("for_value:", permissionResponse.message);
+                let userAccounts = permissionResponse.message.map(record => record.for_value);
+                console.log("Accounts from User Permission (userAccounts):", userAccounts);
+  
+                // Step 2: Check each user-permitted account for matching custom_currency_code
+                frappe.call({
+                    method: "frappe.client.get_list",
+                    args: {
+                        doctype: "Account",
+                        filters: {
+                            parent_account: ["in", userAccounts], // Accounts must be under the parent_account from User Permission
+                            custom_currency_code: child.code // Match custom_currency_code with the entered code
+                        },
+                        fields: ["name", "custom_currency_code", "parent_account"]
+                    },
+                    callback: function(accountResponse) {
+                        console.log("Account fetch response:", accountResponse);
+  
+                        if (accountResponse.message && accountResponse.message.length > 0) {
+                            let matchingAccount = accountResponse.message; // Use the first match
+                            console.log("Matching Account Found:", matchingAccount);
+                            for (let cur of matchingAccount){
+                              if (cur.custom_currency_code === child.code){
+                                console.log("ssss",cur.name)
+                                frappe.model.set_value(child.doctype, child.name, "paid_from", cur.name);
+    
+                              }
+                            }
+    
+                            // Set the account name in the paid_from field
+                        } else {
+                            console.log(`No matching Account found for code: ${child.code}`);
+                            frappe.msgprint(`No matching Account found for code: ${child.code}`);
+                            frappe.model.set_value(child.doctype, child.name, "paid_from", null); // Clear the field
+                        }
+                    }
+                });
+            } else {
+                console.log("No User Permissions found for Accounts.");
+                frappe.msgprint("No User Permissions found for Accounts.");
+                frappe.model.set_value(child.doctype, child.name, "paid_from", null); // Clear the field
+            }
+        }
+    });
+  } else {
+    console.log("Code field is empty. No action taken.");
+  }
+  
+}

@@ -31,7 +31,7 @@ class TellerInvoice(Document):
     def validate(self):
         # prevent to buy more than three currency
 
-        if len(self.get("transactions")) > 3:
+        if len(self.get("teller_invoice_details")) > 3:
             frappe.throw("Can not Buy more than three currency")
 
     def before_save(self):
@@ -108,31 +108,34 @@ class TellerInvoice(Document):
         # frappe.msgprint(f"show number is {last_number_str_len} ")
 
     def set_move_number(self):
-        # Fetch the last submitted Teller Invoice
+        # Fetch the last submitted Teller Invo
         last_invoice = frappe.db.get("Teller Invoice", {"docstatus": 1})
-
+        if last_invoice:
+          
         # Check if the last_invoice exists and has the expected field
-        if last_invoice is not None and "movement_number" in last_invoice:
-            # Get the last movement number and increment it
-            last_move = last_invoice["movement_number"]
-            try:
-                last_move_num = int(last_move.split("-")[1])
-            except (IndexError, ValueError):
-                frappe.throw(
-                    _("Invalid format for movement number in the last invoice.")
-                )
+          if last_invoice is not None and "movement_number" in last_invoice:
+              # Get the last movement number and increment it
+              last_move = last_invoice["movement_number"]
+              if last_move:
+                print("\n\nlast inv",last_move)
+                try:
+                    last_move_num = int(last_move.split("-")[1])
+                except (IndexError, ValueError):
+                    frappe.throw(
+                        _("Invalid format for movement number in the last invoice.")
+                    )
 
-            last_move_num += 1
-            move = f"{self.branch_no}-{last_move_num}"
-        else:
-            # If no last invoice, start the movement number from 1
-            move = f"{self.branch_no}-1"
+                last_move_num += 1
+                move = f"{self.branch_no}-{last_move_num}"
+              else:
+                # If no last invoice, start the movement number from 1
+                  move = f"{self.branch_no}-1"
 
-        # Set the new movement number
-        self.movement_number = move
+          # Set the new movement number
+              self.movement_number = move
 
-        # Commit the changes to the database
-        frappe.db.commit()
+          # Commit the changes to the database
+          frappe.db.commit()
 
     def before_submit(self):
         self.check_allow_amount()
@@ -163,8 +166,8 @@ class TellerInvoice(Document):
     def on_submit(self):
 
         # create Gl entry on submit
-
-        for row in self.get("transactions"):
+        gl_done = False
+        for row in self.get("teller_invoice_details"):
             if row.paid_from and self.egy and row.usd_amount:
                 account_from = get_doc(
                     {
@@ -206,11 +209,13 @@ class TellerInvoice(Document):
                 )
                 account_to.insert(ignore_permissions=True).submit()
                 if account_from and account_to:
+                    gl_done = True
                     frappe.msgprint(
                         _("Teller Invoice created successfully with  Total {0}").format(
                             self.total
                         )
                     )
+
                 else:
                     frappe.msgprint(
                         _("Failed to create GL Entry for row {0}").format(row.idx)
@@ -220,6 +225,40 @@ class TellerInvoice(Document):
                 frappe.throw(
                     _("You must enter all required fields in row {0}").format(row.idx)
                 )
+        print("\n\n\n gl status",gl_done)
+        if gl_done == True:
+          self.update_status()
+    def update_status(self):
+        inv_table = self.teller_invoice_details
+        for row in inv_table:
+            booking_ib =row.booking_interbank
+            currency = row.currency_code
+            booked_details = frappe.get_all("Booked Currency",
+                filters={"parent":booking_ib,"currency":currency},fields=["name","status"])
+            for item in booked_details:
+                print("\n\n\n\n item",item)
+                row_name = item.name
+                currency_book = frappe.get_doc("Booked Currency",row_name)
+                currency_book.db_set("status","Billed")
+            booked_details = frappe.get_all("Booked Currency",
+                filters={"parent":booking_ib},fields=["name","status","parent"])
+            # all_booked = False
+            print("\n\n\n\n booked_details ..",booked_details)
+            all_billed = True
+            all_not_billed = True
+            for booked in booked_details:
+                if booked.status != "Billed":
+                    all_billed = False
+                if booked.status != "Not Billed":
+                    all_not_billed = False  
+            book_doc = frappe.get_doc("Booking Interbank", booked.parent) 
+            if all_billed:
+                book_doc.db_set("status", "Billed")  
+            elif all_not_billed:
+                book_doc.db_set("status", "Not Billed")  
+            else:
+                book_doc.db_set("status", "Partial Billed")            
+                  
 
     def on_cancel(self):
         self.ignore_linked_doctypes = (

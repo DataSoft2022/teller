@@ -88,7 +88,7 @@
   "com_mobile_number",
   "add_commissar",
   "transctions_section",
-  "transactions",
+  "teller_invoice_details",
   "section_break_hqcn",
   "column_break_nvqv",
   "egy_balance",
@@ -134,13 +134,12 @@
    "fieldname": "client_type",
    "fieldtype": "Select",
    "label": "Client Type",
-   "options": "Egyptian\nCompany\nForeigner\nInterbank",
+   "options": "\nEgyptian\nCompany\nForeigner\nInterbank",
    "reqd": 1
   },
   {
    "fieldname": "client",
    "fieldtype": "Link",
-   "hidden": 1,
    "label": "Search Client",
    "options": "Customer"
   },
@@ -298,13 +297,6 @@
    "fieldname": "transctions_section",
    "fieldtype": "Section Break",
    "label": "Transctions"
-  },
-  {
-   "fieldname": "transactions",
-   "fieldtype": "Table",
-   "label": "Transactions",
-   "options": "Entry Child",
-   "reqd": 1
   },
   {
    "fieldname": "amended_from",
@@ -708,12 +700,19 @@
    "fieldtype": "Data",
    "label": "Receipt number2",
    "read_only": 1
+  },
+  {
+   "fieldname": "teller_invoice_details",
+   "fieldtype": "Table",
+   "label": "Teller Invoice Details",
+   "options": "Teller Invoice Details",
+   "reqd": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-01-21 12:06:20.472300",
+ "modified": "2025-01-23 10:16:43.289733",
  "modified_by": "Administrator",
  "module": "Teller Customization",
  "name": "Teller Invoice",
