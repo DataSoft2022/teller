@@ -26,7 +26,9 @@
   "purchase_currency",
   "column_break_hpde",
   "purchase_duration",
-  "purchase_allowed_amount"
+  "purchase_allowed_amount",
+  "section_break_cajx",
+  "allow_queue_interbank"
  ],
  "fields": [
   {
@@ -147,12 +149,23 @@
    "fieldtype": "Float",
    "label": "Purchase Allowed Amount",
    "read_only": 1
+  },
+  {
+   "fieldname": "section_break_cajx",
+   "fieldtype": "Section Break",
+   "label": "Queue Settings"
+  },
+  {
+   "fieldname": "allow_queue_interbank",
+   "fieldtype": "Select",
+   "label": "Allow Queue Interbank",
+   "options": "ON\nOFF"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-07-03 13:03:38.003942",
+ "modified": "2025-01-23 15:20:08.409213",
  "modified_by": "Administrator",
  "module": "Teller Customization",
  "name": "Teller Setting",
