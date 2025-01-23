@@ -285,6 +285,11 @@ frappe.ui.form.on("Interbank Request Details", {
 //(1)                    
 //////////////////////////if there ara avalibe interbank get total avaliable qty for (currency,transaction)
                     if(row.qty > avaliable){
+                    
+                         frappe.db.get_single_value("Teller Setting","allow_queue_interbank").then((value) => {
+                          console.log("allow_queue",value)
+                              if(value === 'ON'){
+
                       frappe.confirm(`You Exceeded InterBank Balance ${row.interbank_balance} ${row.currency} .Do you want to Add Queue ${row.qty - avaliable} ${row.currency} ?`,
                         () => {
 //(2)                          
@@ -296,6 +301,8 @@ frappe.ui.form.on("Interbank Request Details", {
                         }, () => {
                           frappe.model.set_value(cdt,cdn,'qty',row.interbank_balance)
                             // action to perform if No is selected
+                        })
+                              }
                         })
                     
                     }
