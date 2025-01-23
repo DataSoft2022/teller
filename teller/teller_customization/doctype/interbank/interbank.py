@@ -11,6 +11,7 @@ class InterBank(Document):
         if self.type == 'Holiday':
           if self.to_date < self.from_date:
             frappe.throw(f" To Date field Should be Greater than From Date")
+    
     def on_submit(self):
         if not self.interbank:
             frappe.throw("Table is Empty")
@@ -243,7 +244,31 @@ class InterBank(Document):
         # doc.save()  
         # frappe.db.commit()
         return self
+    @frappe.whitelist()
+    def get_percent(self):
+      if self.type == 'Daily':
+            total_percentage = 0
+            count = 0
 
+            # Loop through the child table 'interbank' records
+            for item in self.interbank:
+                if item.qty != 0:
+                    percentage = item.booking_qty / item.qty
+                    print(f"\n\n\n GO {percentage}")
+                    ib_detail_doc = frappe.get_doc("InterBank Details", item.name)
+                    print(f" ib_detail_doc {ib_detail_doc}")
+                    c =percentage * 100 
+                    percentage_with_sign = f"{c}%"
+
+                    print(f"C {type(c)}")
+                    ib_detail_doc.db_set("booking_precentage", percentage_with_sign)
+                    total_percentage += percentage
+                    count += 1
+            average_percentage = (total_percentage / count) if count > 0 else 0
+            ib_doc = frappe.get_doc("InterBank", self.name)
+            percentage_with_sign_Doc = f"{(total_percentage/count)*100}%"
+            ib_doc.db_set("booking_precentage",percentage_with_sign_Doc)
+            print(f"GO {average_percentage}")
 @frappe.whitelist()
 def create_special_price_document(self):
     current_doc = frappe.get_doc("InterBank", self.name)
