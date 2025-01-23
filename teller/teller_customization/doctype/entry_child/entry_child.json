@@ -87,15 +87,17 @@
   {
    "fieldname": "booking_interbank",
    "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_standard_filter": 1,
    "label": "Booking Interbank",
-   "options": "Booking Interbank",
-   "read_only": 1
+   "options": "Booking Interbank"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-01-21 12:08:32.519788",
+ "modified": "2025-01-22 15:02:52.983962",
  "modified_by": "Administrator",
  "module": "Teller Customization",
  "name": "Entry Child",
