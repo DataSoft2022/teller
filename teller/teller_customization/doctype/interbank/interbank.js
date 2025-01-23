@@ -357,22 +357,43 @@ frappe.ui.form.on("InterBank", {
 /////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////// Booking Precentage /////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////
+function get_percent (frm){
+  if (frm.doc.interbank.length !== 0){
+          frm.call("get_percent").then((r) => {
+            console.log(r.message);
+            frm.refresh_field("interbank");
+          });
+  }
+}
+// frappe.ui.form.on("InterBank", {
+//   refresh(frm) {
+//    let count = 1
+//    if(count === 1){
+//     if(frm.doc.type === 'Daily' && frm.doc.docstatus ==1){
+//       get_percent(frm)
+//         frm.reload_doc();
+//         count = 2
+//     }
+//    }
+
+//     console.log("Count",count)
+//   }});
 frappe.ui.form.on("InterBank", {
   refresh(frm) {
-    if(frm.doc.type === 'Daily'){
-      let total_percentage = 0;
-      var table = frm .doc.interbank;
-      table.forEach((item)=>{
-        var percentage = item.booking_qty / item.qty
-        console.log("Precentage :",percentage)
-        frappe.model.set_value(item.doctype,item.name,"booking_precentage",percentage*100)
-        total_percentage += percentage;
-      })
-      let average_percentage = table.length ? total_percentage / table.length : 0;
-      console.log("average_percentage",average_percentage,total_percentage,table.length)
-  
-      // Set the average percentage to the parent field
-      frm.set_value("booking_precentage", average_percentage );
+    // Initialize count in the form's meta if not already set
+    if (!frm.meta.count) {
+      frm.meta.count = 1; 
     }
-  
-  }});
+
+    // Check if count is 1 and the conditions for 'Daily' type and 'docstatus' are met
+    if (frm.meta.count === 1) {
+      if (frm.doc.type === 'Daily' && frm.doc.docstatus === 1) {
+        get_percent(frm); // Call your custom function
+        frm.reload_doc(); // Reload the document
+        frm.meta.count = 2; // Update count to prevent further executions
+      }
+    }
+
+    console.log("Count", frm.meta.count); // For debugging
+  }
+});
