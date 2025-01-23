@@ -58,13 +58,13 @@
    "fieldname": "status",
    "fieldtype": "Select",
    "label": "Status",
-   "options": "Not Billed\nBilled\nPartial Billed"
+   "options": "Not Billed\nBilled"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-01-14 09:56:47.743505",
+ "modified": "2025-01-23 13:14:51.469071",
  "modified_by": "Administrator",
  "module": "Teller",
  "name": "Booked Currency",
