@@ -8,11 +8,11 @@
  "engine": "InnoDB",
  "field_order": [
   "workflow_state",
-  "customer",
   "transaction",
   "type",
   "date",
   "from_date",
+  "customer",
   "column_break_e2yj",
   "mail",
   "send_mail",
@@ -28,7 +28,6 @@
  ],
  "fields": [
   {
-   "default": "\u0627\u0644\u0627\u0647\u0644\u064a",
    "fieldname": "customer",
    "fieldtype": "Link",
    "label": "Customer",
@@ -168,14 +167,15 @@
   {
    "allow_on_submit": 1,
    "fieldname": "booking_precentage",
-   "fieldtype": "Percent",
+   "fieldtype": "Data",
+   "ignore_user_permissions": 1,
    "label": "Booking precentage"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-01-14 15:07:29.277826",
+ "modified": "2025-01-23 16:40:21.652742",
  "modified_by": "Administrator",
  "module": "Teller Customization",
  "name": "InterBank",
