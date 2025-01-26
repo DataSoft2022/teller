@@ -34,6 +34,8 @@
   "column_break_nlal",
   "fetch_national_id",
   "client",
+  "is_returned",
+  "teller_invoice",
   "individual_section",
   "customer_name",
   "nationality",
@@ -114,7 +116,6 @@
    "default": "Roll Series",
    "fieldname": "receipt_number",
    "fieldtype": "Data",
-   "hidden": 1,
    "label": "Receipt number",
    "read_only": 1
   },
@@ -516,9 +517,10 @@
   },
   {
    "fieldname": "company_name",
-   "fieldtype": "Data",
+   "fieldtype": "Link",
    "label": "Company Name",
-   "mandatory_depends_on": "eval: (doc.client_type === \"Company\" || doc.client_type === \"Interbank\")"
+   "mandatory_depends_on": "eval: (doc.client_type === \"Company\" || doc.client_type === \"Interbank\")",
+   "options": "Customer"
   },
   {
    "depends_on": "eval: (doc.client_type === \"Company\" || doc.client_type === \"Interbank\")",
@@ -698,6 +700,7 @@
    "default": "######",
    "fieldname": "receipt_number2",
    "fieldtype": "Data",
+   "hidden": 1,
    "label": "Receipt number2",
    "read_only": 1
   },
@@ -707,12 +710,24 @@
    "label": "Teller Invoice Details",
    "options": "Teller Invoice Details",
    "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "is_returned",
+   "fieldtype": "Check",
+   "label": "Is Returned"
+  },
+  {
+   "fieldname": "teller_invoice",
+   "fieldtype": "Link",
+   "label": "Teller Invoice",
+   "options": "Teller Invoice"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-01-23 10:16:43.289733",
+ "modified": "2025-01-26 12:45:24.383549",
  "modified_by": "Administrator",
  "module": "Teller Customization",
  "name": "Teller Invoice",

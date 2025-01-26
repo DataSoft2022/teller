@@ -594,3 +594,7 @@ def get_current_user_currency_codes(current_user, code):
         filters={"user": current_user, "name": code},
     )
     return codes
+
+@frappe.whitelist()
+def make_return_doc():
+    return "Teller invoice Return"

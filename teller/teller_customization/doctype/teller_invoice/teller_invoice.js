@@ -1570,10 +1570,11 @@ frappe.ui.form.on('Teller Invoice', {
       frm.clear_table("teller_invoice_details");
     }
 
-    let query_args = {
+    let query_args = {  
       filters: {
-        docstatus: ["!=", 2],
-        customer: frm.doc.company_name
+        "docstatus": ["!=", 2],
+        "customer": frm.doc.company_name,
+        "status": ["in", ["Partial Billed", "Not Billed"]]
       }
     };
 
@@ -1619,8 +1620,13 @@ frappe.ui.form.on('Teller Invoice', {
                             child.currency_code = item.currency;
                             child.usd_amount = item.qty;
                             child.rate = item.rate;
+                            child.total_amount = item.qty * item.rate;
                             child.booking_interbank = booking_ib;
                             get_account(frm, child);
+                  
+
+
+
                           }
                         });
                       } else {
@@ -1630,6 +1636,7 @@ frappe.ui.form.on('Teller Invoice', {
                         get_account(frm, child);
                         child.booking_interbank = booking_ib;
                         child.currency_code = item.currency;
+                        child.total_amount = item.qty * item.rate;
                         child.usd_amount = item.qty;
                         child.rate = item.rate;
                       }
@@ -1637,6 +1644,18 @@ frappe.ui.form.on('Teller Invoice', {
                   });
                   frm.refresh_field("teller_invoice_details");
                   cur_dialog.hide();
+                  let total = 0;
+    
+                  frm.doc.teller_invoice_details.forEach((item) => {
+              //       // frm.db.set_valu
+                    total += item.total_amount;
+                  });
+                  frm.set_value("total", total);
+                  frm.refresh_field("total");
+
+                    console.log("before save total is :",total)
+
+
                 }
               }
             });
@@ -1877,3 +1896,21 @@ function get_account (frm, child){
   }
   
 }
+
+/////////////////////////////////////////////////////
+frappe.ui.form.on('Teller Invoice', {
+  refresh: function(frm) {
+    if (frm.doc.docstatus == 1) {
+      frm.add_custom_button(__("Return / Credit Note"), make_sales_return, __("Create"));
+      frm.page.set_inner_btn_group_as_primary(__("Create"));
+    }
+  }
+});
+
+function make_sales_return() {
+  frappe.model.open_mapped_doc({
+    method: "teller.teller_customization.doctype.teller_invoice.teller_invoice.make_sales_return",
+    frm: cur_frm,
+  });
+}
+
