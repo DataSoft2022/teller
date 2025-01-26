@@ -3,6 +3,9 @@
 import frappe
 from frappe import _
 import json
+from frappe.model.mapper import get_mapped_doc
+from frappe.utils import get_url_to_form
+
 from frappe.utils import (
     add_days,
     cint,
@@ -595,6 +598,66 @@ def get_current_user_currency_codes(current_user, code):
     )
     return codes
 
+
+
+
 @frappe.whitelist()
-def make_return_doc():
-    return "Teller invoice Return"
+def make_sales_return(doc):
+    doc_data = json.loads(doc)
+    source_name = doc_data.get("name")  
+    source_total =  doc_data.get("total")  
+    def update_item(source_doc, target_doc, source_parent):
+        target_doc.code = source_doc.code
+        target_doc.currency_code = source_doc.currency_code
+        target_doc.paid_from = source_doc.paid_from
+        target_doc.usd_amount = -source_doc.usd_amount
+        target_doc.rate = source_doc.rate
+        target_doc.total_amount = -source_doc.total_amount
+    # Prepare the mapping dictionary
+    # Ensure the source document has a docstatus of 1 ()
+    # Map the item details
+    # Postprocess the items (if needed)
+    # Create a new document by mapping the fields from the source document
+    table_maps = {
+        "Teller Invoice": {
+            "doctype": "Teller Invoice",
+            "field_map": {
+                "is_returned ": 1,  
+
+            },
+            "validation": {
+                "docstatus": ["=", 1],  
+            },
+        },
+        "Teller Invoice Details": {
+            "doctype": "Teller Invoice Details",  
+            "field_map": {
+                "code": "code",
+                "currency_code": "currency_code",
+                "paid_from": "paid_from",
+                "usd_amount":"usd_amount",
+                "rate":"rate",
+                "total_amount":"total_amount"
+            },
+            "postprocess": update_item,  
+        },
+    }
+
+  
+    target_doc = get_mapped_doc(
+        "Teller Invoice",  # Source doctype
+        source_name,  # Source document name
+        table_maps,  # Field mappings and postprocess functions
+    )
+    target_doc.is_returned =1
+
+    target_doc.total = -1*(float(source_total))
+    target_doc.insert()
+
+    return {
+        "message": "Sales Return Created",
+        "new_teller_invoice": target_doc.name,  
+        "new_teller_invoice_url": get_url_to_form("Teller Invoice", target_doc.name),
+        "type": type(source_total)
+
+    }

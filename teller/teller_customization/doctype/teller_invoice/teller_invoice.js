@@ -1901,16 +1901,32 @@ function get_account (frm, child){
 frappe.ui.form.on('Teller Invoice', {
   refresh: function(frm) {
     if (frm.doc.docstatus == 1) {
-      frm.add_custom_button(__("Return / Credit Note"), make_sales_return, __("Create"));
-      frm.page.set_inner_btn_group_as_primary(__("Create"));
+      frm.add_custom_button(__("Return / Credit Note")
+      , ()=>{
+        frm.call({
+          method: "teller.teller_customization.doctype.teller_invoice.teller_invoice.make_sales_return",
+          args:{
+            doc:frm.doc,
+          },
+
+          callback: (r) => {
+          
+            if (r) {
+              console.log("Respone 22",r.message)
+              let name_doc = r.message.new_teller_invoice
+              // frappe.msgprint(__("Accounting Entries are reposted"));
+              frappe.set_route('Form', "Teller Invoice", name_doc);
+
+            }
+          },
+        });
+      }
+      , __("Create"));
     }
   }
 });
 
-function make_sales_return() {
-  frappe.model.open_mapped_doc({
-    method: "teller.teller_customization.doctype.teller_invoice.teller_invoice.make_sales_return",
-    frm: cur_frm,
-  });
+function make_sales_return(frm) {
+  
 }
 
