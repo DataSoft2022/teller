@@ -1560,124 +1560,93 @@ function validateRegistrationDateExpiration(frm, end) {
 
 ////////////////////////////test====/////////////////////////////////////////////////////////
 frappe.ui.form.on('Teller Invoice', {
-  refresh: function(frm) {
-    frm.add_custom_button(
-      __("Booking Interbank"),
-      function () {
-        if (!frm.doc.client_type || frm.doc.client_type !== 'Interbank') {
-          frappe.throw({title: __("Mandatory"),message: __("Please Select a Client Type Interbank")});
-        }else{
-          cur_frm.clear_table("teller_invoice_details");
-        }
-        
-        /////////////////////////1
-        let query_args = {
-          // query:"dotted.path.to.method",
-          filters: { 
-            docstatus: ["!=", 2], 
-            customer: cur_frm.doc.company_name,
-            
-            // booked_currency: [
-            //   {
-            //     doctype: "Booked Currency",
-            //     status:"Not Billed"
-            //   },
-            // ],
-           }
-      }
-      // ///////////////////////////2.
-        new frappe.ui.form.MultiSelectDialog({
-          doctype: "Booking Interbank",
-          target: cur_frm,
-          setters: {
-            transaction: 'Selling',
-              branch: null,
-              customer:'البنك الاهلي',
-          },
-          add_filters_group: 1,
-          date_field: "date",
-          // allow_child_item_selection: 1,
-          child_columns: ["currency","qty","rate","status"],
-          child_fieldname:"booked_currency",
-          // booked_currency: [
-          //   {
-          //     doctype: "Booked Currency",
-          //     status:"Not Billed"
-          //   },
-          // ],
-          columns: ["name", "transaction", "status","date"],
-          get_query() {
-              return query_args;
-          },
-          action(selections,args) {
-            // console.log("children",args.filtered_children);
-            console.log("selections",selections);
-          
-              selections.forEach(function(booking_ib){
-                console.log("ib",booking_ib)
-                if (booking_ib){
-                    frappe.call({
-                      method:"frappe.client.get",
-                      args:{
-                        "doctype":"Booking Interbank",
-                          filters:{
-                            "name":booking_ib,
-                            "status": ["in", ["Partial Billed", "Not Billed"]],
-                          }
-                      },callback:function(response){
-                          if(response){
-                            // response
-                            console.log("Res booked_currency:",response.message.booked_currency)
-                            response.message.booked_currency.forEach(function(item){
-                              var bo_items = args.filtered_children;
-                              if (item.status === "Not Billed") {
+  special_price: function(frm) {
+    if (!frm.doc.client_type || frm.doc.client_type !== 'Interbank') {
+      frappe.throw({
+        title: __("Mandatory"),
+        message: __("Please Select a Client Type Interbank")
+      });
+    } else {
+      frm.clear_table("teller_invoice_details");
+    }
 
-                                if(bo_items.length){
-                                  frappe.msgprint("Table Booked Currency  => Selected")
-                                  bo_items.forEach(function(bo_item){
-                                    if(bo_item == item.name){
-                                        var child = frm.add_child("teller_invoice_details");
-                                            child.code = item.currency_code;
-                                            child.currency_code = item.currency;
-                                            child.usd_amount = item.qty;
-                                            child.rate = item.rate;
-                                            child.booking_interbank = booking_ib
-                                            get_account (frm, child)
-                                            child.booking_interbank = booking_ib
-                                    }
-                                  })
-                                }else{
-                                  frappe.msgprint("Booking Interbank => Selected")
-                                  var child = frm.add_child("teller_invoice_details");
-                                  child.code = item.currency_code;
-                                  get_account (frm, child)
-                                  child.booking_interbank = booking_ib
-                                  child.currency_code = item.currency;
-                                  child.usd_amount = item.qty;
-                                  child.rate = item.rate;
-                                }
-                              }
-                            })
-                            frm.refresh_field("teller_invoice_details")
-                            cur_dialog.hide();
-                          }
-                        }
-                      
-                    })            
-                }
-              })
-          }
-          })
-          
-        
-          
-    
-    
+    let query_args = {
+      filters: {
+        docstatus: ["!=", 2],
+        customer: frm.doc.company_name
+      }
+    };
+
+    new frappe.ui.form.MultiSelectDialog({
+      doctype: "Booking Interbank",
+      target: frm,
+      setters: {
+        transaction: 'Selling',
+        branch: null,
+        customer: 'البنك الاهلي',
       },
-      __("Get Items From")
-    );
-  },
+      add_filters_group: 1,
+      date_field: "date",
+      child_columns: ["currency", "qty", "rate", "status"],
+      child_fieldname: "booked_currency",
+      columns: ["name", "transaction", "status", "date"],
+      get_query() {
+        return query_args;
+      },
+      action(selections, args) {
+        selections.forEach(function(booking_ib) {
+          if (booking_ib) {
+            frappe.call({
+              method: "frappe.client.get",
+              args: {
+                doctype: "Booking Interbank",
+                filters: {
+                  "name": booking_ib,
+                  "status": ["in", ["Partial Billed", "Not Billed"]]
+                }
+              },
+              callback: function(response) {
+                if (response && response.message) {
+                  response.message.booked_currency.forEach(function(item) {
+                    var bo_items = args.filtered_children;
+                    if (item.status === "Not Billed") {
+                      if (bo_items.length) {
+                        // frappe.msgprint("Table Booked Currency => Selected");
+                        bo_items.forEach(function(bo_item) {
+                          if (bo_item == item.name) {
+                            var child = frm.add_child("teller_invoice_details");
+                            child.code = item.currency_code;
+                            child.currency_code = item.currency;
+                            child.usd_amount = item.qty;
+                            child.rate = item.rate;
+                            child.booking_interbank = booking_ib;
+                            get_account(frm, child);
+                          }
+                        });
+                      } else {
+                        // frappe.msgprint("Booking Interbank => Selected");
+                        var child = frm.add_child("teller_invoice_details");
+                        child.code = item.currency_code;
+                        get_account(frm, child);
+                        child.booking_interbank = booking_ib;
+                        child.currency_code = item.currency;
+                        child.usd_amount = item.qty;
+                        child.rate = item.rate;
+                      }
+                    }
+                  });
+                  frm.refresh_field("teller_invoice_details");
+                  cur_dialog.hide();
+                }
+              }
+            });
+          }
+        });
+      }
+    });
+  }
 });
+
   //////////////////////////////////////////////////////////////////////////////////////////
                               //  Filter paid_from //
   //////////////////////////////////////////////////////////////////////////////////////////
