@@ -474,3 +474,53 @@ frappe.ui.form.on('Request interbank', {
   }
 
 })
+//////////////////////////////////////fetch user and Customer///////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////
+frappe.ui.form.on('Request interbank', {
+	refresh(frm) {
+		// your code here
+			// your code here
+		
+		cur_frm.set_value('customer','البنك الاهلي');
+    	let currentUser = frappe.session.logged_in_user;
+    // 	let user = frappe.user_info().email;
+			cur_frm.set_value('user',currentUser);
+	}
+})
+
+//////////fetch cur depend on code in childtable Request interbank Details////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////
+
+
+frappe.ui.form.on('Interbank Request Details', {
+  currency_code(frm, cdt, cdn) {
+    var row = locals[cdt][cdn];
+    frappe.call({
+      method: "frappe.client.get_list",
+      args: {
+        doctype: "Currency",
+        fields: ["name", "custom_currency_code"],
+        filters: [["custom_currency_code", "=", row.currency_code]],
+      },
+      callback: function (response) {
+        let currencies = response.message || [];
+        // console.log("Fetched currencies:", currencies);
+
+        // Assuming you need to update something based on these currencies
+        if (currencies.length > 0) {
+          // Update the form field with the first currency's details as an example
+          let currency = currencies[0]; // Take the first matched currency
+          // console.log("Selected currency:", currency);
+
+          // Example: Update a field in the current row
+          frappe.model.set_value(cdt, cdn, "currency", currency.name);
+
+          // Optionally, you can set additional fields if needed
+          // frappe.model.set_value(cdt, cdn, "another_field", currency.another_field);
+        } else {
+          console.log("No matching currencies found.");
+        }
+      },
+    });
+  },
+});

@@ -397,3 +397,183 @@ frappe.ui.form.on("InterBank", {
     console.log("Count", frm.meta.count); // For debugging
   }
 });
+//////////////////////////////////////fetch userand user ////////////////////////////////////
+frappe.ui.form.on('InterBank', {
+	refresh(frm) {
+		// your code here
+		
+		cur_frm.set_value('customer','البنك الاهلي');
+	let currentUser = frappe.session.logged_in_user;
+// 	let user = frappe.user_info().email;
+			cur_frm.set_value('user',currentUser);
+	}
+})
+
+////////////////////////////////////////send mail ///////////////////////////////////////////
+frappe.ui.form.on("InterBank", {
+  send_mail: function (frm) {
+  
+    if(frm.doc.status !== 'On Sent' && frm.doc.status !== 'Deal' && frm.doc.status !== 'Closed' && frm.doc.status !== 'Ended' && frm.doc.status !== 'Paused'){
+        console.log("status will changed to Send ")
+          frm.set_value('status', 'On Sent');
+          frm.save();
+        
+//           	if(frm.doc.status == 'On Sent'){
+         
+
+// 		}else{  frm.fields_dict['interbank'].grid.update_docfield_property('rate','read_only',1);
+//             frm.fields_dict['interbank'].grid.update_docfield_property('rate','reqd',1);}
+    }else{
+          console.log("status will not changed to Send ");
+        return;
+    }
+    // frm.save(); // Save the form to persist the change
+  },
+  refresh(frm){
+      if(frm.doc.status == 'On Sent' && frm.doc.docstatus === 0){
+            frm.fields_dict['interbank'].grid.update_docfield_property('rate','read_only',0);
+            frm.fields_dict['interbank'].grid.update_docfield_property('rate','reqd',1);
+            cur_frm.refresh_field("interbank");
+      }else{
+      frm.fields_dict['interbank'].grid.update_docfield_property('rate','read_only',1);
+      frm.fields_dict['interbank'].grid.update_docfield_property('rate','reqd',1);
+
+
+      }
+        
+  }
+});
+
+///////////////////Customize indicator color for each status/////////////////////////////////
+///////////////////Customize indicator color for each status/////////////////////////////////
+///////////////////Customize indicator color for each status/////////////////////////////////
+
+frappe.listview_settings['InterBank'] = {
+  get_indicator(doc) {
+      // Customize indicator color for each status
+      if (doc.status == "Deal") {
+          return [__("Deal"), "blue", "status,=,Deal"];
+      } else if (doc.status == "Closed") {
+          return [__("Closed"), "orange", "status,=,Closed"];
+      } else if (doc.status == "Waiting For Reply") {
+          return [__("Waiting For Reply"), "red", "status,=,Waiting For Reply"];
+      } else if (doc.status == "On Sent") {
+          return [__("On Sent"), "green", "status,=,On Sent"];
+      }
+       else if (doc.status == "Open") {
+          return [__("Open"), "green", "status,=,Open"];
+      }
+      
+  
+  },
+};
+//////////////////////////////////row dupplication for currency ////////////////////////////
+//////////////////////////////////row dupplication for currency ////////////////////////////
+//////////////////////////////////row dupplication for currency ////////////////////////////
+frappe.ui.form.on('InterBank', {
+	refresh(frm) {
+		// your code here
+	}
+});
+
+frappe.ui.form.on('InterBank Details', {
+	interbank_add(frm,cdt,cdn) {
+		// your code here
+// 		frappe.msgprint("king mina")
+		var d = locals[cdt][cdn];
+		var duplicated =  false;
+		var table = frm.doc.interbank;
+		for(let row of table){
+		    if (row.currency_code == d.currency_code && row.name != d.name){
+		        duplicated =true;
+		    }else{
+		        return;
+		    }
+		    if(duplicated){
+		        frappe.throw(`Row ${d.idx} is duplicated`);
+		    }
+		}
+	}
+})
+
+////////////////Fetch Currency  based on custom_currency_code////////////////////////////////
+////////////////Fetch Currency  based on custom_currency_code////////////////////////////////
+////////////////Fetch Currency  based on custom_currency_code////////////////////////////////
+frappe.ui.form.on("InterBank Details", {
+  currency_code(frm, cdt, cdn) {
+    var row = locals[cdt][cdn];
+    frappe.call({
+      method: "frappe.client.get_list",
+      args: {
+        doctype: "Currency",
+        fields: ["name", "custom_currency_code"],
+        filters: [["custom_currency_code", "=", row.currency_code]],
+      },
+      callback: function (response) {
+        let currencies = response.message || [];
+        // console.log("Fetched currencies:", currencies);
+
+        // Assuming you need to update something based on these currencies
+        if (currencies.length > 0) {
+          // Update the form field with the first currency's details as an example
+          let currency = currencies[0]; // Take the first matched currency
+          // console.log("Selected currency:", currency);
+
+          // Example: Update a field in the current row
+          frappe.model.set_value(cdt, cdn, "currency", currency.name);
+
+          // Optionally, you can set additional fields if needed
+          // frappe.model.set_value(cdt, cdn, "another_field", currency.another_field);
+        } else {
+          console.log("No matching currencies found.");
+        }
+      },
+    });
+  },
+});
+
+//////////////////////InterBank Details Calculate Amount///////////////////////////////////
+//////////////////////InterBank Details Calculate Amount///////////////////////////////////
+//////////////////////InterBank Details Calculate Amount///////////////////////////////////
+
+frappe.ui.form.on('InterBank', {
+	refresh(frm) {
+		// your code here
+	}
+})
+frappe.ui.form.on("InterBank Details", {
+  qty(frm, cdt, cdn) {
+    calculate_total(frm, cdt, cdn);
+  },
+  rate(frm, cdt, cdn) {
+    calculate_total(frm, cdt, cdn);
+  },
+});
+
+function calculate_total(frm, cdt, cdn) {
+  var d = locals[cdt][cdn];
+  frappe.model.set_value(cdt, cdn, "amount", d.rate * d.qty);
+}
+////////////////////////////////currency code validation//////////////////////////////////////
+////////////////////////////////currency code validation//////////////////////////////////////
+////////////////////////////////currency code validation/////////////////////////////////////
+
+frappe.ui.form.on('InterBank Details', {
+  currency_code(frm, cdt, cdn) {
+      var d = locals[cdt][cdn];  
+      var currency_code = d.currency_code; 
+      var table = frm.doc.interbank;  
+      var duplicated = false; 
+      for (let row of table) {
+          if (row.currency_code === currency_code && row.name !== d.name) {
+              duplicated = true;
+              break;
+          }
+      }
+      
+      if (duplicated) {
+          frappe.msgprint(__(`Currency code  ${d.currency_code} appears more than one time`));
+          d.currency_code = ''; 
+      }
+  }
+});
