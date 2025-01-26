@@ -32,7 +32,7 @@ class Requestinterbank(Document):
         deleted_interbanks = []
 
         for record in booking_interbank_records:
-            frappe.msgprint(f" Do you want to cancel")
+            # frappe.msgprint(f" Do you want to cancel")
             # Delete Booking Interbank record
             # frappe.delete_doc('Booking Interbank', record['name'], force=1)
             booking_interbank_doc = frappe.get_doc("Booking Interbank",record['name'])
@@ -234,8 +234,8 @@ class Requestinterbank(Document):
                       append_qty = min(ib_balance_qty, requested_qty)
                       requested_qty -= append_qty
                       total_ib -= append_qty
-                      frappe.msgprint(f"\n\n\n!! {append_qty}")    
-                      frappe.msgprint(f"\n\n\n@@ {append_qty}")
+                      # frappe.msgprint(f"\n\n\n!! {append_qty}")    
+                      # frappe.msgprint(f"\n\n\n@@ {append_qty}")
                       bookings.append({
                           "currency_code": currency_code,
                           "currency": currency,
@@ -245,7 +245,7 @@ class Requestinterbank(Document):
                           "request_reference": self.name,
                           "booking_qty": append_qty
                       })
-                      frappe.msgprint(f"Booked {append_qty} of {currency} from interbank {ib_name}.")
+                      # frappe.msgprint(f"Booked {append_qty} of {currency} from interbank {ib_name}.")
 
                 if total_ib < requested_qty:
                   if ib_balance_qty > 0:
@@ -307,10 +307,10 @@ class Requestinterbank(Document):
             
             # (2) Validate if total_ib < requested_qty
             if self.type =='Daily':
-                frappe.msgprint(f"Total IB {total_ib}  requested qty {requested_qty}.")
+                # frappe.msgprint(f"Total IB {total_ib}  requested qty {requested_qty}.")
                 requested_qty = process_interbank_booking(total_ib, currency, purpose, requested_qty, document)
             else:
-                frappe.msgprint(f"Holiday ")
+                # frappe.msgprint(f"Holiday ")
                 requested_qty = process_interbank_booking_holiday(currency, purpose, requested_qty, document)
         document.insert(ignore_permissions=True)
         frappe.msgprint("Document inserted successfully.")
@@ -324,7 +324,7 @@ class Requestinterbank(Document):
         return document
 
     def create_queue(self):
-        frappe.msgprint("Create Queue Function ...")
+        # frappe.msgprint("Create Queue Function ...")
         table = self.items
         queue_table = [{"queue_qty": row.queue_qty, "currency_code": row.currency_code, "currency": row.currency} 
                        for row in table if row.queue_qty > 0]
@@ -349,7 +349,7 @@ class Requestinterbank(Document):
                   })
                   
               queue_doc.insert(ignore_permissions=True)  
-              frappe.msgprint(f"Queue Request is Created {queue_doc.name}") 
+              # frappe.msgprint(f"Queue Request is Created {queue_doc.name}") 
 
           else:
               return     
