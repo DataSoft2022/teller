@@ -357,14 +357,16 @@ frappe.ui.form.on("InterBank", {
 /////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////// Booking Precentage /////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////
-function get_percent (frm){
-  if (frm.doc.interbank.length !== 0){
-          frm.call("get_percent").then((r) => {
-            console.log(r.message);
-            frm.refresh_field("interbank");
-          });
-  }
-}
+// function get_percent (frm){
+//   if (frm.doc.interbank.length !== 0){
+//           frm.call("get_percent").then((r) => {
+//             console.log(r.message);
+//             frm.refresh_field("interbank");
+//           });
+//   }
+// }
+
+/////////////////////////////////////
 // frappe.ui.form.on("InterBank", {
 //   refresh(frm) {
 //    let count = 1
@@ -378,25 +380,25 @@ function get_percent (frm){
 
 //     console.log("Count",count)
 //   }});
-frappe.ui.form.on("InterBank", {
-  refresh(frm) {
-    // Initialize count in the form's meta if not already set
-    if (!frm.meta.count) {
-      frm.meta.count = 1; 
-    }
+// frappe.ui.form.on("InterBank", {
+//   refresh(frm) {
+//     // Initialize count in the form's meta if not already set
+//     if (!frm.meta.count) {
+//       frm.meta.count = 1; 
+//     }
 
-    // Check if count is 1 and the conditions for 'Daily' type and 'docstatus' are met
-    if (frm.meta.count === 1) {
-      if (frm.doc.type === 'Daily' && frm.doc.docstatus === 1) {
-        get_percent(frm); // Call your custom function
-        frm.reload_doc(); // Reload the document
-        frm.meta.count = 2; // Update count to prevent further executions
-      }
-    }
+//     // Check if count is 1 and the conditions for 'Daily' type and 'docstatus' are met
+//     if (frm.meta.count === 1) {
+//       if (frm.doc.type === 'Daily' && frm.doc.docstatus === 1) {
+//         get_percent(frm); // Call your custom function
+//         frm.reload_doc(); // Reload the document
+//         frm.meta.count = 2; // Update count to prevent further executions
+//       }
+//     }
 
-    console.log("Count", frm.meta.count); // For debugging
-  }
-});
+//     console.log("Count", frm.meta.count); // For debugging
+//   }
+// });
 //////////////////////////////////////fetch userand user ////////////////////////////////////
 frappe.ui.form.on('InterBank', {
 	refresh(frm) {
@@ -417,6 +419,15 @@ frappe.ui.form.on("InterBank", {
         console.log("status will changed to Send ")
           frm.set_value('status', 'On Sent');
           frm.save();
+          // frappe
+          // .call({
+          //   method:teller.teller_customization.doctype.interbank.sendmail,
+          //   args:{
+          //     mail:frm.doc.mail,
+          //   },callback:function(r){
+          //     if (r.)
+          //   }
+          // })
         
 //           	if(frm.doc.status == 'On Sent'){
          
