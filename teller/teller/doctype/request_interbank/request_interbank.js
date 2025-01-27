@@ -459,18 +459,21 @@ frappe.ui.form.on('Request interbank', {
 ////////////////////////////////////////Return Request Interbank ///////////////////////////
 frappe.ui.form.on('Request interbank', {
   refresh:function(frm){
-    frm.add_custom_button(__('Return Request'),function(){
-      frm.call({
-        method:"return_request",
-        args: {
-          doc: frm.doc,
-        
-      },
-        callback:function(response){
-        console.log("return request",response.message)
-
-      }});
-    })
+    if (frm.doc.docstatus === 1){
+      frm.add_custom_button(__('Return Request'),function(){
+        frm.call({
+          method:"return_request",
+          args: {
+            doc: frm.doc,
+          
+        },
+          callback:function(response){
+          console.log("return request",response.message)
+  
+        }});
+      })
+    }
+  
   }
 
 })
