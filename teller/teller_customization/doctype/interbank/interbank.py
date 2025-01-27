@@ -328,23 +328,23 @@ def create_queue_request(currency, purpose):
 
 @frappe.whitelist(allow_guest=True)
 def sendmail():
-    pass
-#     email_args = {
-#       "recipients": "ahmedabukhatwa@gmail.com",
-#       "sender": None,
-#       "subject":"subject",
-#       "message": f"hello",
-#       "now": True,
-#       # "attachments": [
-#       #   frappe.attach_print(
-#       #     self.reference_doctype,
-#       #     self.reference_name,
-#       #     file_name=self.reference_name,
-#       #     print_format=self.print_format,
-#       #   )
-#       # ],
-#     }
-#     enqueue(method=frappe.sendmail, queue="short", timeout=300, is_async=True, **email_args)
+    # pass
+    email_args = {
+      "recipients": "ahmedabukhatwa@gmail.com",
+      "sender": "elbank-alahly@datasofteg.com",
+      "subject":"subject",
+      "message": f"hello",
+      "now": True,
+      # "attachments": [
+      #   frappe.attach_print(
+      #     self.reference_doctype,
+      #     self.reference_name,
+      #     file_name=self.reference_name,
+      #     print_format=self.print_format,
+      #   )
+      # ],
+    }
+    enqueue(method=frappe.sendmail, queue="short", timeout=300, is_async=True, **email_args)
 #     # frappe.sendmail(
 #     # 	recipients=frappe.db.get_value("User", ref_doc.owner, "email") or ref_doc.owner,
 #     # 	subject=subject,
