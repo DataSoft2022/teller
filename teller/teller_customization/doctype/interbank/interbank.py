@@ -4,6 +4,7 @@ import frappe
 from frappe.model.document import Document
 from frappe import _
 import json
+from teller.teller.doctype.request_interbank.request_interbank import Requestinterbank
 
 
 class InterBank(Document):
@@ -149,8 +150,9 @@ class InterBank(Document):
                     c =r.get("currency")
                     continue
                     # return frappe.throw(f"may currency{c}{currency} or transaction not matched")
-          frappe.msgprint(f"Queue... Closed successfully Against {self.name}.")        
+          frappe.msgprint(f"Queue Request Closed successfully Against {self.name}.")        
     def update_queue(self,booking_table,queue):
+        currency_table = self.interbank
         for q in queue:
             queue_name = q.get("name")
             currency = q.get("currency")
@@ -163,14 +165,25 @@ class InterBank(Document):
             for row in queue_details:
               detail_doc = frappe.get_doc("Queue Request Details", row.name)
               detail_doc.db_set("status", "Closed")
+
+
             ib_details = frappe.get_all(
                     "InterBank Details",
                     fields=["name", "status", "qty", "currency", "parent"],
                     filters={"parent": self.name, "currency": currency},
                 )
-            for row in ib_details:
-                ib_detail_doc = frappe.get_doc("InterBank Details", row.name)
-                ib_detail_doc.db_set("booking_qty", queue_qty)
+            for detail in ib_details:
+                ib_detail_doc = frappe.get_doc("InterBank Details", detail.name)
+                booking_qty = ib_detail_doc.get("booking_qty")
+                ib_detail_doc.db_set("booking_qty", booking_qty + queue_qty)
+                # req_interbank = Requestinterbank.calculate_precent()
+                ib_doc = ib_detail_doc.get("parent")
+                calc=Requestinterbank.calculate_precent(self, ib_doc)
+                for item in currency_table:
+                    if item.qty == ib_detail_doc.get("booking_qty"):
+                        ib_detail_doc.db_set("statys", "Closed")
+                
+                # req_interbank.calculate_precent(self, ib_doc)
     @frappe.whitelist()    
     def interbank_update_status(self):
           current_interbank = frappe.get_doc("InterBank", self.name)
