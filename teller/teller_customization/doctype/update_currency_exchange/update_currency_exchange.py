@@ -40,7 +40,7 @@ class UpdateCurrencyExchange(Document):
     @frappe.whitelist()
     
     def set_currency_rates(self):
-
+      if not self.exchange_records:
         for d in self.fetch_currency_rates():
             self.append(
                 "exchange_records",
@@ -50,6 +50,8 @@ class UpdateCurrencyExchange(Document):
                     "selling_exchange_rate": d.custom_selling_exchange_rate,
                 },
             )
+            
+              
 
     @frappe.whitelist()
     def update_currency(self, from_currency, purchase_rate, selling_rate):
