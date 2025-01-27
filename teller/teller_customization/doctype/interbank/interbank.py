@@ -5,9 +5,10 @@ from frappe.model.document import Document
 from frappe import _
 import json
 from teller.teller.doctype.request_interbank.request_interbank import Requestinterbank
-
+from frappe.utils.background_jobs import enqueue
 
 class InterBank(Document):
+    
     def validate(self):
         if self.type == 'Holiday':
           if self.to_date < self.from_date:
@@ -25,74 +26,24 @@ class InterBank(Document):
         for row in table:
           currency = row.currency
           purpose  = self.transaction
-          queue_type = self.type
+          ib_type = self.type
           print ("Data  ==========>",currency,purpose)
           if self.type == 'Daily':
-              self.close_queue(currency, purpose, queue_type)
-
-
-        # currency_table = self.interbank
-        # for row in currency_table:
-  
-
-
-    # @frappe.whitelist()
-    # def on_submit(self):
-    #     currency_table = self.interbank
-    #     if not self.interbank:
-    #         frappe.throw("Put interbank table.")
-    #     for row in currency_table:
-    #         if not row.rate or row.rate == 0:
-    #             frappe.throw(f"Put Rate for currency {row.currency}.")
-    #     document = frappe.new_doc("Booking Interbank")
-    #     document.customer = self.customer
-    #     document.type = self.transaction
-    #     # if self.type ==
-    #     # if self.time:
-    #     #     document.time
-    #     if self.date:
-    #         document.date  
-
-    #     document.user = self.user
-    #     document.branch = self.branch
-    #     for row in currency_table:
-    #       requested_qty = row.qty
-    #       currency = row.currency
-    #       purpose = self.transaction
-    #       data = create_queue_request(currency, purpose)
-    #       if data:
-    #         for record in data:
-    #             ir_name = record.get("name")
-    #             ir_curr_code = record.get("currency_code")
-    #             ir_curr = record.get("currency")
-    #             ir_qty = record.get("qty")
-    #             ir_queue_qty = record.get("queue_qty")
-    #             ir_rate = record.get("rate")
-    #             if ir_queue_qty <= 0:
-    #                 continue
-    #             document.append("booked_currency", {
-    #                               "currency_code": ir_curr_code,
-    #                               "currency": ir_curr,
-    #                               "rate": ir_rate,
-    #                               "qty": ir_queue_qty,
-    #                               "interbank_reference": ir_name,
-    #                               "request_reference":self.name,
-    #                               "booking_qty": ir_queue_qty
-    #                           })
-
-    #       document.insert(ignore_permissions=True)
-    #       frappe.msgprint("Booking Interbank document created successfully.")
-    #     else:
-    #         return
-        
-    def close_queue(self, currency, purpose, queue_type):
+              self.close_queue(currency, purpose, ib_type)
+    
+    def close_queue(self, currency, purpose, ib_type):
           # frappe.msgprint("Get Queue...",purpose)
           sql = """
           select 
-          qr.name,qr.creation,qr.branch,
+          qrd.name AS name,
+          qr.name AS parent,
+          qr.creation,qr.branch,
           qrd.currency_code,
           qr.transaction,
-          qrd.currency,qrd.qty,qr.type,
+          qrd.booked_qty,
+          qrd.currency,
+          qrd.qty,qr.type,
+          (qrd.qty - qrd.booked_qty) AS balance,
           qrd.request_interbank
           from `tabQueue Request` qr
           left join `tabQueue Request Details` qrd  ON qr.name = qrd.parent 
@@ -103,10 +54,9 @@ class InterBank(Document):
                AND  qr.type = %s
               ORDER BY qr.creation ASC
                       """
-          queue = frappe.db.sql(sql,(currency, purpose, queue_type), as_dict=True)
-          if not queue:
+          queue_table = frappe.db.sql(sql,(currency, purpose, ib_type), as_dict=True)
+          if not queue_table:
               return 
-          print ("Queue after submit interbank  ***==========>",queue)
           document = frappe.new_doc("Booking Interbank")
           document.customer = self.customer
           document.type = self.transaction
@@ -116,56 +66,84 @@ class InterBank(Document):
           for row in currency_table:
               currency = row.currency
               purpose = self.transaction
-              for r in queue:
-                document.branch = r.get("branch")
-                print ("\n\n Tow of queue**************",r)
-                print ("**************",purpose , r.get("transaction"))
-                print ("**************",queue_type , r.get("type"))
-                print ("**************",currency , r.get("currency"))
-                if r.get("currency") == currency and queue_type == r.get("type") and purpose == r.get("transaction"):
-                    available_balance = r.get("qty")
-                    if row.qty >= available_balance:    
-                      print("Row is=======",r)
-                      print("r.get currency ", r.get("currency"))
-                      document.append("booked_currency", {
-                                        "currency_code": r.get("currency_code"),
-                                        "currency": r.get("currency"),
-                                        "rate": row.rate,
-                                        "qty": r.get("qty"),
-                                        "booking_qty": r.get("qty"),
-                                        "request_reference":r.get("request_interbank"),
-                                        "interbank_reference":self.name
-                                    })
-                      new_available_balance = available_balance - row.qty
-                      # Assuming there’s a field or method to update the queue balance
-                      # self.update_queue_balance(r.get("name"), new_available_balance)
-
-                      document.insert(ignore_permissions=True)
-                      self.update_queue(document.booked_currency,queue)
-                    else:
-                        c =r.get("currency")
-                        continue
-                        # return frappe.throw(f"may {c}{currency}  Qty Queue greater than Interbank")
-                else:
-                    c =r.get("currency")
-                    continue
-                    # return frappe.throw(f"may currency{c}{currency} or transaction not matched")
+              for queue in queue_table:
+                # Queue fields 
+                queue_balance = queue.get("balance")
+                document.branch = queue.get("branch")
+                if row.qty > queue_balance:
+                  append_qty = queue_balance 
+                  document.append("booked_currency", {
+                                    "currency_code": queue.get("currency_code"),
+                                    "currency": queue.get("currency"),
+                                    "rate": row.rate,
+                                    "qty": append_qty,
+                                    "booking_qty": append_qty,
+                                    "request_reference":queue.get("request_interbank"),
+                                    "interbank_reference":self.name
+                                })
+                  self.update_queue(append_qty,queue_table)
+                if row.qty == queue_balance:
+                  append_qty = queue_balance 
+                  document.append("booked_currency", {
+                                    "currency_code": queue.get("currency_code"),
+                                    "currency": queue.get("currency"),
+                                    "rate": row.rate,
+                                    "qty": append_qty,
+                                    "booking_qty": append_qty,
+                                    "request_reference":queue.get("request_interbank"),
+                                    "interbank_reference":self.name
+                                })
+                  self.update_queue(append_qty,queue_table)
+                  # document.insert(ignore_permissions=True)
+                if row.qty < queue_balance:
+                    append_qty = row.qty
+                    document.append("booked_currency", {
+                                    "currency_code": queue.get("currency_code"),
+                                    "currency": queue.get("currency"),
+                                    "rate": row.rate,
+                                    "qty": append_qty,
+                                    "booking_qty": append_qty,
+                                    "request_reference":queue.get("request_interbank"),
+                                    "interbank_reference":self.name
+                                })
+                    self.update_queue(append_qty,queue_table)
+                        # document.insert(ignore_permissions=True)
+                # document.insert(ignore_permissions=True)
+                
           frappe.msgprint(f"Queue Request Closed successfully Against {self.name}.")        
-    def update_queue(self,booking_table,queue):
+    def update_queue(self,append_qty,queue_table):
         currency_table = self.interbank
-        for q in queue:
+        for q in currency_table:
             queue_name = q.get("name")
             currency = q.get("currency")
-            queue_qty = q.get("qty")
-            queue_details = frappe.get_all(
-                    "Queue Request Details",
-                    fields=["name", "status", "qty", "currency", "parent"],
-                    filters={"parent": queue_name, "currency": currency, "status":"Queue"},
-                )
+            ib_qty = q.get("qty")
+            queue_details = queue_table
+            # queue_details = frappe.get_all(
+            #         "Queue Request Details",
+            #         fields=["name", "parent","status", "qty", "currency","booked_qty"],
+            #         filters={"currency": currency, "status":"Queue", "parenttype":"Queue Request"},
+            #     )
+            print(f"queue_details {queue_details}")
             for row in queue_details:
-              detail_doc = frappe.get_doc("Queue Request Details", row.name)
-              detail_doc.db_set("status", "Closed")
-
+              queue_parent = row.get("booked_qty")
+              queue_qty = row.get("qty")
+              queue_booking_qty = row.get("booked_qty")
+              if queue_qty == ib_qty:                
+                detail_doc = frappe.get_doc("Queue Request Details", row.name)
+                q_total = append_qty + queue_booking_qty
+                detail_doc.db_set("booked_qty", q_total)
+                detail_doc.db_set("status", "Closed")
+          
+              if queue_qty < ib_qty:                
+                detail_doc = frappe.get_doc("Queue Request Details", row.name)
+                q_total = append_qty + queue_booking_qty
+                detail_doc.db_set("booked_qty", q_total)
+                frappe.msgprint(f"{queue_parent} queue_qty {queue_qty}< queue_booking_qty{ib_qty} tot {q_total}")
+              else:
+                  detail_doc = frappe.get_doc("Queue Request Details", row.name)
+                  q_total = append_qty + queue_booking_qty
+                  detail_doc.db_set("booked_qty", q_total)
+                  detail_doc.db_set("status", "Closed")
 
             ib_details = frappe.get_all(
                     "InterBank Details",
@@ -175,13 +153,18 @@ class InterBank(Document):
             for detail in ib_details:
                 ib_detail_doc = frappe.get_doc("InterBank Details", detail.name)
                 booking_qty = ib_detail_doc.get("booking_qty")
-                ib_detail_doc.db_set("booking_qty", booking_qty + queue_qty)
+                # i_total =booking_qty + queue_qty
+                i_total =booking_qty + append_qty
+                ib_detail_doc.db_set("booking_qty", i_total)
                 # req_interbank = Requestinterbank.calculate_precent()
                 ib_doc = ib_detail_doc.get("parent")
                 calc=Requestinterbank.calculate_precent(self, ib_doc)
                 for item in currency_table:
-                    if item.qty == ib_detail_doc.get("booking_qty"):
-                        ib_detail_doc.db_set("statys", "Closed")
+                    if item.qty == booking_qty:
+                        ib_detail_doc.db_set("status", "Closed")
+                        calc=Requestinterbank.calculate_precent(self, ib_doc)
+                    else:
+                        calc=Requestinterbank.calculate_precent(self, ib_doc)    
                 
                 # req_interbank.calculate_precent(self, ib_doc)
     @frappe.whitelist()    
@@ -216,10 +199,6 @@ class InterBank(Document):
 
     @frappe.whitelist()
     def get_currency(self):
-        # self = json.loads(self)
-        # doc = frappe.get_doc("InterBank", self.get("name"))
-        # doc = self.name
-        # return doc.name
         query = """
           SELECT
               cu.custom_currency_code,ac.account_currency, 
@@ -253,36 +232,8 @@ class InterBank(Document):
                       "qty": 0,
                   },
               )
-        # self.insert()
-        # doc.save()  
-        # frappe.db.commit()
+
         return self
-    
-    # @frappe.whitelist()
-    # def get_percent(self):
-    #   if self.type == 'Daily':
-    #         total_percentage = 0
-    #         count = 0
-
-    #         # Loop through the child table 'interbank' records
-    #         for item in self.interbank:
-    #             if item.qty != 0:
-    #                 percentage = item.booking_qty / item.qty
-    #                 print(f"\n\n\n GO {percentage}")
-    #                 ib_detail_doc = frappe.get_doc("InterBank Details", item.name)
-    #                 print(f" ib_detail_doc {ib_detail_doc}")
-    #                 c =percentage * 100 
-    #                 percentage_with_sign = f"{c}%"
-
-    #                 print(f"C {type(c)}")
-    #                 ib_detail_doc.db_set("booking_precentage", percentage_with_sign)
-    #                 total_percentage += percentage
-    #                 count += 1
-    #         average_percentage = (total_percentage / count) if count > 0 else 0
-    #         ib_doc = frappe.get_doc("InterBank", self.name)
-    #         percentage_with_sign_Doc = f"{(total_percentage/count)*100}%"
-    #         ib_doc.db_set("booking_precentage",percentage_with_sign_Doc)
-    #         print(f"GO {average_percentage}")
 @frappe.whitelist()
 def create_special_price_document(self):
     current_doc = frappe.get_doc("InterBank", self.name)
@@ -374,3 +325,30 @@ def create_queue_request(currency, purpose):
           """
     ri = frappe.db.sql(sql,(currency , purpose), as_dict=True)
     return ri
+
+@frappe.whitelist(allow_guest=True)
+def sendmail():
+    pass
+#     email_args = {
+#       "recipients": "ahmedabukhatwa@gmail.com",
+#       "sender": None,
+#       "subject":"subject",
+#       "message": f"hello",
+#       "now": True,
+#       # "attachments": [
+#       #   frappe.attach_print(
+#       #     self.reference_doctype,
+#       #     self.reference_name,
+#       #     file_name=self.reference_name,
+#       #     print_format=self.print_format,
+#       #   )
+#       # ],
+#     }
+#     enqueue(method=frappe.sendmail, queue="short", timeout=300, is_async=True, **email_args)
+#     # frappe.sendmail(
+#     # 	recipients=frappe.db.get_value("User", ref_doc.owner, "email") or ref_doc.owner,
+#     # 	subject=subject,
+#     # 	message=message,
+#     # 	reference_doctype=ref_doc.doctype,
+#     # 	reference_name=ref_doc.name,
+#     # )

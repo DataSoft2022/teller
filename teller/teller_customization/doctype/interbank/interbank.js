@@ -417,17 +417,21 @@ frappe.ui.form.on("InterBank", {
   
     if(frm.doc.status !== 'On Sent' && frm.doc.status !== 'Deal' && frm.doc.status !== 'Closed' && frm.doc.status !== 'Ended' && frm.doc.status !== 'Paused'){
         console.log("status will changed to Send ")
-          frm.set_value('status', 'On Sent');
-          frm.save();
-          // frappe
-          // .call({
-          //   method:teller.teller_customization.doctype.interbank.sendmail,
-          //   args:{
-          //     mail:frm.doc.mail,
-          //   },callback:function(r){
-          //     if (r.)
-          //   }
-          // })
+        
+    
+          frappe.call({
+            method:"teller.teller_customization.doctype.interbank.interbank.sendmail",
+            args:{
+              mail:frm.doc.mail,
+            },callback:function(r){
+              if (r){
+                console.log("sending sucessfully")
+                frm.set_value('status', 'On Sent');
+                frm.save();
+
+              }
+            }
+          })
         
 //           	if(frm.doc.status == 'On Sent'){
          

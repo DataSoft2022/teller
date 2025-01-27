@@ -77,7 +77,8 @@
    "fetch_from": "customer.email_id",
    "fieldname": "mail",
    "fieldtype": "Data",
-   "label": "Mail"
+   "label": "Mail",
+   "options": "Email"
   },
   {
    "fieldname": "send_mail",
@@ -175,7 +176,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-01-23 17:07:36.115890",
+ "modified": "2025-01-27 14:20:40.687025",
  "modified_by": "Administrator",
  "module": "Teller Customization",
  "name": "InterBank",
