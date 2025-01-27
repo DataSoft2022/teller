@@ -6,6 +6,7 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "column_break_jnxb",
   "currency_code",
   "currency",
   "rate",
@@ -37,7 +38,8 @@
   {
    "fieldname": "interbank_balance",
    "fieldtype": "Float",
-   "label": "Interbank Balance"
+   "label": "Interbank Balance",
+   "read_only": 1
   },
   {
    "fieldname": "currency_code",
@@ -52,18 +54,24 @@
   {
    "fieldname": "rate",
    "fieldtype": "Float",
-   "label": "Rate"
+   "label": "Rate",
+   "read_only": 1
   },
   {
    "fieldname": "remaining",
    "fieldtype": "Data",
    "label": "Remaining"
+  },
+  {
+   "fieldname": "column_break_jnxb",
+   "fieldtype": "Column Break",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-01-16 14:41:31.076553",
+ "modified": "2025-01-26 15:33:54.389265",
  "modified_by": "Administrator",
  "module": "Teller",
  "name": "Interbank Request Details",
