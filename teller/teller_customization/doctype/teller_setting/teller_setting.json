@@ -28,7 +28,10 @@
   "purchase_duration",
   "purchase_allowed_amount",
   "section_break_cajx",
-  "allow_queue_interbank"
+  "allow_queue_interbank",
+  "section_break_lixz",
+  "allow_interbank_notification",
+  "notification_percentage"
  ],
  "fields": [
   {
@@ -160,12 +163,27 @@
    "fieldtype": "Select",
    "label": "Allow Queue Interbank",
    "options": "ON\nOFF"
+  },
+  {
+   "fieldname": "section_break_lixz",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "allow_interbank_notification",
+   "fieldtype": "Select",
+   "label": "Allow Interbank Notification",
+   "options": "ON\nOFF"
+  },
+  {
+   "fieldname": "notification_percentage",
+   "fieldtype": "Percent",
+   "label": " Notification Percentage"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-01-23 15:20:08.409213",
+ "modified": "2025-01-27 15:20:05.184502",
  "modified_by": "Administrator",
  "module": "Teller Customization",
  "name": "Teller Setting",
