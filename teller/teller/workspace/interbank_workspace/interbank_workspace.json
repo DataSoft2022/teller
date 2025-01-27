@@ -1,0 +1,397 @@
+{
+ "charts": [],
+ "content": "[{\"id\":\"jmpquFu9Le\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Your Shortcuts</b><b></b></span>\",\"col\":12}},{\"id\":\"fUicuznfA0\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Request Interbank\",\"col\":3}},{\"id\":\"qPCsQF4Q9k\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"InterBank\",\"col\":3}},{\"id\":\"lQ9JpnFBxW\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Booking Interbank\",\"col\":3}},{\"id\":\"DgM-1IONdr\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Queue Request\",\"col\":3}},{\"id\":\"hVNJL0r3IM\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Teller Purchase\",\"col\":3}},{\"id\":\"HIkp25Xzmr\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Teller Invoice\",\"col\":3}},{\"id\":\"ntHo2pkn7y\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Branch\",\"col\":3}},{\"id\":\"308qss8rYh\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"User\",\"col\":3}},{\"id\":\"enQA7bCi4M\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Interbank Workspace</span>\",\"col\":12}},{\"id\":\"69xnId78dx\",\"type\":\"card\",\"data\":{\"card_name\":\"Bank Card \",\"col\":6}},{\"id\":\"M5XRTSwB4S\",\"type\":\"card\",\"data\":{\"card_name\":\"Invoices\",\"col\":6}},{\"id\":\"ECsl3CmMUU\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>                                                Teller Setting</b></span>\",\"col\":12}},{\"id\":\"nLBoPAgoaR\",\"type\":\"card\",\"data\":{\"card_name\":\"Branches And Setting\",\"col\":4}},{\"id\":\"AHCO0MLZin\",\"type\":\"card\",\"data\":{\"card_name\":\"Master Data\",\"col\":4}},{\"id\":\"uJAt9SqusI\",\"type\":\"card\",\"data\":{\"card_name\":\"Reports\",\"col\":4}}]",
+ "creation": "2024-11-18 14:35:02.349161",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "for_user": "",
+ "hide_custom": 0,
+ "icon": "income",
+ "idx": 0,
+ "indicator_color": "",
+ "is_hidden": 0,
+ "label": "Interbank Workspace",
+ "links": [
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Interbank Deal",
+   "link_count": 0,
+   "link_to": "Request Deal interbank",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Interbank Request",
+   "link_count": 0,
+   "link_to": "Request interbank",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Booking Interbank",
+   "link_count": 0,
+   "link_to": "Booking Interbank",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Interbank",
+   "link_count": 0,
+   "link_to": "InterBank",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Master Data",
+   "link_count": 4,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Users",
+   "link_count": 0,
+   "link_to": "User",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Our Branches",
+   "link_count": 0,
+   "link_to": "Branch",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Contact",
+   "link_count": 0,
+   "link_to": "Contact",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Close Shift",
+   "link_count": 0,
+   "link_to": "Close Shift",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Branches And Setting",
+   "link_count": 4,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Teller Setting",
+   "link_count": 0,
+   "link_to": "Teller Setting",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Close Shift",
+   "link_count": 0,
+   "link_to": "Close Shift",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Price List",
+   "link_count": 0,
+   "link_to": "Price List",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Currency",
+   "link_count": 0,
+   "link_to": "Currency",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Reports",
+   "link_count": 4,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Branches Balance",
+   "link_count": 0,
+   "link_to": "branches balance",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Branches Total Currancy",
+   "link_count": 0,
+   "link_to": "branches total currancy",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Head Branches total currency",
+   "link_count": 0,
+   "link_to": "Head Branches total currency",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Head branch Currency",
+   "link_count": 0,
+   "link_to": "Head branch Currency",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Bank Card ",
+   "link_count": 5,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "InterBank Request",
+   "link_count": 0,
+   "link_to": "Request interbank",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "InterBank",
+   "link_count": 0,
+   "link_to": "InterBank",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Branch Interbank Request",
+   "link_count": 0,
+   "link_to": "Branch Interbank Request",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Queue Request",
+   "link_count": 0,
+   "link_to": "Queue Request",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Booking Interbank",
+   "link_count": 0,
+   "link_to": "Booking Interbank",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Invoices",
+   "link_count": 4,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Teller Invoice",
+   "link_count": 0,
+   "link_to": "Teller Invoice",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Teller Purchase",
+   "link_count": 0,
+   "link_to": "Teller Purchase",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Open Shift",
+   "link_count": 0,
+   "link_to": "OPen Shift",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Close Shift",
+   "link_count": 0,
+   "link_to": "Close Shift",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  }
+ ],
+ "modified": "2025-01-26 18:55:57.196360",
+ "modified_by": "andrew@datasofteg.com",
+ "module": "Teller",
+ "name": "Interbank Workspace",
+ "number_cards": [],
+ "owner": "Administrator",
+ "parent_page": "",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [
+  {
+   "role": "interbank branch manager"
+  },
+  {
+   "role": "Interbank HQ"
+  }
+ ],
+ "sequence_id": 9.0,
+ "shortcuts": [
+  {
+   "color": "Red",
+   "doc_view": "List",
+   "label": "Branch",
+   "link_to": "Branch",
+   "stats_filter": "[]",
+   "type": "DocType"
+  },
+  {
+   "color": "Green",
+   "doc_view": "List",
+   "label": "InterBank",
+   "link_to": "InterBank",
+   "stats_filter": "[]",
+   "type": "DocType"
+  },
+  {
+   "color": "Green",
+   "doc_view": "List",
+   "label": "Teller Invoice",
+   "link_to": "Teller Invoice",
+   "stats_filter": "[]",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Booking Interbank",
+   "link_to": "Booking Interbank",
+   "stats_filter": "[]",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Request Interbank",
+   "link_to": "Request interbank",
+   "stats_filter": "[]",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Queue Request",
+   "link_to": "Queue Request",
+   "stats_filter": "[]",
+   "type": "DocType"
+  },
+  {
+   "color": "Red",
+   "doc_view": "List",
+   "label": "Teller Purchase",
+   "link_to": "Teller Purchase",
+   "stats_filter": "[]",
+   "type": "DocType"
+  },
+  {
+   "color": "Red",
+   "doc_view": "List",
+   "label": "User",
+   "link_to": "User",
+   "stats_filter": "[]",
+   "type": "DocType"
+  }
+ ],
+ "title": "Interbank Workspace"
+}
