@@ -22,10 +22,10 @@ def sendmail(interbank_doc):
           percentage = float(str_value)
       if percentage > 80:
           allow_notify = frappe.db.get_singles_value("Teller Setting", "allow_interbank_notification")
-      if allow_notify == "ON":
-          notify = frappe.db.get_singles_value("Teller Setting", "notification_percentage")
-          print(f"notify: {notify} | percentage: {percentage} | currency: {currency}")   
-          message += _(f"Interbank Currency {currency} value is {percentage}%\n")
+          if allow_notify == "ON":
+              notify = frappe.db.get_singles_value("Teller Setting", "notification_percentage")
+              print(f"notify: {notify} | percentage: {percentage} | currency: {currency}")   
+              message += _(f"Interbank Currency {currency} value is {percentage}%\n")
   if message:
       print(f"messege........{message}")
       frappe.sendmail(
