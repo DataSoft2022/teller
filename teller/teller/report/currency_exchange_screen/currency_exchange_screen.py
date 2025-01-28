@@ -12,7 +12,7 @@ def execute(filters=None):
 def get_columns():
 	 return [
         {"label": "Currency", "fieldname": "from_currency", "fieldtype": "Data", "width": 150},
-        {"label": "Exchange Rate", "fieldname": "exchange_rate", "fieldtype": "Float", "width": 150},
+        {"label": "Buying Exchange Rate", "fieldname": "exchange_rate", "fieldtype": "Float", "width": 150},
         {"label": "Selling Exchange Rate", "fieldname": "custom_selling_exchange_rate", "fieldtype": "Float", "width": 200},
         {"label": "Last Date", "fieldname": "latest_date", "fieldtype": "Datetime", "width": 250},
         
