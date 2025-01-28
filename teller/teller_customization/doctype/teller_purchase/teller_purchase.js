@@ -1444,7 +1444,7 @@ frappe.ui.form.on("Teller Purchase",{
                                 bo_items.forEach(function(bo_item){
                                   if(bo_item == item.name){
                                     console.log("iiiiiii",item)
-                                    frappe.msgprint("Booking Interbank1 => Selected")
+                                    // frappe.msgprint("Booking Interbank1 => Selected")
                                       var child = frm.add_child("transactions");
                                       child.code = item.currency_code;
                                       child.currency_code = item.currency;
@@ -1458,7 +1458,7 @@ frappe.ui.form.on("Teller Purchase",{
                               }else{
                                 console.log("iiiiiii",item)
 
-                                frappe.msgprint("Booking Interbank2 => Selected")
+                                // frappe.msgprint("Booking Interbank2 => Selected")
                                 var child = frm.add_child("transactions");
                                 child.code = item.currency_code;
                                 get_account(frm, child);
