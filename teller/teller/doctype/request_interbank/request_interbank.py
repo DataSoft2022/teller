@@ -405,21 +405,19 @@ class Requestinterbank(Document):
                     detail_doc = frappe.get_doc("InterBank Details", detail.name)
                     qt_booked = detail_doc.get("booking_qty") + booking_amount
                     detail_doc.db_set("booking_qty", qt_booked)
-                    new_val =detail_doc.get("booking_qty")
-                    mail =interbank_doc.get("mail")
-                    sendmail(new_val,mail)
-                    print(f"\n\n\\n\n VVV")
+                    sendmail(interbank_doc)
+
                     if detail_doc.qty == detail_doc.booking_qty:
                         detail_doc.db_set("status", "Closed",update_modified=True)
                         self.calculate_precent(interbank_name)
                         for item in currency_table:
                             if item.currency == currency:
                                 item.db_set("status", "Reserved")
-                                
+                        sendmail(interbank_doc)        
                     else:
                         interbank_doc.db_set("status", "Deal")
                         self.calculate_precent(interbank_name)
-                        
+                        sendmail(interbank_doc)
         if not found_interbank:
             frappe.msgprint("No valid InterBank records were found.")
         else:
