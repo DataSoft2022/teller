@@ -46,11 +46,12 @@ def sendmail(interbank_doc):
   if message:
       # print(f"\n\npercentage22........{percentage}")
       print(f"messege22{email}........{message}")
-      frappe.sendmail(
-        sender=None,
-        recipients=email,
-        subject=_("Interbank Notification"),
-        message=message)
-      return message
-      #     enqueue(method=frappe.sendmail, queue="short", timeout=300, is_async=True, **email_args)
+      for recipient in email:
+        frappe.sendmail(
+          sender=None,
+          recipients=recipient,
+          subject=_("Interbank Notification"),
+          message=message)
+        return message
+        #     enqueue(method=frappe.sendmail, queue="short", timeout=300, is_async=True, **email_args)
     
