@@ -154,55 +154,6 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Reports",
-   "link_count": 4,
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Card Break"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Branches Balance",
-   "link_count": 0,
-   "link_to": "branches balance",
-   "link_type": "Report",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Branches Total Currancy",
-   "link_count": 0,
-   "link_to": "branches total currancy",
-   "link_type": "Report",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Head Branches total currency",
-   "link_count": 0,
-   "link_to": "Head Branches total currency",
-   "link_type": "Report",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Head branch Currency",
-   "link_count": 0,
-   "link_to": "Head branch Currency",
-   "link_type": "Report",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
    "label": "Bank Card ",
    "link_count": 5,
    "link_type": "DocType",
@@ -327,9 +278,68 @@
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Reports",
+   "link_count": 5,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Branches Balance",
+   "link_count": 0,
+   "link_to": "branches balance",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Branches Total Currancy",
+   "link_count": 0,
+   "link_to": "branches total currancy",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Head Branches total currency",
+   "link_count": 0,
+   "link_to": "Head Branches total currency",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Head branch Currency",
+   "link_count": 0,
+   "link_to": "Head branch Currency",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Currency Exchange Screen",
+   "link_count": 0,
+   "link_to": "Currency Exchange Screen",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
   }
  ],
- "modified": "2025-01-28 09:54:44.291916",
+ "modified": "2025-01-28 11:05:06.260479",
  "modified_by": "Administrator",
  "module": "Teller",
  "name": "Interbank Workspace",
