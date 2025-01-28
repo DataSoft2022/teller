@@ -133,11 +133,12 @@ class InterBank(Document):
                 q_total = append_qty + queue_booking_qty
                 detail_doc.db_set("booked_qty", q_total)
                 detail_doc.db_set("status", "Closed")
-          
+
               if queue_qty < ib_qty:                
                 detail_doc = frappe.get_doc("Queue Request Details", row.name)
                 q_total = append_qty + queue_booking_qty
                 detail_doc.db_set("booked_qty", q_total)
+                detail_doc.db_set("status", "Closed")
                 frappe.msgprint(f"{queue_parent} queue_qty {queue_qty}< queue_booking_qty{ib_qty} tot {q_total}")
               else:
                   detail_doc = frappe.get_doc("Queue Request Details", row.name)
@@ -153,20 +154,31 @@ class InterBank(Document):
             for detail in ib_details:
                 ib_detail_doc = frappe.get_doc("InterBank Details", detail.name)
                 booking_qty = ib_detail_doc.get("booking_qty")
+                ib_precent = ib_detail_doc.get("booking_precentage")
                 # i_total =booking_qty + queue_qty
                 i_total =booking_qty + append_qty
                 ib_detail_doc.db_set("booking_qty", i_total)
                 # req_interbank = Requestinterbank.calculate_precent()
                 ib_doc = ib_detail_doc.get("parent")
                 calc=Requestinterbank.calculate_precent(self, ib_doc)
+                self.sendmail(ib_doc,ib_precent)
                 for item in currency_table:
                     if item.qty == booking_qty:
                         ib_detail_doc.db_set("status", "Closed")
                         calc=Requestinterbank.calculate_precent(self, ib_doc)
+                        self.sendmail(ib_doc,ib_precent)
                     else:
-                        calc=Requestinterbank.calculate_precent(self, ib_doc)    
+                        calc=Requestinterbank.calculate_precent(self, ib_doc) 
+                        self.sendmail(ib_doc,ib_precent)   
                 
                 # req_interbank.calculate_precent(self, ib_doc)
+    def sendmail(self, ib_doc,ib_precent):
+        allow_notify =frappe.db.get_singles_value("Teller Setting", "allow_interbank_notification")
+        if allow_notify == "ON":
+          notify = frappe.db.get_singles_value("Teller Setting", "notification_percentage")
+          print(f"n\n\n\nnotify{notify} precent ib {ib_precent}")
+          print(f"n\n\n\nnotify{type(notify)} precent ib {type(ib_precent)}")
+        # pass            
     @frappe.whitelist()    
     def interbank_update_status(self):
           current_interbank = frappe.get_doc("InterBank", self.name)
@@ -174,28 +186,7 @@ class InterBank(Document):
           current_interbank.db_set('status', 'Closed')
           current_interbank.save()
           
-    # @frappe.whitelist()
-    # def fetch_data(self):
-    #     # Your logic to fetch data
-    #     sql = """
-    # 	   SELECT
-    #         account,
-    #         SUM(credit_in_account_currency) AS sum_currency_sale,
-    #         SUM(debit_in_account_currency) AS sum_currency_purchase,
-    #         account_currency,
-    #         SUM(credit) AS sum_egy_sale,
-    #         SUM(debit) AS sum_egy_purchase,
-    #         posting_date
-    #     FROM
-    #         `tabGL Entry`
-    #     WHERE
-    #         account IN (SELECT name FROM `tabAccount` WHERE account_type = 'Cash')
-
-    # 	"""
-
-    #     sr = frappe.db.sql(sql, as_dict=True)
-    #     fetched_data = sr  # Replace with actual fetched data
-    #     return fetched_data
+    
 
     @frappe.whitelist()
     def get_currency(self):
