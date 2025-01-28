@@ -263,7 +263,7 @@
    "hidden": 0,
    "is_query_report": 0,
    "label": "Invoices",
-   "link_count": 4,
+   "link_count": 6,
    "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
@@ -307,10 +307,30 @@
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Update Currency Exchange",
+   "link_count": 0,
+   "link_to": "Update Currency Exchange",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Currency Exchange",
+   "link_count": 0,
+   "link_to": "Currency Exchange",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
   }
  ],
- "modified": "2025-01-26 18:55:57.196360",
- "modified_by": "andrew@datasofteg.com",
+ "modified": "2025-01-28 09:54:44.291916",
+ "modified_by": "Administrator",
  "module": "Teller",
  "name": "Interbank Workspace",
  "number_cards": [],
