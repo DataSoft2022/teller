@@ -13,25 +13,30 @@ def sendmail(interbank_doc):
   message =f""
   email =["ahmedabukhatwa1@gmail.com"]
   for detail in interbank_details:
-      new_val = detail.get("booking_qty")
+      new_val = detail.get("booking_precentage")
       currency  = detail.get("currency")
       str_value = str(new_val) 
-      if '%' in str_value:
-          percentage = float(str_value.replace('%', '')) 
+      if new_val is not None and new_val != '':
+        if '%' in str_value:
+            percentage = float(str_value.replace('%', '')) 
+        else:
+            percentage = float(str_value)
+        if percentage >= 80:
+            allow_notify = frappe.db.get_singles_value("Teller Setting", "allow_interbank_notification")
+            if allow_notify == "ON":
+                notify = frappe.db.get_singles_value("Teller Setting", "notification_percentage")
+                print(f"notify: {notify} | percentage: {percentage} | currency: {currency}")   
+                message += _(f"Interbank Currency {currency} value is {percentage}%\n")
       else:
-          percentage = float(str_value)
-      if percentage > 80:
-          allow_notify = frappe.db.get_singles_value("Teller Setting", "allow_interbank_notification")
-          if allow_notify == "ON":
-              notify = frappe.db.get_singles_value("Teller Setting", "notification_percentage")
-              print(f"notify: {notify} | percentage: {percentage} | currency: {currency}")   
-              message += _(f"Interbank Currency {currency} value is {percentage}%\n")
+          percentage = 0
   if message:
-      print(f"messege........{message}")
+      print(f"\n\npercentage22........{percentage}")
+      print(f"messege22........{percentage}")
       frappe.sendmail(
         sender=None,
         recipients=email,
         subject=_("Interbank Notification"),
         message=message)
       return message
-          
+      #     enqueue(method=frappe.sendmail, queue="short", timeout=300, is_async=True, **email_args)
+    

@@ -123,7 +123,7 @@ class InterBank(Document):
             #         fields=["name", "parent","status", "qty", "currency","booked_qty"],
             #         filters={"currency": currency, "status":"Queue", "parenttype":"Queue Request"},
             #     )
-            print(f"queue_details {queue_details}")
+            # print(f"queue_details {queue_details}")
             for row in queue_details:
               queue_parent = row.get("booked_qty")
               queue_qty = row.get("qty")
@@ -139,7 +139,7 @@ class InterBank(Document):
                 q_total = append_qty + queue_booking_qty
                 detail_doc.db_set("booked_qty", q_total)
                 detail_doc.db_set("status", "Closed")
-                frappe.msgprint(f"{queue_parent} queue_qty {queue_qty}< queue_booking_qty{ib_qty} tot {q_total}")
+                # frappe.msgprint(f"{queue_parent} queue_qty {queue_qty}< queue_booking_qty{ib_qty} tot {q_total}")
               else:
                   detail_doc = frappe.get_doc("Queue Request Details", row.name)
                   q_total = append_qty + queue_booking_qty
@@ -161,24 +161,18 @@ class InterBank(Document):
                 # req_interbank = Requestinterbank.calculate_precent()
                 ib_doc = ib_detail_doc.get("parent")
                 calc=Requestinterbank.calculate_precent(self, ib_doc)
-                self.sendmail(ib_doc,ib_precent)
+                
                 for item in currency_table:
                     if item.qty == booking_qty:
                         ib_detail_doc.db_set("status", "Closed")
                         calc=Requestinterbank.calculate_precent(self, ib_doc)
-                        self.sendmail(ib_doc,ib_precent)
+                  
                     else:
                         calc=Requestinterbank.calculate_precent(self, ib_doc) 
-                        self.sendmail(ib_doc,ib_precent)   
+                   
                 
                 # req_interbank.calculate_precent(self, ib_doc)
-    def sendmail(self, ib_doc,ib_precent):
-        allow_notify =frappe.db.get_singles_value("Teller Setting", "allow_interbank_notification")
-        if allow_notify == "ON":
-          notify = frappe.db.get_singles_value("Teller Setting", "notification_percentage")
-          print(f"n\n\n\nnotify{notify} precent ib {ib_precent}")
-          print(f"n\n\n\nnotify{type(notify)} precent ib {type(ib_precent)}")
-        # pass            
+          
     @frappe.whitelist()    
     def interbank_update_status(self):
           current_interbank = frappe.get_doc("InterBank", self.name)
@@ -317,29 +311,3 @@ def create_queue_request(currency, purpose):
     ri = frappe.db.sql(sql,(currency , purpose), as_dict=True)
     return ri
 
-@frappe.whitelist(allow_guest=True)
-def sendmail():
-    pass
-#     email_args = {
-#       "recipients": "ahmedabukhatwa@gmail.com",
-#       "sender": "elbank-alahly@datasofteg.com",
-#       "subject":"subject",
-#       "message": f"hello",
-#       "now": True,
-#       # "attachments": [
-#       #   frappe.attach_print(
-#       #     self.reference_doctype,
-#       #     self.reference_name,
-#       #     file_name=self.reference_name,
-#       #     print_format=self.print_format,
-#       #   )
-#       # ],
-#     }
-#     enqueue(method=frappe.sendmail, queue="short", timeout=300, is_async=True, **email_args)
-# #     # frappe.sendmail(
-# #     # 	recipients=frappe.db.get_value("User", ref_doc.owner, "email") or ref_doc.owner,
-# #     # 	subject=subject,
-# #     # 	message=message,
-# #     # 	reference_doctype=ref_doc.doctype,
-# #     # 	reference_name=ref_doc.name,
-# #     # )
