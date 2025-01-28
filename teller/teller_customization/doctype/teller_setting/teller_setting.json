@@ -31,7 +31,8 @@
   "allow_queue_interbank",
   "section_break_lixz",
   "allow_interbank_notification",
-  "notification_percentage"
+  "notification_percentage",
+  "close_interbank"
  ],
  "fields": [
   {
@@ -176,14 +177,19 @@
   },
   {
    "fieldname": "notification_percentage",
-   "fieldtype": "Percent",
+   "fieldtype": "Int",
    "label": " Notification Percentage"
+  },
+  {
+   "fieldname": "close_interbank",
+   "fieldtype": "Int",
+   "label": "Close Interbank"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-01-27 15:20:05.184502",
+ "modified": "2025-01-28 16:59:19.495821",
  "modified_by": "Administrator",
  "module": "Teller Customization",
  "name": "Teller Setting",

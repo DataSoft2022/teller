@@ -419,19 +419,19 @@ frappe.ui.form.on("InterBank", {
         console.log("status will changed to Send ")
         
     
-          frappe.call({
-            method:"teller.teller_customization.doctype.interbank.interbank.sendmail",
-            args:{
-              mail:frm.doc.mail,
-            },callback:function(r){
-              if (r){
-                console.log("sending sucessfully")
+          // frappe.call({
+          //   method:"teller.teller_customization.doctype.interbank.interbank.sendmail",
+          //   args:{
+          //     mail:frm.doc.mail,
+          //   },callback:function(r){
+          //     if (r){
+          //       console.log("sending sucessfully")
                 frm.set_value('status', 'On Sent');
                 frm.save();
 
-              }
-            }
-          })
+          //     }
+          //   }
+          // })
         
 //           	if(frm.doc.status == 'On Sent'){
          

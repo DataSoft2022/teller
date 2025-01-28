@@ -150,7 +150,6 @@ scheduler_events = {
   "cron":{
     "* * * * *":[ 
     "teller.validate_time.cron_validate_interbank_time",
-    # "teller.teller_customization.doctype.interbank_details.interbank_details.sendmail"
   ]
   }
 # 	"all": [
