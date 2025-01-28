@@ -13,7 +13,7 @@ def sendmail(interbank_doc):
   message =f""
   email =[]
   # x = interbank_doc.mail
-  x = "ahmedabukhatwa1@gmail.com"
+  x = ["ahmedabukhatwa1@gmail.com","andrewdatasoft@gmail.com"]
   email.append(x)
   e = frappe.db.get_singles_value("Teller Setting", "notification_percentage")
   o = frappe.db.get_singles_value("Teller Setting", "close_interbank")
