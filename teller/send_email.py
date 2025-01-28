@@ -1,12 +1,12 @@
 import frappe
 from frappe import _
 @frappe.whitelist(allow_guest=True)
-def sendmail(new_val):
+def sendmail(new_val,email):
   str_value = str(new_val) 
   if '%' in str_value:
       percentage = float(str_value.replace('%', '')) 
   else:
-      percentage = float(str_value,email)
+      percentage = float(str_value)
   percentage = float(str_value.replace('%', ''))
   allow_notify = frappe.db.get_singles_value("Teller Setting", "allow_interbank_notification")
   if allow_notify == "ON":

@@ -3,6 +3,7 @@ from frappe.model.document import Document
 from frappe.utils import flt
 from frappe import _
 from frappe import whitelist
+from teller.send_email import sendmail
 class Requestinterbank(Document):
     def on_submit(self):
         if not self.items:
@@ -399,11 +400,15 @@ class Requestinterbank(Document):
                     ignore_permissions=True
                 )
                 ###############################
+                
                 for detail in interbank_details:
                     detail_doc = frappe.get_doc("InterBank Details", detail.name)
                     qt_booked = detail_doc.get("booking_qty") + booking_amount
                     detail_doc.db_set("booking_qty", qt_booked)
-      
+                    new_val =detail_doc.get("booking_qty")
+                    mail =interbank_doc.get("mail")
+                    sendmail(new_val,mail)
+                    print(f"\n\n\\n\n VVV")
                     if detail_doc.qty == detail_doc.booking_qty:
                         detail_doc.db_set("status", "Closed",update_modified=True)
                         self.calculate_precent(interbank_name)
@@ -414,6 +419,7 @@ class Requestinterbank(Document):
                     else:
                         interbank_doc.db_set("status", "Deal")
                         self.calculate_precent(interbank_name)
+                        
         if not found_interbank:
             frappe.msgprint("No valid InterBank records were found.")
         else:
