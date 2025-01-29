@@ -134,6 +134,10 @@ doc_events = {
     # 		"on_cancel": "method",
     # 		"on_trash": "method"
     # 	}
+    "Currency Exchange": {
+        "after_insert": "teller.teller.page.currency_screen.currency_screen.after_insert",
+        "on_update": "teller.teller.page.currency_screen.currency_screen.on_update"
+    },
     "Customer": {"autoname": "teller.teller_customization.customer.customer.autoname"},
     # "Subscription": {
     #     # "before_save": "teller.subscription.before_save",
