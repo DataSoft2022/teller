@@ -57,3 +57,43 @@ class BranchInterbankRequest(Document):
 
         # Display success message with document name (now it will have a name after insert)
         frappe.msgprint(f"Booking Interbank document {document.name} has been created successfully.")
+@frappe.whitelist(allow_guest=True)
+def get_all_avaliale_currency(transaction):
+    """Server-side function that is triggered when the user clicks 'Yes'."""
+    sql = """
+WITH LatestCurrency AS (
+    SELECT 
+        ib.name, 
+        ib.status,
+        ibd.currency,
+        ib.transaction,
+        ibd.currency_code, 
+        ibd.qty, 
+        ibd.booking_qty,
+        ibd.remaining,
+        ibd.rate,
+        ibd.creation,
+        ibd.qty - ibd.booking_qty AS available_qty,
+        ROW_NUMBER() OVER (PARTITION BY ibd.currency ORDER BY ibd.creation ASC) AS row_num
+    FROM 
+        `tabInterBank` ib 
+    LEFT JOIN 
+        `tabInterBank Details` ibd 
+    ON 
+        ibd.parent = ib.name
+    WHERE 
+        ib.docstatus = 1
+        AND ib.transaction = %s
+        AND ib.status = 'Deal'
+        AND ib.type = 'Daily'
+        AND ib.status != 'Closed'
+        AND ibd.status != 'Closed'
+    
+)
+SELECT *
+FROM LatestCurrency
+WHERE row_num = 1
+ORDER BY currency_code,creation ASC;  
+ """
+    data = frappe.db.sql(sql,(transaction, ),as_dict=True)
+    return data
