@@ -12,7 +12,8 @@
   "rate",
   "qty",
   "amount",
-  "status"
+  "status",
+  "interbank_balance"
  ],
  "fields": [
   {
@@ -47,12 +48,17 @@
    "fieldname": "amount",
    "fieldtype": "Float",
    "label": "Amount"
+  },
+  {
+   "fieldname": "interbank_balance",
+   "fieldtype": "Float",
+   "label": "Interbank Balance"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-01-19 12:58:31.081555",
+ "modified": "2025-01-29 16:45:45.683888",
  "modified_by": "Administrator",
  "module": "Teller",
  "name": "Branch Request Details",

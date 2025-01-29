@@ -9,7 +9,6 @@
   "code",
   "currency_code",
   "paid_from",
-  "currency",
   "usd_amount",
   "rate",
   "received_amount",
@@ -28,14 +27,6 @@
    "label": "Teller",
    "options": "Account",
    "reqd": 1
-  },
-  {
-   "fieldname": "currency",
-   "fieldtype": "Link",
-   "hidden": 1,
-   "label": "Currency",
-   "options": "Currency",
-   "read_only": 1
   },
   {
    "fieldname": "rate",
@@ -97,7 +88,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-01-22 15:02:52.983962",
+ "modified": "2025-01-29 16:31:54.375738",
  "modified_by": "Administrator",
  "module": "Teller Customization",
  "name": "Entry Child",
