@@ -1413,7 +1413,7 @@ frappe.ui.form.on("Teller Purchase",{
             branch: null,
             customer: 'البنك الاهلي',
         },
-        allow_child_item_selection: 1,
+        // allow_child_item_selection: 1,
         child_columns: ["currency","qty","rate"],
         child_fieldname:"booked_currency",
         columns: ["name", "transaction", "status","date"],
@@ -1448,6 +1448,7 @@ frappe.ui.form.on("Teller Purchase",{
                                       var child = frm.add_child("transactions");
                                       child.code = item.currency_code;
                                       child.currency_code = item.currency;
+                                      child.currency = item.currency;
                                       child.usd_amount = item.qty;
                                       child.rate = item.rate;
                                       child.total_amount = item.qty * item.rate;
