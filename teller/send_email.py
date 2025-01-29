@@ -53,5 +53,14 @@ def sendmail(interbank_doc):
           subject=_("Interbank Notification"),
           message=message)
         return message
-        #     enqueue(method=frappe.sendmail, queue="short", timeout=300, is_async=True, **email_args)
-    
+        # enqueue(method=frappe.sendmail, queue="short", timeout=300, is_async=True, **email_args)
+def sendmail_customer_expired_registration_date(customer):    
+    recipient = customer.email_id
+    registration_date = customer.custom_end_registration_date
+    message = _(f"Registration Date {registration_date} Expired")
+    frappe.sendmail(
+      sender=None,
+      recipients=recipient,
+      subject=_("Interbank Notification"),
+      message=message)
+    return message

@@ -120,7 +120,8 @@ home_page = "login"
 # Override standard doctype classes
 
 override_doctype_class = {
-    "Currency Exchange": "teller.teller_customization.currency_override.CurrencyName"
+    "Currency Exchange": "teller.teller_customization.currency_override.CurrencyName",
+    # "Customer": "teller.controllers.override.CustomCustomer"
 }
 
 # Document Events
@@ -147,10 +148,15 @@ doc_events = {
 # ---------------
 
 scheduler_events = {
+    # "daily": [
+    # "teller.controllers.validate_customer.validate"
+    # ],
   "cron":{
     "* * * * *":[ 
     "teller.validate_time.cron_validate_interbank_time",
-  ]
+    "teller.controllers.validate_customer.validate_registration_date"
+  ],
+
   }
 # 	"all": [
 # 		"teller.tasks.all"
