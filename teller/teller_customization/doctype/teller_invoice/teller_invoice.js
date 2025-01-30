@@ -1829,7 +1829,7 @@ if (row.code) {
 function get_account (frm, child){
 
   if (child.code) {
-    console.log("Code entered222222:", child);
+    console.log("Code entered222222:", child.code);
   
   //   // Step 1: Fetch User Permissions for Accounts
     frappe.call({
@@ -1837,8 +1837,8 @@ function get_account (frm, child){
         args: {
             doctype: "User Permission",
             filters: {
-              user: 'andrew@datasofteg.com',
-                // user: frappe.session.user, // Filter by the current user
+              // user: 'andrew@datasofteg.com',
+                user: frappe.session.user, // Filter by the current user
                 allow: "Account" // Ensure permissions are for the Account doctype
             },
             fields: ["for_value"]
