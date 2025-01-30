@@ -605,7 +605,7 @@ def get_total(currency, purpose):
     return frappe.db.sql(sql, (currency, purpose), as_dict=True)
 #function get avaliable currency balance on click tranaction 
 @frappe.whitelist(allow_guest=True)
-def get_all_avaliale_currency(transaction):
+def get_all_avaliale_currency(transaction,type):
     """Server-side function that is triggered when the user clicks 'Yes'."""
     sql = """
 WITH LatestCurrency AS (
@@ -632,7 +632,7 @@ WITH LatestCurrency AS (
         ib.docstatus = 1
         AND ib.transaction = %s
         AND ib.status = 'Deal'
-        AND ib.type = 'Daily'
+        AND ib.type = %s
         AND ib.status != 'Closed'
         AND ibd.status != 'Closed'
     
@@ -642,7 +642,7 @@ FROM LatestCurrency
 WHERE row_num = 1
 ORDER BY currency_code,creation ASC;  
  """
-    data = frappe.db.sql(sql,(transaction, ),as_dict=True)
+    data = frappe.db.sql(sql,(transaction,type ),as_dict=True)
     return data
 
 

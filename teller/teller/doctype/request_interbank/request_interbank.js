@@ -414,7 +414,7 @@ frappe.ui.form.on('Interbank Request Details', {
 frappe.ui.form.on('Request interbank', {
   transaction(frm) {
         var transaction = frm.doc.transaction;
-
+        var type = frm.doc.type;
         // Clear the items table
         frappe.model.clear_table(frm.doc, "items");
 
@@ -423,7 +423,7 @@ frappe.ui.form.on('Request interbank', {
             setTimeout(() => {
                 frm.call({
                     method: "get_all_avaliale_currency",
-                    args: { transaction },
+                    args: { transaction,type },
                     callback: function (r) {
                         if (r && r.message && Array.isArray(r.message)) {
                             const data = r.message.filter(row => row && Object.values(row).some(value => value !== null));
