@@ -1,0 +1,118 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-01-30 11:20:37.861838",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_skeu",
+  "treasury_code",
+  "amended_from",
+  "accepted",
+  "column_break_lxjz",
+  "branch_number",
+  "printing_roll",
+  "selling_printing_roll",
+  "treasury_type",
+  "for_transfer",
+  "section_break_lvnf",
+  "treasury"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_skeu",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "treasury_code",
+   "fieldtype": "Select",
+   "label": "Treasury table",
+   "options": "0701\n0702\n0703"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Small Text",
+   "label": "description",
+   "no_copy": 1,
+   "options": "Treasury",
+   "print_hide": 1,
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "accepted",
+   "fieldtype": "Check",
+   "label": "Suspended"
+  },
+  {
+   "fieldname": "column_break_lxjz",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "branch_number",
+   "fieldtype": "Select",
+   "label": "branch number",
+   "options": "81\n82\n83\n84"
+  },
+  {
+   "fieldname": "printing_roll",
+   "fieldtype": "Select",
+   "label": "purchase printing roll",
+   "options": "0000000000\n0000000888\n0000000777\n0000000999"
+  },
+  {
+   "fieldname": "selling_printing_roll",
+   "fieldtype": "Select",
+   "label": "selling printing roll ",
+   "options": "0000000000\n0000000888\n0000000777\n0000000999"
+  },
+  {
+   "fieldname": "treasury_type",
+   "fieldtype": "Select",
+   "label": "Treasury type",
+   "options": "selling\nbuying\nselling & buying"
+  },
+  {
+   "default": "0",
+   "fieldname": "for_transfer",
+   "fieldtype": "Check",
+   "label": "transfer "
+  },
+  {
+   "fieldname": "section_break_lvnf",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "treasury",
+   "fieldtype": "Table",
+   "label": "Treasury",
+   "options": "Treasury table"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2025-01-30 12:45:11.122131",
+ "modified_by": "Administrator",
+ "module": "Teller",
+ "name": "Treasury",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
