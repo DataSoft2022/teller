@@ -7,6 +7,7 @@
  "engine": "InnoDB",
  "field_order": [
   "section_break_ugcr",
+  "reason_for_selling",
   "treasury_code",
   "movement_number",
   "column_break_beht",
@@ -728,12 +729,17 @@
    "fieldtype": "Link",
    "label": "Teller Invoice",
    "options": "Teller Invoice"
+  },
+  {
+   "fieldname": "reason_for_selling",
+   "fieldtype": "Data",
+   "label": "reason for Selling"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-01-27 10:41:35.283091",
+ "modified": "2025-01-30 13:31:41.897483",
  "modified_by": "Administrator",
  "module": "Teller Customization",
  "name": "Teller Invoice",
