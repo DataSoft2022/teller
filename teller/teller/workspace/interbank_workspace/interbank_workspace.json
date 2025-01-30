@@ -1,6 +1,6 @@
 {
  "charts": [],
- "content": "[{\"id\":\"jmpquFu9Le\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Your Shortcuts</b><b></b></span>\",\"col\":12}},{\"id\":\"fUicuznfA0\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Request Interbank\",\"col\":3}},{\"id\":\"qPCsQF4Q9k\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"InterBank\",\"col\":3}},{\"id\":\"lQ9JpnFBxW\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Booking Interbank\",\"col\":3}},{\"id\":\"DgM-1IONdr\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Queue Request\",\"col\":3}},{\"id\":\"hVNJL0r3IM\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Teller Purchase\",\"col\":3}},{\"id\":\"HIkp25Xzmr\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Teller Invoice\",\"col\":3}},{\"id\":\"ntHo2pkn7y\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Branch\",\"col\":3}},{\"id\":\"308qss8rYh\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"User\",\"col\":3}},{\"id\":\"enQA7bCi4M\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Interbank Workspace</span>\",\"col\":12}},{\"id\":\"69xnId78dx\",\"type\":\"card\",\"data\":{\"card_name\":\"Bank Card \",\"col\":6}},{\"id\":\"M5XRTSwB4S\",\"type\":\"card\",\"data\":{\"card_name\":\"Invoices\",\"col\":6}},{\"id\":\"ECsl3CmMUU\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>                                                Teller Setting</b></span>\",\"col\":12}},{\"id\":\"nLBoPAgoaR\",\"type\":\"card\",\"data\":{\"card_name\":\"Branches And Setting\",\"col\":4}},{\"id\":\"AHCO0MLZin\",\"type\":\"card\",\"data\":{\"card_name\":\"Master Data\",\"col\":4}},{\"id\":\"uJAt9SqusI\",\"type\":\"card\",\"data\":{\"card_name\":\"Reports\",\"col\":4}}]",
+ "content": "[{\"id\":\"jmpquFu9Le\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Your Shortcuts</b><b></b></span>\",\"col\":12}},{\"id\":\"fUicuznfA0\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Request Interbank\",\"col\":3}},{\"id\":\"qPCsQF4Q9k\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"InterBank\",\"col\":3}},{\"id\":\"lQ9JpnFBxW\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Booking Interbank\",\"col\":3}},{\"id\":\"DgM-1IONdr\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Queue Request\",\"col\":3}},{\"id\":\"hVNJL0r3IM\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Teller Purchase\",\"col\":3}},{\"id\":\"HIkp25Xzmr\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Teller Invoice\",\"col\":3}},{\"id\":\"ntHo2pkn7y\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Branch\",\"col\":3}},{\"id\":\"308qss8rYh\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"User\",\"col\":3}},{\"id\":\"enQA7bCi4M\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Interbank Workspace</span>\",\"col\":12}},{\"id\":\"M5XRTSwB4S\",\"type\":\"card\",\"data\":{\"card_name\":\"Shift & Invoices\",\"col\":4}},{\"id\":\"w2RS3KpoIQ\",\"type\":\"card\",\"data\":{\"card_name\":\"Interbank & Currency\",\"col\":4}},{\"id\":\"yqtuXY5nd5\",\"type\":\"card\",\"data\":{\"card_name\":\"Update Currency\",\"col\":4}},{\"id\":\"ECsl3CmMUU\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>                                                Teller Setting</b></span>\",\"col\":12}},{\"id\":\"nLBoPAgoaR\",\"type\":\"card\",\"data\":{\"card_name\":\"Branches And Setting\",\"col\":4}},{\"id\":\"AHCO0MLZin\",\"type\":\"card\",\"data\":{\"card_name\":\"Master Data\",\"col\":4}},{\"id\":\"uJAt9SqusI\",\"type\":\"card\",\"data\":{\"card_name\":\"Reports\",\"col\":4}}]",
  "creation": "2024-11-18 14:35:02.349161",
  "custom_blocks": [],
  "docstatus": 0,
@@ -154,8 +154,8 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Bank Card ",
-   "link_count": 5,
+   "label": "Reports",
+   "link_count": 4,
    "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
@@ -163,12 +163,51 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "InterBank Request",
+   "label": "Currency Exchange Screen",
    "link_count": 0,
-   "link_to": "Request interbank",
-   "link_type": "DocType",
+   "link_to": "Currency Exchange Screen",
+   "link_type": "Report",
    "onboard": 0,
    "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Branches Balance",
+   "link_count": 0,
+   "link_to": "branches balance",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Branches Total Currancy",
+   "link_count": 0,
+   "link_to": "branches total currancy",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Head branch Currency",
+   "link_count": 0,
+   "link_to": "Head branch Currency",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Interbank & Currency",
+   "link_count": 4,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
   },
   {
    "hidden": 0,
@@ -176,6 +215,16 @@
    "label": "InterBank",
    "link_count": 0,
    "link_to": "InterBank",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Request interbank",
+   "link_count": 0,
+   "link_to": "Request interbank",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
@@ -193,16 +242,6 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Queue Request",
-   "link_count": 0,
-   "link_to": "Queue Request",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
    "label": "Booking Interbank",
    "link_count": 0,
    "link_to": "Booking Interbank",
@@ -213,8 +252,47 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Invoices",
-   "link_count": 6,
+   "label": "Update Currency",
+   "link_count": 3,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Update Currency Exchange",
+   "link_count": 0,
+   "link_to": "Update Currency Exchange",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Currency Exchange",
+   "link_count": 0,
+   "link_to": "Currency Exchange",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Currency-Screen",
+   "link_count": 0,
+   "link_to": "currency-screen",
+   "link_type": "Page",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Shift & Invoices",
+   "link_count": 4,
    "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
@@ -258,89 +336,10 @@
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Update Currency Exchange",
-   "link_count": 0,
-   "link_to": "Update Currency Exchange",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Currency Exchange",
-   "link_count": 0,
-   "link_to": "Currency Exchange",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Reports",
-   "link_count": 5,
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Card Break"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Branches Balance",
-   "link_count": 0,
-   "link_to": "branches balance",
-   "link_type": "Report",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Branches Total Currancy",
-   "link_count": 0,
-   "link_to": "branches total currancy",
-   "link_type": "Report",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Head Branches total currency",
-   "link_count": 0,
-   "link_to": "Head Branches total currency",
-   "link_type": "Report",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Head branch Currency",
-   "link_count": 0,
-   "link_to": "Head branch Currency",
-   "link_type": "Report",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Currency Exchange Screen",
-   "link_count": 0,
-   "link_to": "Currency Exchange Screen",
-   "link_type": "Report",
-   "onboard": 0,
-   "type": "Link"
   }
  ],
- "modified": "2025-01-28 11:05:06.260479",
- "modified_by": "Administrator",
+ "modified": "2025-01-30 13:52:58.222959",
+ "modified_by": "ahmed.reda@datasofteg.com",
  "module": "Teller",
  "name": "Interbank Workspace",
  "number_cards": [],
