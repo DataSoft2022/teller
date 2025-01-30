@@ -2,6 +2,9 @@
 # For license information, please see license.txt
 
 import frappe
+import json
+from frappe.utils import get_url_to_form 
+from frappe.model.mapper import get_mapped_doc
 from frappe.model.document import Document
 from frappe.utils import (
     add_days,
@@ -47,7 +50,8 @@ class TellerPurchase(Document):
     def on_submit(self):
 
         for row in self.get("transactions"):
-            if row.paid_from and self.egy and row.usd_amount and row.received_amount:
+            if row.paid_from and self.egy and row.usd_amount:
+            # if row.paid_from and self.egy and row.usd_amount and row.received_amount:
                 account_from = get_doc(
                     {
                         "doctype": "GL Entry",
@@ -57,11 +61,11 @@ class TellerPurchase(Document):
                         "credit": 0,
                         "credit_in_account_currency": 0,
                         "debit_in_account_currency": row.usd_amount,
-                        "remarks": f"Amount {row.currency} {row.usd_amount} transferred from {self.egy} to {row.paid_from}",
+                        "remarks": f"Amount {row.currency_code} {row.usd_amount} transferred from {self.egy} to {row.paid_from}",
                         "voucher_type": "Teller Purchase",
                         "voucher_no": self.name,
                         "against": self.egy,
-                        "account_currency": row.currency,
+                        "account_currency": row.currency_code,
                         # "cost_center": row.cost_center,
                         # "project": row.project,
                         "credit_in_transaction_currency": row.total_amount,
@@ -78,7 +82,7 @@ class TellerPurchase(Document):
                         "credit": row.total_amount,
                         "debit_in_account_currency": 0,
                         "credit_in_account_currency": row.total_amount,
-                        "remarks": f"Amount {row.currency} {row.usd_amount} transferred from {self.egy} to {row.paid_from}",
+                        "remarks": f"Amount {row.currency_code} {row.usd_amount} transferred from {self.egy} to {row.paid_from}",
                         "voucher_type": "Teller Purchase",
                         "voucher_no": self.name,
                         "against": row.paid_from,
@@ -447,3 +451,69 @@ def get_list_currency_code(session_user, code):
     )
 
     return codes
+
+@frappe.whitelist()
+def make_purchase_return(doc):
+    doc_data = json.loads(doc)
+    source_name = doc_data.get("name")  
+    source_total =  doc_data.get("total")  
+    def update_item(source_doc, target_doc, source_parent):
+        target_doc.code = source_doc.code
+        target_doc.currency_code = source_doc.currency_code
+        target_doc.paid_from = source_doc.paid_from
+        target_doc.usd_amount = -source_doc.usd_amount
+        target_doc.rate = source_doc.rate
+        target_doc.total_amount = -source_doc.total_amount
+    # Prepare the mapping dictionary
+    # Ensure the source document has a docstatus of 1 ()
+    # Map the item details
+    # Postprocess the items (if needed)
+    # Create a new document by mapping the fields from the source document
+    table_maps = {
+        "Teller Purchase": {
+            "doctype": "Teller Purchase",
+            "field_map": {
+                "is_returned ": 1,  
+
+            },
+            "validation": {
+                "docstatus": ["=", 1],  
+            },
+        },
+        "Teller Purchase Child": {
+            "doctype": "Teller Purchase Child",  
+            "field_map": {
+                "code": "code",
+                "currency_code": "currency_code",
+                "paid_from": "paid_from",
+                "usd_amount":"usd_amount",
+                "rate":"rate",
+                "total_amount":"total_amount"
+            },
+            "postprocess": update_item,  
+        },
+    }
+
+  
+    target_doc = get_mapped_doc(
+        "Teller Purchase",  # Source doctype
+        source_name,  # Source document name
+        table_maps,  # Field mappings and postprocess functions
+    )
+    target_doc.is_returned =1
+
+    target_doc.total = -1*(float(source_total))
+    target_doc.insert()
+
+    return {
+        "message": "Sales Return Created",
+        "new_teller_purchase": target_doc.name,  
+        "new_teller_invoice_url": get_url_to_form("Teller Purchase", target_doc.name),
+        "type": type(source_total)
+
+    }
+@frappe.whitelist()
+def make_purchase_return2(source_name, target_doc=None):
+	from erpnext.controllers.sales_and_purchase_return import make_return_doc
+
+	return make_return_doc("Teller Purchase", source_name, target_doc)

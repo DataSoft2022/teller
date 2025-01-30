@@ -1457,7 +1457,7 @@ frappe.ui.form.on("Teller Purchase",{
                                   }
                                 })
                               }else{
-                                console.log("iiiiiii",item)
+                                console.log("tab from select booking",item)
 
                                 // frappe.msgprint("Booking Interbank2 => Selected")
                                 var child = frm.add_child("transactions");
@@ -1511,8 +1511,8 @@ function get_account (frm, child){
         args: {
             doctype: "User Permission",
             filters: {
-              user: 'andrew@datasofteg.com',
-                // user: frappe.session.user, // Filter by the current user
+              // user: 'andrew@datasofteg.com',
+                user: frappe.session.user, // Filter by the current user
                 allow: "Account" // Ensure permissions are for the Account doctype
             },
             fields: ["for_value"]
@@ -1721,3 +1721,52 @@ function get_account (frm, child){
 
     },
   });
+
+
+frappe.ui.form.on("Teller Purchase",{
+  refresh: function(frm) {
+    if (frm.doc.docstatus == 1) {
+      frm.add_custom_button(__("Return / Credit Note")
+      , ()=>{
+        frm.call({
+          method: "teller.teller_customization.doctype.teller_purchase.teller_purchase.make_purchase_return",
+          args:{
+            doc:frm.doc,
+          },
+
+          callback: (r) => {
+          
+            if (r) {
+              console.log("Respone 22",r.message)
+              let name_doc = r.message.new_teller_purchase
+              // frappe.msgprint(__("Accounting Entries are reposted"));
+              frappe.set_route('Form', "Teller Purchase", name_doc);
+
+            }
+          },
+        });
+      }
+      , __("Create"));
+    }
+  }
+})  
+
+// frappe.ui.form.on("Teller Purchase",{
+//   refresh: function(frm) {
+//     if (frm.doc.docstatus == 1) {
+//       frm.add_custom_button(__("Return / Credit Note"), function() {
+//           frm.events.make_sales_return(frm);
+//         }
+//       , __("Create"));
+//     }
+//   },
+//   make_sales_return: function(frm) {
+//     // Call the method to create the purchase return
+//     frappe.model.open_mapped_doc({
+//       method: "teller.teller_customization.doctype.teller_purchase.teller_purchase.make_purchase_return2",
+//       frm: frm
+//     });
+//   }
+// });
+
+

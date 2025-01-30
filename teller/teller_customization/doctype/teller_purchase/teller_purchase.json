@@ -25,6 +25,8 @@
   "egy_account",
   "column_break_idhd",
   "closing_date",
+  "is_returned",
+  "teller_purchase",
   "know_your_customer_section",
   "customer_history",
   "section_break_defd",
@@ -378,7 +380,6 @@
   {
    "fieldname": "egy",
    "fieldtype": "Link",
-   "hidden": 1,
    "label": "EGY",
    "options": "Account",
    "read_only": 1
@@ -615,7 +616,6 @@
   {
    "fieldname": "egy_account",
    "fieldtype": "Data",
-   "hidden": 1,
    "label": "Egy Account",
    "read_only": 1
   },
@@ -656,12 +656,25 @@
    "fieldtype": "Data",
    "label": "Receipt number",
    "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "is_returned",
+   "fieldtype": "Check",
+   "label": "Is Returned"
+  },
+  {
+   "depends_on": "eval:doc.is_returned ===1",
+   "fieldname": "teller_purchase",
+   "fieldtype": "Link",
+   "label": "Teller Purchase ",
+   "options": "Teller Purchase"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-01-29 16:27:22.639088",
+ "modified": "2025-01-30 11:43:05.133371",
  "modified_by": "Administrator",
  "module": "Teller Customization",
  "name": "Teller Purchase",
