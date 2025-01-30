@@ -32,7 +32,9 @@
   "invoices_sales_total_section",
   "column_break_lsit",
   "column_break_ibdu",
-  "total_sales"
+  "total_sales",
+  "currency_summay_total_section",
+  "currency_summary"
  ],
  "fields": [
   {
@@ -179,12 +181,23 @@
    "fieldname": "get_all_invoices",
    "fieldtype": "Button",
    "label": "Get All Invoices"
+  },
+  {
+   "fieldname": "currency_summay_total_section",
+   "fieldtype": "Section Break",
+   "label": "Currency Summay Total"
+  },
+  {
+   "fieldname": "currency_summary",
+   "fieldtype": "Table",
+   "label": "Currency Summary",
+   "options": "Currency Summary"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-01-29 16:16:22.286105",
+ "modified": "2025-01-30 09:37:06.064132",
  "modified_by": "Administrator",
  "module": "Teller Customization",
  "name": "Close Shift",
