@@ -1570,6 +1570,12 @@ frappe.ui.form.on('Teller Invoice', {
       frm.clear_table("teller_invoice_details");
     }
 
+    if (!frm.doc.client ) {
+      frappe.throw({
+        title: __("Mandatory"),
+        message: __("Please Select a Search Client")
+      });
+    }
     let query_args = {  
       filters: {
         "docstatus": ["!=", 2],

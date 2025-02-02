@@ -16,7 +16,9 @@ class Requestinterbank(Document):
             frappe.throw("Table is Empty")
         for row in self.items:
             if not row.qty or row.qty == 0:
-                frappe.throw(f" Row {row.idx}# can't be rate {row.qty}")
+                frappe.throw(f" Row {row.idx}# can't be Qty {row.qty}")
+            if not row.rate or row.rate == 0:
+                frappe.throw(f" Row {row.idx}# can't be Rate {row.rate}")
         # self.create_queue()
         self.create_booking()
         frappe.db.set_value("Request Interbank Session", {"status": "Open","user":self.user}, "session_status", "Closed")
