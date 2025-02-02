@@ -1264,7 +1264,7 @@ function set_branch_and_shift(frm) {
   frappe.call({
     method: "frappe.client.get_value",
     args: {
-      doctype: "OPen Shift",
+      doctype: "Open Shift for Branch",
       filters: { active: 1 },
       fieldname: ["name", "current_user"],
     },

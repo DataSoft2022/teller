@@ -4,7 +4,13 @@ from frappe.utils import flt
 from frappe import _
 from frappe import whitelist
 from teller.send_email import sendmail
+from frappe.utils import now_datetime, add_to_date
+import json
+   
 class Requestinterbank(Document):
+    SESSION_KEY = "request_interbank_session"
+    
+
     def on_submit(self):
         if not self.items:
             frappe.throw("Table is Empty")
@@ -13,6 +19,8 @@ class Requestinterbank(Document):
                 frappe.throw(f" Row {row.idx}# can't be rate {row.qty}")
         # self.create_queue()
         self.create_booking()
+        frappe.db.set_value("Request Interbank Session", {"status": "Open","user":self.user}, "session_status", "Closed")
+
         
     def on_cancel(self):
         
@@ -423,25 +431,27 @@ class Requestinterbank(Document):
         else:
             frappe.msgprint("InterBank details updated successfully.")
     def calculate_precent(self, interbank_name):
-        total_percentage = 0
-        child = frappe.db.get_all(
-                    "InterBank Details",
-                    fields=["currency","status","name", "booking_qty", "qty", "parent"],
-                    filters={"parent": interbank_name},
-                    ignore_permissions=True
-                )
-        count = len(child)
-        for detail in child:
-            detail_doc = frappe.get_doc("InterBank Details", detail.name)
-            percentage = detail_doc.get("booking_qty") / detail_doc.get("qty")*100
-            total_percentage +=percentage
-            percentage_with_sign = f"{percentage}%"
-            detail_doc.db_set("booking_precentage", percentage_with_sign)
-        print(f" total percentage{total_percentage} ")
-        print(f" length {count} ")    
+        ib_type = frappe.get_doc("InterBank",interbank_name)
+        if ib_type.get("type") == 'Daily':
+            total_percentage = 0
+            child = frappe.db.get_all(
+                        "InterBank Details",
+                        fields=["currency","status","name", "booking_qty", "qty", "parent"],
+                        filters={"parent": interbank_name},
+                        ignore_permissions=True
+                    )
+            count = len(child)
+            for detail in child:
+                detail_doc = frappe.get_doc("InterBank Details", detail.name)
+                percentage = detail_doc.get("booking_qty") / detail_doc.get("qty")*100
+                total_percentage +=percentage
+                percentage_with_sign = f"{percentage}%"
+                detail_doc.db_set("booking_precentage", percentage_with_sign)
+            print(f" total percentage{total_percentage} ")
+            print(f" length {count} ")    
 
-        interbank_doc =frappe.get_doc("InterBank",interbank_name)
-        interbank_doc.db_set("booking_precentage",f"{total_percentage/count}%")
+            interbank_doc =frappe.get_doc("InterBank",interbank_name)
+            interbank_doc.db_set("booking_precentage",f"{total_percentage/count}%")
   
 
 @frappe.whitelist(allow_guest=True)
@@ -671,132 +681,101 @@ def return_request(doc):
   return_request.insert(ignore_permissions=True)
   return return_request
 
+# import frappe
+# from frappe.utils import add_to_date, get_datetime
+# from datetime import datetime, timezone
+# from threading import Timer
+
+# @frappe.whitelist()
+# def open_session(user, current_time, current_time2,url):
+#     """Check if a user is already using the session and if it has expired."""
+#     obj_time = get_datetime(current_time)
+#     end_time = add_to_date(obj_time, seconds=60)  # Session expires after 60 seconds
+#     session_ended = False
+#     # Check if an active session exists
+#     active_sessions = frappe.get_all(
+#         "Request Interbank Session",
+#         filters={"session_status": "Open"},
+#         fields=["name", "timestamp", "user"]
+#     )
+
+#     if not active_sessions:
+#         session = frappe.get_doc({
+#             "doctype": "Request Interbank Session",
+#             "user": user,
+#             "session_status": "Open",
+#             "timestamp": current_time2,
+#             "session_expiry": None,  # Expiry time will be set in close_session
+#             "url":url
+#         })
+#         session.insert(ignore_permissions=True)  
+#         session_name = session.name
+#         frappe.msgprint(f"Created new session: {session_name}")
+
+#         # Schedule session closure after returning session
+#         # frappe.enqueue("teller.teller.doctype.request_interbank.request_interbank.close_session", session_name=session_name, end_time=end_time)
+#         session_ended = True
+#         return session  # Return session immediately
+
+#     return session_ended
+
+# @frappe.whitelist()
+# def close_session(session_name, end_time):
+#     """Close the session by updating the status and setting session expiry."""
+#     try:
+#         session = frappe.get_doc("Request Interbank Session", session_name)
+
+#         # Only close if still open
+#         if session.session_status == "Open":
+#             session_expiry_time = end_time.strftime("%Y-%m-%d %H:%M:%S")
+#             session.db_set("session_status", "Closed")
+#             session.db_set("session_expiry", session_expiry_time)
+#             frappe.msgprint(f"Closed session: {session_name}")
+
+#         return session
+#     except Exception as e:
+#         frappe.log_error(f"Error closing session {session_name}: {str(e)}", "Session Close Error")
+
+# @frappe.whitelist()
+# def validate_session ():
+#     active_sessions = frappe.get_all("Request Interbank Session", filters={"status": "Open"}, fields=["name", "timestamp", "user"])
+#     if active_sessions:
+#         frappe.throw(" there are active_sessions")
+
+# @frappe.whitelist()
+# def close_session_on_exit(user):
+#     """Close active session when the user leaves the Request Interbank page."""
+#     active_sessions = frappe.get_all(
+#         "Request Interbank Session",
+#         filters={"user": user, "session_status": "Open"},
+#         fields=["name"]
+#     )
+
+#     for session in active_sessions:
+#         session_doc = frappe.get_doc("Request Interbank Session", session["name"])
+#         session_doc.db_set("session_status", "Closed")
+#         session_doc.db_set("session_expiry", now_datetime())
+
+#     return "Session closed"
 
 
+# @frappe.whitelist()
+# def check_session_status(user, url):
+#     """Check if session should be closed (based on last activity and matching URL)."""
+#     active_sessions = frappe.get_all(
+#         "Request Interbank Session",
+#         filters={"user": user, "session_status": "Open", "url": url},  # Ensure URL matches
+#         fields=["name", "timestamp"]
+#     )
 
+#     if active_sessions:
+#         # Get last session timestamp
+#         session_doc = frappe.get_doc("Request Interbank Session", active_sessions[0]["name"])
+#         time_difference = (now_datetime() - session_doc.timestamp).total_seconds()
 
+#         # If session is inactive for more than 30 seconds, close it
+#         if time_difference > 30:
+#             close_session_on_exit(user)
+#             return "Session Closed"
 
-
-
-
-
-
-
-import frappe
-from frappe.desk.notifications import delete_notification_count_for, get_filters_for
-import json
-@frappe.whitelist(allow_guest=True)
-@frappe.read_only()
-def get_open_count(doctype: str, name: str, items=None):
-    """Get count for internal and external links for given transactions.
-
-    :param doctype: Reference DocType
-    :param name: Reference Name
-    :param items: Optional list of transactions (json/dict)
-    """
-    if frappe.flags.in_migrate or frappe.flags.in_install:
-        return {"count": []}
-
-    doc = frappe.get_doc(doctype, name)
-    doc.check_permission()
-    meta = doc.meta
-    links = meta.get_dashboard_data()
-    print("Linkkkkkkkkkkkk",links)
-    # Compile all items in a list
-    if items is None:
-        items = []
-        for group in links.transactions:
-            items.extend(group.get("items"))
-    elif not isinstance(items, list):
-        try:
-            items = json.loads(items)  # Safely parse items if it is not a list
-        except (TypeError, json.JSONDecodeError):
-            items = []  # Default to an empty list if parsing fails
-
-    out = {
-        "external_links_found": [],
-        "internal_links_found": [],
-    }
-
-    for d in items:
-        internal_link_for_doctype = links.get("internal_links", {}).get(d) or links.get(
-            "internal_and_external_links", {}
-        ).get(d)
-        if internal_link_for_doctype:
-            internal_links_data_for_d = get_internal_links(doc, internal_link_for_doctype, d)
-            if internal_links_data_for_d["count"]:
-                out["internal_links_found"].append(internal_links_data_for_d)
-            else:
-                try:
-                    external_links_data_for_d = get_external_links(d, name, links)
-                    out["external_links_found"].append(external_links_data_for_d)
-                except Exception:
-                    out["external_links_found"].append({"doctype": d, "open_count": 0, "count": 0})
-        else:
-            external_links_data_for_d = get_external_links(d, name, links)
-            out["external_links_found"].append(external_links_data_for_d)
-
-    out = {
-        "count": out,
-    }
-
-    if not meta.custom:
-        module = frappe.get_meta_module(doctype)
-        if hasattr(module, "get_timeline_data"):
-            out["timeline_data"] = module.get_timeline_data(doctype, name)
-
-    return out
-
-
-
-def get_internal_links(doc, link, link_doctype):
-	names = []
-	data = {"doctype": link_doctype}
-
-	if isinstance(link, str):
-		# get internal links in parent document
-		value = doc.get(link)
-		if value and value not in names:
-			names.append(value)
-	elif isinstance(link, list):
-		# get internal links in child documents
-		table_fieldname, link_fieldname = link
-		for row in doc.get(table_fieldname) or []:
-			value = row.get(link_fieldname)
-			if value and value not in names:
-				names.append(value)
-
-	data["open_count"] = 0
-	data["count"] = len(names)
-	data["names"] = names
-
-	return data
-
-
-def get_external_links(doctype, name, links):
-	filters = get_filters_for(doctype)
-	fieldname = links.get("non_standard_fieldnames", {}).get(doctype, links.get("fieldname"))
-	data = {"doctype": doctype}
-
-	if filters:
-		# get the fieldname for the current document
-		# we only need open documents related to the current document
-		filters[fieldname] = name
-		total = len(
-			frappe.get_all(
-				doctype, fields="name", filters=filters, limit=100, distinct=True, ignore_ifnull=True
-			)
-		)
-		data["open_count"] = total
-	else:
-		data["open_count"] = 0
-
-	total = len(
-		frappe.get_all(
-			doctype, fields="name", filters={fieldname: name}, limit=100, distinct=True, ignore_ifnull=True
-		)
-	)
-	data["count"] = total
-
-	return data
-
+#     return "Session Active"
