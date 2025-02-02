@@ -292,7 +292,7 @@
    "hidden": 0,
    "is_query_report": 0,
    "label": "Shift & Invoices",
-   "link_count": 4,
+   "link_count": 6,
    "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
@@ -336,9 +336,29 @@
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Close Shift For Branch",
+   "link_count": 0,
+   "link_to": "Close Shift For Branch",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Open Shift for Branch",
+   "link_count": 0,
+   "link_to": "Open Shift for Branch",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
   }
  ],
- "modified": "2025-01-30 13:52:58.222959",
+ "modified": "2025-02-02 12:49:26.635029",
  "modified_by": "ahmed.reda@datasofteg.com",
  "module": "Teller",
  "name": "Interbank Workspace",
