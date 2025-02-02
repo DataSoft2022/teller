@@ -16,7 +16,17 @@ def cron_validate_interbank_time():
             # frappe.msgprint(f" function is good")
           ib = frappe.get_doc("InterBank",interbank.name,update_modified=True)
           ib.db_set('status', 'Ended')  
-          return "yes"
+          return "Ended"
 @frappe.whitelist()
 def cron_validate_queue_time():
-   return
+  cur_time = get_datetime(now()).strftime('%H:%M:%S')
+  cur_day = get_datetime(now()).date()
+  stopWatch = f"23:59:59"
+  open_queues = frappe.get_all('Queue Request', filters={'status': ['!=', 'Close'], 'type':'Daily','date':cur_day}, fields=['name','date','status','type'])
+  for queue in open_queues:
+      # return cur_time >= stopWatch  and interbank.date == cur_day
+      if cur_time == stopWatch and queue.date == cur_day:
+          # frappe.msgprint(f" function is good")
+        q = frappe.get_doc('Queue Request',queue.name,update_modified=True)
+        q.db_set('status', 'Ended')  
+        return "Ended"

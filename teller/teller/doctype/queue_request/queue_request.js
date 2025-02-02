@@ -3,17 +3,17 @@
 
 frappe.ui.form.on("Queue Request", {
 	refresh(frm) {
-    let allClosed = true;
-    let tab = frm.doc.items;
-    tab.forEach(item => {
-      if (item.status !== 'Closed') {
-        allClosed = false;
-      }
+  //   let allClosed = true;
+  //   let tab = frm.doc.items;
+  //   tab.forEach(item => {
+  //     if (item.status !== 'Closed') {
+  //       allClosed = false;
+  //     }
       
-    });
-    if(allClosed){
-      frm.set_value("status","Closed")
-      frm.save();
-    }
+  //   });
+  //   if(allClosed){
+  //     frm.set_value("status","Closed")
+  //     frm.save();
+  //   }
 	},
 });

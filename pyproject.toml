@@ -1,7 +1,9 @@
 [project]
 name = "teller"
 authors = [
-    { name = "Mohamed AbdElsabour", email = "test@test.com"}
+    { name = "Ahmed RedaAbukhatwa", email = "ahmedabukhatwa1@gmail.com"},
+    { name = "Mohamed AbdElsabour", email = "test@test.com"},
+
 ]
 description = "teller app"
 requires-python = ">=3.10"
