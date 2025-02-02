@@ -1265,7 +1265,7 @@ function set_branch_and_shift(frm) {
     method: "frappe.client.get_value",
     args: {
       doctype: "Open Shift for Branch",
-      filters: { active: 1 },
+      filters: { shift_status: "Active" },
       fieldname: ["name", "current_user"],
     },
     callback: function (r) {

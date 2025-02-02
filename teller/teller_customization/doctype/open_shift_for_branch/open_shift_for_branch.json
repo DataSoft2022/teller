@@ -13,7 +13,7 @@
   "serial",
   "column_break_wnku",
   "current_user",
-  "active",
+  "shift_status",
   "amended_from",
   "branch"
  ],
@@ -35,12 +35,14 @@
   {
    "fieldname": "start_date",
    "fieldtype": "Datetime",
-   "label": "Start Date"
+   "label": "Start Date",
+   "reqd": 1
   },
   {
    "fieldname": "end_date",
    "fieldtype": "Datetime",
-   "label": "End Date"
+   "label": "End Date",
+   "reqd": 1
   },
   {
    "fieldname": "column_break_wnku",
@@ -55,13 +57,8 @@
    "fieldname": "current_user",
    "fieldtype": "Link",
    "label": "Current User",
-   "options": "User"
-  },
-  {
-   "default": "0",
-   "fieldname": "active",
-   "fieldtype": "Check",
-   "label": "Active"
+   "options": "User",
+   "reqd": 1
   },
   {
    "fieldname": "amended_from",
@@ -77,13 +74,26 @@
    "fieldname": "branch",
    "fieldtype": "Link",
    "label": "Branch",
-   "options": "Branch"
+   "options": "Branch",
+   "reqd": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "shift_status",
+   "fieldtype": "Select",
+   "ignore_user_permissions": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_standard_filter": 1,
+   "label": "Shift Status",
+   "options": "\nActive\nClosed",
+   "translatable": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-02-02 10:57:37.267599",
+ "modified": "2025-02-02 13:23:12.681533",
  "modified_by": "Administrator",
  "module": "Teller Customization",
  "name": "Open Shift for Branch",

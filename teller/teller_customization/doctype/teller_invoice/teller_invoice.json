@@ -271,7 +271,7 @@
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Shift",
-   "options": "OPen Shift",
+   "options": "Open Shift for Branch",
    "read_only": 1
   },
   {
@@ -739,7 +739,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-01-30 13:31:41.897483",
+ "modified": "2025-02-02 14:16:13.770294",
  "modified_by": "Administrator",
  "module": "Teller Customization",
  "name": "Teller Invoice",

@@ -79,7 +79,7 @@
   {
    "fieldname": "current_user",
    "fieldtype": "Link",
-   "label": "Current User",
+   "label": "Shift User",
    "options": "User"
   },
   {
@@ -186,7 +186,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-02-02 10:14:48.192735",
+ "modified": "2025-02-02 13:48:54.830443",
  "modified_by": "Administrator",
  "module": "Teller Customization",
  "name": "Close Shift For Branch",

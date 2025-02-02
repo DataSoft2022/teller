@@ -10,16 +10,17 @@ class CloseShiftForBranch(Document):
 	pass
 @whitelist()
 def get_active_shift():
-    active_open_shift = frappe.db.get_list("Open Shift for Branch", {"active": 1})
+    active_open_shift = frappe.db.get_list("Open Shift for Branch", {"shift_status": "Active"})
     if active_open_shift:
       active_open_shift_name = active_open_shift[0]["name"]
       return active_open_shift_name
     else:
         frappe.throw("there is not Open shift for branch")
 @whitelist()
-def active_active_user():
-    user = frappe.get_doc("User", frappe.session.user)
-    return user
+def active_active_user(shift):
+    active_open_shift = frappe.get_doc("Open Shift for Branch",shift)
+    # user = frappe.get_doc("User", frappe.session.user)
+    return active_open_shift
 @whitelist()
 def call_from_class(self):
     return self.current_user, len(self.sales_table)

@@ -12,12 +12,16 @@ frappe.ui.form.on("Close Shift For Branch", {
       },
     });
 
+  
+  },
+  open_shift:(frm)=>{
     frappe.call({
       method:
         "teller.teller_customization.doctype.close_shift_for_branch.close_shift_for_branch.active_active_user",
+        args:{"shift":frm.doc.open_shift},
       callback: function (r) {
-        console.log(r.message["name"]);
-        frm.set_value("current_user", r.message["name"]);
+        console.log(r.message);
+        frm.set_value("current_user", r.message["current_user"]);
       },
     });
   },
@@ -49,6 +53,7 @@ frappe.ui.form.on("Close Shift For Branch", {
         frm.clear_table("sales_invoice");
         console.log(r.message);
         let invocies = r.message;
+        console.log("S Invoice",invocies)
         // sales_invoice;
         invocies.forEach((invoice) => {
           frm.add_child("sales_invoice", {
@@ -97,7 +102,7 @@ frappe.ui.form.on("Close Shift For Branch", {
       },
       callback: (r) => {
         if (r.message) {
-          console.log(r.message);
+          console.log("p invoice",r.message);
           frm.clear_table("purchase_close_table");
           let log = console.log;
 

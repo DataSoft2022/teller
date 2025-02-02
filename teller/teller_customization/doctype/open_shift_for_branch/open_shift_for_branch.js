@@ -21,8 +21,30 @@ frappe.ui.form.on("Open Shift for Branch", {
           }
         }
       });
+    }else{
+      frappe.throw("Select a Branch");
+      
     }
   }
 });
 
-// select e.user_id from `tabEmployee` e where e.branch = '81'
+//////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////  indecators status  //////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////
+frappe.listview_settings["Open Shift For Branch"]= {
+  add_fields: [
+    "shift_status", // Ensure entry_type is included in the fields
+    // other fields...
+  ],
+  
+  get_indicator: function (doc) {
+    console.log("Processing document:", doc);
+    if (doc.shift_status === "Active") {
+      return [__("Active"), "green", "status,=,Active"];
+  
+    }else if (doc.status == "Closed") {
+      return [__("Closed"), "red", "status,=,Closed"];
+    }
+  
+  }
+}

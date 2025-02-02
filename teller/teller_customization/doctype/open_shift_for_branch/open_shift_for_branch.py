@@ -7,9 +7,10 @@ from frappe.model.document import Document
 
 
 class OpenShiftforBranch(Document):
+    def on_submit(self):
+        pass
     def before_save(self):
-        self.current_user = frappe.session.user
-
+        self.shift_status = "Active"
 @whitelist()
 def get_user_id(branch):
     users = frappe.db.get_list("Employee", {"branch": branch},["user_id"])
