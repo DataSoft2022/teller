@@ -7,12 +7,15 @@
  "field_order": [
   "treasury_code",
   "branch",
-  "naming_series"
+  "naming_series",
+  "column_break_xzmf",
+  "treasury_currency",
+  "account"
  ],
  "fields": [
   {
    "fieldname": "treasury_code",
-   "fieldtype": "Int",
+   "fieldtype": "Data",
    "label": "Treasury Code"
   },
   {
@@ -24,12 +27,29 @@
   {
    "fieldname": "naming_series",
    "fieldtype": "Data",
-   "label": "naming series"
+   "label": "naming series",
+   "unique": 1
+  },
+  {
+   "fieldname": "column_break_xzmf",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "treasury_currency",
+   "fieldtype": "Link",
+   "label": "Treasury Currency",
+   "options": "Currency"
+  },
+  {
+   "fieldname": "account",
+   "fieldtype": "Link",
+   "label": "Account",
+   "options": "Account"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-02-02 15:57:07.401873",
+ "modified": "2025-02-02 16:57:58.575127",
  "modified_by": "Administrator",
  "module": "Teller Customization",
  "name": "Teller Treasury",
