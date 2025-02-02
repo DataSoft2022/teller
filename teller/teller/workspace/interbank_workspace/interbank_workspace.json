@@ -203,55 +203,6 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Interbank & Currency",
-   "link_count": 4,
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Card Break"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "InterBank",
-   "link_count": 0,
-   "link_to": "InterBank",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Request interbank",
-   "link_count": 0,
-   "link_to": "Request interbank",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Branch Interbank Request",
-   "link_count": 0,
-   "link_to": "Branch Interbank Request",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Booking Interbank",
-   "link_count": 0,
-   "link_to": "Booking Interbank",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
    "label": "Update Currency",
    "link_count": 3,
    "link_type": "DocType",
@@ -356,10 +307,79 @@
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Interbank & Currency",
+   "link_count": 6,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "InterBank",
+   "link_count": 0,
+   "link_to": "InterBank",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Request interbank",
+   "link_count": 0,
+   "link_to": "Request interbank",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Branch Interbank Request",
+   "link_count": 0,
+   "link_to": "Branch Interbank Request",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Booking Interbank",
+   "link_count": 0,
+   "link_to": "Booking Interbank",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Teller Treasury",
+   "link_count": 0,
+   "link_to": "Teller Treasury",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Treasury Assignment Tool",
+   "link_count": 0,
+   "link_to": "Treasury Assignment Tool",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
   }
  ],
- "modified": "2025-02-02 12:49:26.635029",
- "modified_by": "ahmed.reda@datasofteg.com",
+ "modified": "2025-02-02 15:35:25.187780",
+ "modified_by": "Administrator",
  "module": "Teller",
  "name": "Interbank Workspace",
  "number_cards": [],

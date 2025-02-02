@@ -21,7 +21,7 @@ class Requestinterbank(Document):
                 frappe.throw(f" Row {row.idx}# can't be Rate {row.rate}")
         # self.create_queue()
         self.create_booking()
-        frappe.db.set_value("Request Interbank Session", {"status": "Open","user":self.user}, "session_status", "Closed")
+        # frappe.db.set_value("Request Interbank Session", {"status": "Open","user":self.user}, "session_status", "Closed")
 
         
     def on_cancel(self):

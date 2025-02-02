@@ -107,8 +107,7 @@
    "fieldname": "purchase_close_table",
    "fieldtype": "Table",
    "label": "Purchase Close Table",
-   "options": "Purchase Close Table",
-   "read_only": 1
+   "options": "Purchase Close Table"
   },
   {
    "fieldname": "invoices_purchase_total_section",
@@ -186,7 +185,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-02-02 13:48:54.830443",
+ "modified": "2025-02-02 14:35:10.454356",
  "modified_by": "Administrator",
  "module": "Teller Customization",
  "name": "Close Shift For Branch",

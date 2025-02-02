@@ -159,3 +159,34 @@ frappe.ui.form.on("Close Shift For Branch", {
     });
   },
 });
+
+// sql = """
+
+// SELECT 
+//     currency_code,
+//     COALESCE(sum_purchase, 0) - COALESCE(sum_invoice, 0) AS balance
+// FROM (
+//     -- Sum from Teller Purchase
+//     SELECT 
+//         tpc.currency_code, 
+//         SUM(tpc.total_amount) AS sum_purchase,
+//         NULL AS sum_invoice
+//     FROM `tabTeller Purchase` tp
+//     LEFT JOIN `tabTeller Purchase Child` tpc ON tp.name = tpc.parent
+//     WHERE tp.shift = 'Open Shift Branch_0007'
+//     GROUP BY tpc.currency_code
+
+//     UNION 
+
+//     -- Sum from Teller Invoice
+//     SELECT 
+//         tid.currency_code, 
+//         NULL AS sum_purchase,
+//         SUM(tid.total_amount) AS sum_invoice
+//     FROM `tabTeller Invoice` ti
+//     LEFT JOIN `tabTeller Invoice Details` tid ON ti.name = tid.parent
+//     WHERE ti.shift = 'Open Shift Branch_0007'
+//     GROUP BY tid.currency_code
+// ) combined
+// GROUP BY currency_code;
+// """
