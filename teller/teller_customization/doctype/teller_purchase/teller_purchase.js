@@ -1405,6 +1405,12 @@ frappe.ui.form.on("Teller Purchase",{
         }else{
           cur_frm.clear_table("transactions");
         }
+        if (!frm.doc.buyer){
+          frappe.throw({
+            title:__("Mandatory"),
+            message:__(" Mandatory to Select a Buyer ")
+          })
+        }
         new frappe.ui.form.MultiSelectDialog({
           doctype:"Booking Interbank",
           target:cur_frm,
@@ -1448,12 +1454,12 @@ frappe.ui.form.on("Teller Purchase",{
                                       var child = frm.add_child("transactions");
                                       child.code = item.currency_code;
                                       child.currency_code = item.currency;
-                                      child.currency = item.currency;
                                       child.usd_amount = item.qty;
                                       child.rate = item.rate;
                                       child.total_amount = item.qty * item.rate;
                                       child.booking_interbank = booking_ib;
                                       get_account(frm, child);
+                            
                                   }
                                 })
                               }else{
@@ -1472,7 +1478,7 @@ frappe.ui.form.on("Teller Purchase",{
                               
                             }
                           })
-                          frm.refresh_field("teller_invoice_details");
+                          frm.refresh_field("transactions");
                             cur_dialog.hide();
                             let total = 0;
               

@@ -129,7 +129,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Category of Buyer",
-   "options": "Egyptian\nCompany\nForeigner\nInterbank",
+   "options": "\nEgyptian\nCompany\nForeigner\nInterbank",
    "reqd": 1
   },
   {
@@ -248,7 +248,6 @@
    "bold": 1,
    "fieldname": "buyer",
    "fieldtype": "Link",
-   "hidden": 1,
    "label": "Search Buyer",
    "options": "Customer"
   },
@@ -680,7 +679,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-01-30 13:31:00.669785",
+ "modified": "2025-02-02 12:27:19.162010",
  "modified_by": "Administrator",
  "module": "Teller Customization",
  "name": "Teller Purchase",

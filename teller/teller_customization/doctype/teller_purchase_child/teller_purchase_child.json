@@ -11,7 +11,6 @@
   "paid_from",
   "usd_amount",
   "rate",
-  "received_amount",
   "total_amount"
  ],
  "fields": [
@@ -29,21 +28,12 @@
   {
    "fieldname": "rate",
    "fieldtype": "Float",
-   "label": "Rate",
-   "read_only": 1
-  },
-  {
-   "fieldname": "received_amount",
-   "fieldtype": "Currency",
-   "hidden": 1,
-   "label": "Received Amount",
-   "read_only": 1
+   "label": "Rate"
   },
   {
    "fieldname": "total_amount",
    "fieldtype": "Currency",
-   "label": "Total Amount",
-   "read_only": 1
+   "label": "Total Amount"
   },
   {
    "fieldname": "code",
@@ -52,7 +42,7 @@
   },
   {
    "fieldname": "currency_code",
-   "fieldtype": "Link",
+   "fieldtype": "Data",
    "label": "Currency",
    "options": "Currency"
   }
@@ -60,7 +50,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-01-30 10:06:25.009120",
+ "modified": "2025-02-02 12:41:35.920882",
  "modified_by": "Administrator",
  "module": "Teller Customization",
  "name": "Teller Purchase Child",
