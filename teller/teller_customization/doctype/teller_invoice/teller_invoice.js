@@ -1187,7 +1187,7 @@ frappe.ui.form.on("Teller Invoice Details", {
           },
         });
       }
-    },10  00)
+    },1000)
 
   },
 

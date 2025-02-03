@@ -235,32 +235,33 @@ class TellerInvoice(Document):
         inv_table = self.teller_invoice_details
         for row in inv_table:
             booking_ib =row.booking_interbank
-            currency = row.currency_code
-            booked_details = frappe.get_all("Booked Currency",
-                filters={"parent":booking_ib,"currency":currency},fields=["name","status"])
-            for item in booked_details:
-                print("\n\n\n\n item",item)
-                row_name = item.name
-                currency_book = frappe.get_doc("Booked Currency",row_name)
-                currency_book.db_set("status","Billed")
-            booked_details = frappe.get_all("Booked Currency",
-                filters={"parent":booking_ib},fields=["name","status","parent"])
-            # all_booked = False
-            print("\n\n\n\n booked_details ..",booked_details)
-            all_billed = True
-            all_not_billed = True
-            for booked in booked_details:
-                if booked.status != "Billed":
-                    all_billed = False
-                if booked.status != "Not Billed":
-                    all_not_billed = False  
-            book_doc = frappe.get_doc("Booking Interbank", booked.parent) 
-            if all_billed:
-                book_doc.db_set("status", "Billed")  
-            elif all_not_billed:
-                book_doc.db_set("status", "Not Billed")  
-            else:
-                book_doc.db_set("status", "Partial Billed")            
+            if booking_ib:
+              currency = row.currency_code
+              booked_details = frappe.get_all("Booked Currency",
+                  filters={"parent":booking_ib,"currency":currency},fields=["name","status"])
+              for item in booked_details:
+                  print("\n\n\n\n item",item)
+                  row_name = item.name
+                  currency_book = frappe.get_doc("Booked Currency",row_name)
+                  currency_book.db_set("status","Billed")
+              booked_details = frappe.get_all("Booked Currency",
+                  filters={"parent":booking_ib},fields=["name","status","parent"])
+              # all_booked = False
+              print("\n\n\n\n booked_details ..",booked_details)
+              all_billed = True
+              all_not_billed = True
+              for booked in booked_details:
+                  if booked.status != "Billed":
+                      all_billed = False
+                  if booked.status != "Not Billed":
+                      all_not_billed = False  
+              book_doc = frappe.get_doc("Booking Interbank", booked.parent) 
+              if all_billed:
+                  book_doc.db_set("status", "Billed")  
+              elif all_not_billed:
+                  book_doc.db_set("status", "Not Billed")  
+              else:
+                  book_doc.db_set("status", "Partial Billed")            
                   
 
     def on_cancel(self):
