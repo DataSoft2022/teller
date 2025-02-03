@@ -1943,3 +1943,16 @@ function make_sales_return(frm) {
   
 }
 
+
+frappe.ui.form.on("Teller Invoice",{
+  client_type(frm){
+if (frm.doc.client_type == "Foreigner"){
+  frm.set_value("card_type","Passport")
+  frm.refresh_field("card_type");
+}
+if (frm.doc.client_type == "Egyptian"){
+  frm.set_value("card_type","National ID")
+  frm.refresh_field("card_type");
+}
+  }
+})

@@ -55,6 +55,7 @@
   "passport_number",
   "military_number",
   "mobile_number",
+  "national_id_copy",
   "companies_section",
   "company_name",
   "company_address",
@@ -82,7 +83,6 @@
   "customer_name_copy",
   "gender_copy",
   "nationality_copy",
-  "national_id_copy",
   "column_break_gpot",
   "primary_contacts_copy",
   "work_for__copy",
@@ -346,6 +346,7 @@
   {
    "fieldname": "national_id_copy",
    "fieldtype": "Data",
+   "hidden": 1,
    "label": "National ID "
   },
   {
@@ -491,8 +492,7 @@
    "fieldname": "national_id",
    "fieldtype": "Data",
    "label": "National ID",
-   "mandatory_depends_on": "eval:(doc.category_of_buyer === \"Egyptian\" || doc.category_of_buyer === \"Foreigner\") &&(doc.card_type==\"National ID\") ",
-   "read_only": 1
+   "mandatory_depends_on": "eval:(doc.category_of_buyer === \"Egyptian\" || doc.category_of_buyer === \"Foreigner\") &&(doc.card_type==\"National ID\") "
   },
   {
    "depends_on": "eval:doc.card_type==\"Passport\"",
@@ -679,7 +679,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-02-03 11:38:07.258537",
+ "modified": "2025-02-03 14:05:28.267774",
  "modified_by": "Administrator",
  "module": "Teller Customization",
  "name": "Teller Purchase",
