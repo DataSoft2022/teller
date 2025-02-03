@@ -229,9 +229,11 @@ class TellerPurchase(Document):
         # show_number = len(last_number_str)
         # set the new number to the current printing roll
 
-        frappe.db.set_value(
-            "Printing Roll", roll_name, "last_printed_number", last_number
-        )
+        # frappe.db.set_value(
+        #     "Printing Roll", roll_name, "last_printed_number", last_number
+        # )
+        roll_doc = frappe.get_doc("Printing Roll",roll_name)
+        roll_doc.db_set("last_printed_number",last_number)
         # update the current printing roll with length of last_printed_number
 
         frappe.db.set_value(

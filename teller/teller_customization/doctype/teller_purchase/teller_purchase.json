@@ -415,6 +415,7 @@
    "read_only": 1
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "current_roll",
    "fieldtype": "Data",
    "label": "Current Roll",
@@ -679,7 +680,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-02-03 14:05:28.267774",
+ "modified": "2025-02-03 15:31:48.276721",
  "modified_by": "Administrator",
  "module": "Teller Customization",
  "name": "Teller Purchase",
