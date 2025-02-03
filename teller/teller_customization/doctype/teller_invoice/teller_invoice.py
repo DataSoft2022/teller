@@ -353,7 +353,7 @@ def get_currency(account):
     special_selling_rate = frappe.db.get_value(
         "Currency Exchange", {"from_currency": currency}, "custom_special_selling"
     )
-    return currency, selling_rate, special_selling_rate, currency_code
+    return {"currency_code":currency_code,"currency":currency, "selling_rate":selling_rate, "special_selling_rate":special_selling_rate}
 
 
 @frappe.whitelist()

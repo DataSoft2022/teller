@@ -664,13 +664,14 @@ frappe.ui.form.on("Teller Invoice", {
     if (
       (frm.doc.client_type == "Egyptian" ||
         frm.doc.client_type == "Foreigner") &&
-      !frm.doc.client
+      !frm.doc.client   
     ) {
       frappe.call({
         method: "frappe.client.insert",
         args: {
           doc: {
             doctype: "Customer",
+            customer_name: frm.doc.customer_name,
             customer_name: frm.doc.customer_name,
             gender: frm.doc.gender ? frm.doc.gender : "Male",
             custom_card_type: frm.doc.card_type,
@@ -1136,53 +1137,59 @@ frappe.ui.form.on("Teller Invoice", {
 frappe.ui.form.on("Teller Invoice Details", {
   // filter accounts
 
-  // paid_from: function (frm, cdt, cdn) {
-  //   var acc_currency;
-  //   var row = locals[cdt][cdn];
-  //   if (row.paid_from) {
-  //     frappe.call({
-  //       method:
-  //         "teller.teller_customization.doctype.teller_invoice.teller_invoice.get_currency",
-  //       args: {
-  //         account: row.paid_from,
-  //       },
-  //       callback: function (r) {
-  //         console.log(r.message);
-  //         console.log(r.message[0]);
-  //         let curr = r.message[0];
-  //         let currency_rate = r.message[1];
-  //         acc_currency = curr;
-  //         let currencyCode = r.message[3];
-  //         console.log("the currency code is " + currencyCode);
+  code: function (frm, cdt, cdn) {
+    setTimeout(function () {
+      var acc_currency;
+      var row = locals[cdt][cdn];
+      if (row.paid_from) {
+         frappe.call({
+          method:
+            "teller.teller_customization.doctype.teller_invoice.teller_invoice.get_currency",
+          args: {
+            account: row.paid_from,
+          },
+          callback:  function (r) {
+            console.log("Currency tablexx: ",r.message);
+            // let currencyCode = r.message["currency_code"];
+            // let currency = r.message["currency"];
+            let currency_rate = r.message["selling_rate"];
+            console.log("xxxxxxx",currency_rate)
+            // let special_selling_rate = r.message["special_selling_rate"];
+            // console.log("currencyCode : ",currencyCode);
+            // console.log("currency : ",currency);
+            // console.log("currency_rate : ",currency_rate);
+            // console.log("special_selling_rate : ",special_selling_rate);
+            // console.log("the currency code is " + currencyCode);
+  
+            // frappe.model.set_value(cdt, cdn, "currency", curr);
+            frappe.model.set_value(cdt, cdn, "rate", currency_rate);
+            // frappe.model.set_value(cdt, cdn , "code", currencyCode);
+          },
+        });
+  
+        frappe.call({
+          method:
+            "teller.teller_customization.doctype.teller_invoice.teller_invoice.account_from_balance",
+          args: {
+            paid_from: row.paid_from,
+          },
+          callback: function (r) {
+            if (r.message) {
+              console.log("the teller balance is", r.message);
+              let from_balance = r.message;
+              let formatted_balance = format_currency(from_balance, acc_currency);
+              console.log(typeof formatted_balance);
+  
+              frappe.model.set_value(cdt, cdn, "balance", formatted_balance);
+            } else {
+              console.log("not found");
+            }
+          },
+        });
+      }
+    },10  00)
 
-  //         frappe.model.set_value(cdt, cdn, "currency", curr);
-
-  //         frappe.model.set_value(cdt, cdn, "rate", currency_rate);
-  //         frappe.model.set_value(cdt, cdn, "code", currencyCode);
-  //       },
-  //     });
-
-  //     frappe.call({
-  //       method:
-  //         "teller.teller_customization.doctype.teller_invoice.teller_invoice.account_from_balance",
-  //       args: {
-  //         paid_from: row.paid_from,
-  //       },
-  //       callback: function (r) {
-  //         if (r.message) {
-  //           console.log("the teller balance is", r.message);
-  //           let from_balance = r.message;
-  //           let formatted_balance = format_currency(from_balance, acc_currency);
-  //           console.log(typeof formatted_balance);
-
-  //           frappe.model.set_value(cdt, cdn, "balance", formatted_balance);
-  //         } else {
-  //           console.log("not found");
-  //         }
-  //       },
-  //     });
-  //   }
-  // },
+  },
 
   usd_amount: async function (frm, cdt, cdn) {
     var row = locals[cdt][cdn];
@@ -1773,12 +1780,12 @@ if (row.code) {
           fields: ["for_value"]
       },
       callback: function(permissionResponse) {
-          console.log("User Permission (response):", permissionResponse.message);
+          // console.log("User Permission (response):", permissionResponse.message);
 
           if (permissionResponse.message && permissionResponse.message.length > 0) {
-            console.log("for_value:", permissionResponse.message);
+            // console.log("for_value:", permissionResponse.message);
               let userAccounts = permissionResponse.message.map(record => record.for_value);
-              console.log("Accounts from User Permission (userAccounts):", userAccounts);
+              // console.log("Accounts from User Permission (userAccounts):", userAccounts);
 
               // Step 2: Check each user-permitted account for matching custom_currency_code
               frappe.call({
@@ -1792,14 +1799,14 @@ if (row.code) {
                       fields: ["name", "custom_currency_code", "parent_account"]
                   },
                   callback: function(accountResponse) {
-                      console.log("Account fetch response:", accountResponse);
+                      // console.log("Account fetch response:", accountResponse);
 
                       if (accountResponse.message && accountResponse.message.length > 0) {
                           let matchingAccount = accountResponse.message; // Use the first match
-                          console.log("Matching Account Found:", matchingAccount);
+                          // console.log("Matching Account Found:", matchingAccount);
                           for (let cur of matchingAccount){
                             if (cur.custom_currency_code === row.code){
-                              console.log("ssss",cur.name)
+                              // console.log("ssss",cur.name)
                               frappe.model.set_value(cdt, cdn, "paid_from", cur.name);
   
                             }
