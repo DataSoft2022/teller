@@ -1954,5 +1954,25 @@ if (frm.doc.client_type == "Egyptian"){
   frm.set_value("card_type","National ID")
   frm.refresh_field("card_type");
 }
+  },
+  async fetch_national_id(frm){
+    let x =  await frappe.db.get_doc("Customer",cur_frm.doc.fetch_national_id)
+    console.log("xxxxxxxxxxx",x.custom_is_expired )
+    if(x.custom_is_expired == 1){
+      frappe.throw({
+        title:__("Customer Expired"),
+        message:__(" Expired Registration Date For Client")
+      })
+
+    }
+  
+  },
+  validate(frm){
+    if(frm.doc.is_expired1 == 1){
+      frappe.throw({
+        title:__("Customer Expired"),
+        message:__(" Expired Registration Date For Client")
+      })
+  }
   }
 })
