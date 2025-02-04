@@ -8,7 +8,7 @@ app_license = "mit"
 # fixtures=["Custom Field"]
 
 # Includes in <head>
-# ------------------
+# -------------------
 
 # include js, css files in header of desk.html
 # app_include_css = "/assets/teller/css/teller.css"
