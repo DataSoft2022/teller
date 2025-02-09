@@ -33,7 +33,6 @@
   "special_price",
   "test_button",
   "column_break_nlal",
-  "fetch_national_id",
   "client",
   "is_returned",
   "teller_invoice",
@@ -105,7 +104,11 @@
   "column_break_cvci",
   "amended_from",
   "section_break_hqmb",
-  "notes"
+  "notes",
+  "naming_series",
+  "posting_date",
+  "total_amount",
+  "total_egy"
  ],
  "fields": [
   {
@@ -298,7 +301,14 @@
   {
    "fieldname": "transctions_section",
    "fieldtype": "Section Break",
-   "label": "Transctions"
+   "label": "Transactions"
+  },
+  {
+   "fieldname": "teller_invoice_details",
+   "fieldtype": "Table",
+   "label": "Transactions",
+   "options": "Teller Invoice Details",
+   "reqd": 1
   },
   {
    "fieldname": "amended_from",
@@ -601,7 +611,9 @@
    "collapsible": 1,
    "fieldname": "section_break_ugcr",
    "fieldtype": "Section Break",
-   "label": "Invoice Info"
+   "label": "Invoice Info",
+   "collapsible_depends_on": "eval:1",
+   "collapsed": 0
   },
   {
    "fieldname": "commissar",
@@ -688,11 +700,6 @@
    "read_only": 1
   },
   {
-   "fieldname": "fetch_national_id",
-   "fieldtype": "Data",
-   "label": "Enter Unique ID"
-  },
-  {
    "fieldname": "company_num",
    "fieldtype": "Data",
    "label": "Company Num"
@@ -704,13 +711,6 @@
    "hidden": 1,
    "label": "Receipt number2",
    "read_only": 1
-  },
-  {
-   "fieldname": "teller_invoice_details",
-   "fieldtype": "Table",
-   "label": "Teller Invoice Details",
-   "options": "Teller Invoice Details",
-   "reqd": 1
   },
   {
    "allow_on_submit": 1,
@@ -734,6 +734,33 @@
    "fieldname": "reason_for_selling",
    "fieldtype": "Data",
    "label": "reason for Selling"
+  },
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Series",
+   "options": "TI-.YYYY.-",
+   "reqd": 1
+  },
+  {
+   "default": "Today",
+   "fieldname": "posting_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "total_amount",
+   "fieldtype": "Currency",
+   "label": "Total Amount",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_egy",
+   "fieldtype": "Currency",
+   "label": "Total (EGY)",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
@@ -747,19 +774,50 @@
  "owner": "Administrator",
  "permissions": [
   {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
    "create": 1,
    "delete": 1,
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1,
    "report": 1,
-   "role": "System Manager",
-   "share": 1,
-   "write": 1
+   "export": 1
+  },
+  {
+   "role": "Teller",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "submit": 1,
+   "report": 1,
+   "select": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Sales User",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "submit": 1,
+   "report": 1,
+   "select": 1,
+   "permlevel": 0
+  },
+  {
+   "role": "Accounts User",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "submit": 1,
+   "report": 1,
+   "select": 1,
+   "permlevel": 0
   }
  ],
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "track_changes": 1
 }

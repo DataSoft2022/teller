@@ -27,15 +27,164 @@ from frappe import _, utils
 
 from erpnext.accounts.general_ledger import (
     make_reverse_gl_entries,
+    make_gl_entries,
 )
+from frappe.permissions import add_user_permission, remove_user_permission
+
+
+def get_permission_query_conditions(user=None):
+    """Return SQL conditions with user permissions."""
+    if not user:
+        user = frappe.session.user
+        
+    if "System Manager" in frappe.get_roles(user):
+        return ""
+        
+    # Get the employee linked to the current user
+    employee = frappe.db.get_value('Employee', {'user_id': user}, 'name')
+    if not employee:
+        return "1=0"
+        
+    # Get active shift for the employee
+    active_shift = frappe.db.get_value(
+        "Open Shift for Branch",
+        {
+            "current_user": employee,
+            "shift_status": "Active",
+            "docstatus": 1
+        },
+        "teller_treasury"
+    )
+    
+    if not active_shift:
+        return "1=0"
+        
+    # Return condition to filter by treasury_code
+    return f"`tabTeller Invoice`.treasury_code = '{active_shift}'"
+
+def has_permission(doc, ptype="read", user=None):
+    """Permission handler for Teller Invoice"""
+    if not user:
+        user = frappe.session.user
+        
+    if "System Manager" in frappe.get_roles(user):
+        return True
+        
+    # Check if user has required roles
+    required_roles = ["Teller", "Sales User", "Accounts User"]
+    user_roles = frappe.get_roles(user)
+    if not any(role in required_roles for role in user_roles):
+        frappe.msgprint(_("User does not have any of the required roles: Teller, Sales User, or Accounts User"))
+        return False
+        
+    # Get the employee linked to the current user
+    employee = frappe.db.get_value('Employee', {'user_id': user}, 'name')
+    if not employee:
+        frappe.msgprint(_("No employee record found for user {0}. Please create an Employee record and link it to this user.").format(user))
+        return False
+        
+    # For create permission or when doc is None
+    if ptype == "create":
+        active_shift = frappe.db.get_value(
+            "Open Shift for Branch",
+            {
+                "current_user": employee,
+                "shift_status": "Active",
+                "docstatus": 1
+            },
+            ["name", "teller_treasury"],
+            as_dict=1
+        )
+        
+        if not active_shift:
+            frappe.msgprint(_("No active shift found for employee {0}. Please open a shift first.").format(employee))
+            return False
+            
+        return True
+        
+    # For read/write/submit permissions when doc exists
+    if doc and ptype in ["read", "write", "submit"]:
+        active_shift = frappe.db.get_value(
+            "Open Shift for Branch",
+            {
+                "current_user": employee,
+                "shift_status": "Active",
+                "docstatus": 1
+            },
+            ["name", "teller_treasury"],
+            as_dict=1
+        )
+        
+        if not active_shift:
+            frappe.msgprint(_("No active shift found for employee {0}").format(employee))
+            return False
+            
+        if not doc.treasury_code:
+            return True
+            
+        if doc.treasury_code != active_shift.teller_treasury:
+            frappe.msgprint(_("Document treasury ({0}) does not match employee's active shift treasury ({1})").format(
+                doc.treasury_code, active_shift.teller_treasury))
+            return False
+            
+        return True
+        
+    # For read/write/submit permissions when doc is None
+    if not doc and ptype in ["read", "write", "submit"]:
+        active_shift = frappe.db.exists(
+            "Open Shift for Branch",
+            {
+                "current_user": employee,
+                "shift_status": "Active",
+                "docstatus": 1
+            }
+        )
+        return bool(active_shift)
+        
+    return False
 
 
 class TellerInvoice(Document):
+    def before_insert(self):
+        """Set initial values before insert"""
+        # Get the employee linked to the current user
+        employee = frappe.db.get_value('Employee', {'user_id': frappe.session.user}, 'name')
+        if not employee:
+            frappe.throw(_("No employee found for user {0}").format(frappe.session.user))
+            
+        # Get active shift
+        active_shift = frappe.db.get_value(
+            "Open Shift for Branch",
+            {
+                "current_user": employee,
+                "shift_status": "Active",
+                "docstatus": 1
+            },
+            ["name", "teller_treasury"]
+        )
+        
+        if not active_shift:
+            frappe.throw(_("No active shift found. Please ask your supervisor to open a shift for you."))
+            
+        # Set company from defaults if not set
+        if not self.company:
+            self.company = frappe.defaults.get_user_default("Company")
+            if not self.company:
+                frappe.throw(_("Please set default company in Global Defaults"))
+                
+        # Set treasury code from active shift
+        self.treasury_code = active_shift.teller_treasury
+        self.shift = active_shift.name
+        self.teller = frappe.session.user
+        
     def validate(self):
-        # prevent to buy more than three currency
-
+        """Validate document"""
         if len(self.get("teller_invoice_details")) > 3:
             frappe.throw("Can not Buy more than three currency")
+
+        self.validate_active_shift()
+        self.validate_currency_transactions()
+        self.calculate_totals()
 
     def before_save(self):
         self.set_customer_invoices()
@@ -167,70 +316,8 @@ class TellerInvoice(Document):
             return res
 
     def on_submit(self):
+        self.make_gl_entries()
 
-        # create Gl entry on submit
-        gl_done = False
-        for row in self.get("teller_invoice_details"):
-            if row.paid_from and self.egy and row.usd_amount:
-                account_from = get_doc(
-                    {
-                        "doctype": "GL Entry",
-                        "posting_date": nowdate(),
-                        "account": row.paid_from,
-                        "debit": 0,
-                        "credit": row.total_amount,
-                        "credit_in_account_currency": row.usd_amount,
-                        "remarks": f"Amount {row.currency} {row.usd_amount} transferred from {row.paid_from} to {self.egy}",
-                        "voucher_type": "Teller Invoice",
-                        "voucher_no": self.name,
-                        "against": self.egy,
-                        # "cost_center": row.cost_center,
-                        # "project": row.project,
-                        "credit_in_transaction_currency": row.total_amount,
-                    }
-                )
-                account_from.insert(ignore_permissions=True).submit()
-
-                account_to = get_doc(
-                    {
-                        "doctype": "GL Entry",
-                        "posting_date": nowdate(),
-                        "account": self.egy,
-                        "debit": row.total_amount,
-                        "credit": 0,
-                        "debit_in_account_currency": row.total_amount,
-                        "credit_in_account_currency": 0,
-                        "remarks": f"Amount {row.currency} {row.usd_amount} transferred from {row.paid_from} to {self.egy}",
-                        "voucher_type": "Teller Invoice",
-                        "voucher_no": self.name,
-                        "against": row.paid_from,
-                        # "cost_center": row.cost_center,
-                        # "project": row.project,
-                        "debit_in_transaction_currency": row.total_amount,
-                        "credit_in_transaction_currency": 0,
-                    }
-                )
-                account_to.insert(ignore_permissions=True).submit()
-                if account_from and account_to:
-                    gl_done = True
-                    frappe.msgprint(
-                        _("Teller Invoice created successfully with  Total {0}").format(
-                            self.total
-                        )
-                    )
-
-                else:
-                    frappe.msgprint(
-                        _("Failed to create GL Entry for row {0}").format(row.idx)
-                    )
-
-            else:
-                frappe.throw(
-                    _("You must enter all required fields in row {0}").format(row.idx)
-                )
-        print("\n\n\n gl status",gl_done)
-        if gl_done == True:
-          self.update_status()
     def update_status(self):
         inv_table = self.teller_invoice_details
         for row in inv_table:
@@ -265,28 +352,7 @@ class TellerInvoice(Document):
                   
 
     def on_cancel(self):
-        self.ignore_linked_doctypes = (
-            "GL Entry",
-            "Stock Ledger Entry",
-            "Payment Ledger Entry",
-            "Repost Payment Ledger",
-            "Repost Payment Ledger Items",
-            "Repost Accounting Ledger",
-            "Repost Accounting Ledger Items",
-            "Unreconcile Payment",
-            "Unreconcile Payment Entries",
-        )
-
-        try:
-            # Reverse GL Entries
-
-            make_reverse_gl_entries(voucher_type=self.doctype, voucher_no=self.name)
-
-            # add custom logic or user notifications
-            frappe.msgprint(_("Teller Sales document canceled successfully."))
-
-        except Exception as e:
-            frappe.throw(_("An error occurred during cancellation: {0}").format(str(e)))
+        self.make_gl_entries(cancel=True)
 
     def set_cost(self):
         cost = frappe.db.get_value("Branch", {"custom_active": 1}, "branch")
@@ -339,22 +405,197 @@ class TellerInvoice(Document):
         )
         return duration
 
+    def after_insert(self):
+        # Add user permission when a new invoice is created
+        if self.teller and self.treasury_code:
+            try:
+                # Create the user permission with ignore_permissions=True
+                frappe.get_doc({
+                    "doctype": "User Permission",
+                    "user": self.teller,
+                    "allow": "Teller Invoice",
+                    "for_value": self.name,
+                    "apply_to_all_doctypes": 1
+                }).insert(ignore_permissions=True)
+            except Exception as e:
+                frappe.log_error(f"Error adding user permission: {str(e)}")
+
+    def on_trash(self):
+        # Remove user permission when invoice is deleted
+        if self.teller:
+            try:
+                # Delete the user permission with ignore_permissions=True
+                name = frappe.db.get_value(
+                    "User Permission",
+                    {
+                        "user": self.teller,
+                        "allow": "Teller Invoice",
+                        "for_value": self.name
+                    }
+                )
+                if name:
+                    frappe.delete_doc("User Permission", name, ignore_permissions=True)
+            except Exception as e:
+                frappe.log_error(f"Error removing user permission: {str(e)}")
+
+    def set_treasury_details(self):
+        # Get the employee linked to the current user
+        employee = frappe.db.get_value('Employee', {'user_id': frappe.session.user}, 'name')
+        if not employee:
+            frappe.throw(_("No employee found for user {0}").format(frappe.session.user))
+        
+        # Get active shift for current employee
+        active_shift = frappe.db.get_value(
+            "Open Shift for Branch",
+            {
+                "current_user": employee,
+                "shift_status": "Active",
+                "docstatus": 1
+            },
+            "teller_treasury"
+        )
+        
+        if active_shift:
+            treasury = frappe.get_doc("Teller Treasury", active_shift)
+            if treasury:
+                self.treasury_code = treasury.name
+                self.branch_no = treasury.branch
+                self.branch_name = frappe.db.get_value("Branch", treasury.branch, "custom_branch_no")
+
+    def validate_active_shift(self):
+        """Ensure user has an active shift"""
+        # Get the employee linked to the current user
+        employee = frappe.db.get_value('Employee', {'user_id': frappe.session.user}, 'name')
+        if not employee:
+            frappe.throw(_("No employee found for user {0}").format(frappe.session.user))
+            
+        active_shift = frappe.db.get_value("Open Shift for Branch", 
+            filters={
+                "current_user": employee,
+                "shift_status": "Active",
+                "docstatus": 1
+            },
+            fieldname="teller_treasury"
+        )
+        
+        if not active_shift:
+            frappe.throw("No active shift found. Please open a shift first.")
+            
+        self.teller_treasury = active_shift
+        
+    def validate_currency_transactions(self):
+        """Validate currency transactions"""
+        if not self.teller_invoice_details:
+            frappe.throw("At least one currency transaction is required")
+            
+        for row in self.teller_invoice_details:
+            # Validate account belongs to treasury
+            account = frappe.get_doc("Account", row.account)
+            if account.custom_teller_treasury != self.teller_treasury:
+                frappe.throw(f"Account {row.account} is not assigned to your treasury")
+                
+            # Calculate amounts - amount in original currency, egy_amount in EGY
+            row.amount = flt(row.quantity)  # Amount in original currency
+            row.egy_amount = flt(row.quantity) * flt(row.exchange_rate)  # Amount in EGY
+            
+            # Check and update balance using get_balance_on
+            current_balance = get_balance_on(account=row.account)
+            row.balance_after = flt(current_balance) + flt(row.quantity)
+            
+            if row.balance_after < 0:
+                frappe.throw(f"Insufficient balance in account {row.account}")
+                
+    def calculate_totals(self):
+        """Calculate total amounts"""
+        self.total_amount = 0  # Initialize in original currencies
+        self.total_egy = 0     # Initialize in EGY
+        
+        for row in self.teller_invoice_details:
+            # Add amount in original currency
+            self.total_amount += flt(row.amount)
+            # Add EGY equivalent amount
+            self.total_egy += flt(row.egy_amount)
+            
+    def make_gl_entries(self, cancel=False):
+        """Create GL Entries for currency transactions"""
+        gl_entries = []
+        
+        # Validate EGY account exists
+        if not self.egy:
+            frappe.throw(_("EGY Account is required for GL entries. Please set the EGY account in the invoice."))
+            
+        # Use company from the document
+        if not self.company:
+            frappe.throw(_("Company is required for GL entries"))
+            
+        # Get cost center
+        cost_center = frappe.db.get_value("Company", self.company, "cost_center")
+        if not cost_center:
+            frappe.throw(_("Please set default cost center in company {0}").format(self.company))
+            
+        for row in self.teller_invoice_details:
+            # Debit currency account (using EGY amount for GL entries)
+            debit_entry = frappe._dict({
+                "account": row.account,
+                "debit": row.egy_amount if not cancel else 0,
+                "credit": 0 if not cancel else row.egy_amount,
+                "against": "Customer",
+                "party_type": "Customer",
+                "party": self.client,
+                "posting_date": self.posting_date,
+                "company": self.company,
+                "voucher_type": self.doctype,
+                "voucher_no": self.name,
+                "cost_center": cost_center,
+                "remarks": f"Amount: {row.quantity} {row.currency}"
+            })
+            gl_entries.append(debit_entry)
+            
+            # Credit EGY account
+            credit_entry = frappe._dict({
+                "account": self.egy,
+                "debit": 0 if not cancel else row.egy_amount,
+                "credit": row.egy_amount if not cancel else 0,
+                "against": self.client,
+                "party_type": "Customer",
+                "party": self.client,
+                "posting_date": self.posting_date,
+                "company": self.company,
+                "voucher_type": self.doctype,
+                "voucher_no": self.name,
+                "cost_center": cost_center,
+                "remarks": f"Against: {row.quantity} {row.currency}"
+            })
+            gl_entries.append(credit_entry)
+            
+        if gl_entries:
+            make_gl_entries(gl_entries, cancel=cancel)
+
 
 # get currency and exchange rate associated with each account
 @frappe.whitelist(allow_guest=True)
 def get_currency(account):
-    currency = frappe.db.get_value("Account", {"name": account}, "account_currency")
-    currency_code = frappe.db.get_value(
-        "Account", {"name": account}, "custom_currency_code"
-    )
+    account_doc = frappe.get_doc("Account", account)
+    currency = account_doc.account_currency
+    currency_code = account_doc.custom_currency_code
 
     selling_rate = frappe.db.get_value(
-        "Currency Exchange", {"from_currency": currency}, "custom_selling_exchange_rate"
+        "Currency Exchange", 
+        {"from_currency": currency}, 
+        "custom_selling_exchange_rate"
     )
     special_selling_rate = frappe.db.get_value(
-        "Currency Exchange", {"from_currency": currency}, "custom_special_selling"
+        "Currency Exchange", 
+        {"from_currency": currency}, 
+        "custom_special_selling"
     )
-    return {"currency_code":currency_code,"currency":currency, "selling_rate":selling_rate, "special_selling_rate":special_selling_rate}
+    
+    return {
+        "currency_code": currency_code,
+        "currency": currency, 
+        "selling_rate": selling_rate, 
+        "special_selling_rate": special_selling_rate
+    }
 
 
 @frappe.whitelist()
@@ -579,8 +820,6 @@ def check_client_exists(doctype_name):
 
 @frappe.whitelist(allow_guest=True)
 def test_api():
-    # doc = frappe.db.get_list("Customer", ignore_permissions=True, pluck="name")
-    # get single  value
     pass
 
 
@@ -588,18 +827,6 @@ def test_api():
 def test_doc_description():
     doc = frappe.db.describe("Teller Purchase")
     return doc
-
-
-@frappe.whitelist(allow_guest=True)
-def get_current_user_currency_codes(current_user, code):
-    codes = frappe.db.get_list(
-        "Currency Code",
-        fields=["account", "code"],
-        filters={"user": current_user, "name": code},
-    )
-    return codes
-
-
 
 
 @frappe.whitelist()
@@ -662,3 +889,173 @@ def make_sales_return(doc):
         "type": type(source_total)
 
     }
+
+@frappe.whitelist()
+def get_employee_shift_details():
+    user = frappe.session.user
+    
+    # Check if user has required roles
+    required_roles = ["Teller", "Sales User", "Accounts User"]
+    user_roles = frappe.get_roles(user)
+    missing_roles = [role for role in required_roles if role not in user_roles]
+    
+    if missing_roles:
+        frappe.throw(_(
+            "You don't have the required roles to create Teller Invoice. Missing roles: {0}"
+        ).format(", ".join(missing_roles)))
+    
+    # First get the employee linked to the current user
+    employee = frappe.db.get_value('Employee', {'user_id': user}, 'name')
+    if not employee:
+        frappe.throw(_("No employee found for user {0}. Please link an Employee record to this user.").format(user))
+    
+    # Get active shift for current employee
+    active_shift = frappe.get_all(
+        "Open Shift for Branch",
+        filters={
+            "current_user": employee,  # Using employee ID instead of user ID
+            "shift_status": "Active",
+            "docstatus": 1
+        },
+        fields=["name", "current_user", "teller_treasury"],
+        order_by="creation desc",
+        limit=1
+    )
+    
+    if not active_shift:
+        frappe.throw(_("No active shift found. Please ask your supervisor to open a shift for you."))
+        
+    shift = active_shift[0]
+    
+    # Get Teller Treasury details
+    treasury = frappe.get_doc("Teller Treasury", shift.teller_treasury)
+    if not treasury:
+        frappe.throw(_("Teller Treasury not found"))
+        
+    # Get Branch details
+    branch = frappe.get_doc("Branch", treasury.branch)
+    if not branch:
+        frappe.throw(_("Branch not found"))
+        
+    # Get the treasury code - using teller_number from Teller Treasury
+    treasury_code = treasury.name if treasury.name else shift.teller_treasury
+        
+    return {
+        "shift": shift.name,
+        "teller": user,  # Return the user ID for consistency
+        "treasury_code": treasury_code,
+        "branch": branch.name,
+        "branch_name": branch.custom_branch_no
+    }
+
+def open_shift_has_permission(doc, ptype, user):
+    """Permission handler for Open Shift for Branch"""
+    if ptype == "read":
+        # Allow read if user is the current_user of the shift
+        return user == doc.current_user
+    return False
+
+def get_account_permission_query_conditions(user=None):
+    if not user:
+        user = frappe.session.user
+        
+    required_roles = ["Teller", "Sales User", "Accounts User"]
+    user_roles = frappe.get_roles(user)
+    
+    # Check if user has required roles
+    if not any(role in required_roles for role in user_roles):
+        return "1=0"
+        
+    # Get the employee linked to the current user
+    employee = frappe.db.get_value('Employee', {'user_id': user}, 'name')
+    if not employee:
+        return "1=0"
+        
+    # Get active shift for the employee to find their treasury
+    active_shift = frappe.db.get_value(
+        "Open Shift for Branch",
+        {
+            "current_user": employee,
+            "shift_status": "Active",
+            "docstatus": 1
+        },
+        ["name", "teller_treasury"]
+    )
+    
+    if not active_shift:
+        return "1=0"
+        
+    # Get the treasury's accounts
+    treasury = frappe.get_doc("Teller Treasury", active_shift.teller_treasury)
+    if not treasury:
+        return "1=0"
+        
+    return """
+        `tabAccount`.account_type in ('Bank', 'Cash')
+        AND (
+            -- Check if account is linked to user's currency codes
+            EXISTS (
+                SELECT 1 FROM `tabCurrency Code` cc 
+                WHERE cc.user = '{user}'
+                AND cc.account = `tabAccount`.name
+            )
+            OR 
+            -- Check if account is the EGY account for the user
+            EXISTS (
+                SELECT 1 FROM `tabUser` u
+                WHERE u.name = '{user}'
+                AND u.egy_account = `tabAccount`.name
+            )
+        )
+    """.format(user=user)
+
+def has_account_permission(doc, ptype, user):
+    if not user:
+        user = frappe.session.user
+        
+    required_roles = ["Teller", "Sales User", "Accounts User"]
+    user_roles = frappe.get_roles(user)
+    
+    # Check if user has required roles
+    if not any(role in required_roles for role in user_roles):
+        return False
+        
+    if ptype in ("read", "write"):
+        # Get the employee linked to the current user
+        employee = frappe.db.get_value('Employee', {'user_id': user}, 'name')
+        if not employee:
+            return False
+            
+        # Get active shift for the employee
+        active_shift = frappe.db.get_value(
+            "Open Shift for Branch",
+            {
+                "current_user": employee,
+                "shift_status": "Active",
+                "docstatus": 1
+            },
+            "teller_treasury"
+        )
+        
+        if not active_shift:
+            return False
+            
+        # Check if the account is linked to any currency codes for this user
+        # or if it's the user's EGY account
+        has_currency_codes = frappe.db.exists(
+            "Currency Code",
+            {
+                "user": user,
+                "account": doc.name
+            }
+        )
+        
+        is_egy_account = frappe.db.get_value(
+            "User",
+            user,
+            "egy_account"
+        ) == doc.name
+        
+        return bool(has_currency_codes or is_egy_account)
+        
+    return False

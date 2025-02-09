@@ -12,7 +12,7 @@ app_license = "mit"
 
 # include js, css files in header of desk.html
 # app_include_css = "/assets/teller/css/teller.css"
-# app_include_js = "/assets/teller/js/customer.js"
+# app_include_js = "/assets/teller/js/teller.js"
 
 # include js, css files in header of web template
 # web_include_css = "/assets/teller/css/teller.css"
@@ -29,11 +29,7 @@ app_license = "mit"
 # page_js = {"page" : "public/js/file.js"}
 
 # include js in doctype views
-# doctype_js = {"Sales Order" : "public/js/sales_orders.js","Sales Invoice" : "public/js/sales_invoice_number.js"}
-# doctype_js = {"Customer" :"public/js/customer.js"}
-# doctype_js = {"Account" :"public/js/account_custom.js"}
-
-
+# doctype_js = {"doctype" : "public/js/doctype.js"}
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
@@ -107,13 +103,18 @@ home_page = "login"
 # -----------
 # Permissions evaluated in scripted ways
 
-# permission_query_conditions = {
-# 	"Event": "frappe.desk.doctype.event.event.get_permission_query_conditions",
-# }
-#
-# has_permission = {
-# 	"Event": "frappe.desk.doctype.event.event.has_permission",
-# }
+permission_query_conditions = {
+    "Open Shift for Branch": "teller.teller_customization.doctype.open_shift_for_branch.open_shift_for_branch.get_permission_query_conditions",
+    "Teller Invoice": "teller.teller_customization.doctype.teller_invoice.teller_invoice.get_permission_query_conditions",
+    "Account": "teller.teller_customization.doctype.account.account_permission.get_permission_query_conditions"
+}
+
+# Permissions for all doctypes
+has_permission = {
+    "Open Shift for Branch": "teller.teller_customization.doctype.open_shift_for_branch.open_shift_for_branch.has_permission",
+    "Teller Invoice": "teller.teller_customization.doctype.teller_invoice.teller_invoice.has_permission",
+    "Account": "teller.teller_customization.doctype.account.account_permission.has_permission"
+}
 
 # DocType Class
 # ---------------
@@ -129,23 +130,16 @@ override_doctype_class = {
 # Hook on document methods and events
 
 doc_events = {
-    # 	"*": {
-    # 		"on_update": "method",
-    # 		"on_cancel": "method",
-    # 		"on_trash": "method"
-    # 	}
     "Currency Exchange": {
         "after_insert": "teller.teller.page.currency_screen.currency_screen.after_insert",
         "on_update": "teller.teller.page.currency_screen.currency_screen.on_update"
     },
-    "Customer": {"autoname": "teller.teller_customization.customer.customer.autoname"},
-    # "Subscription": {
-    #     # "before_save": "teller.subscription.before_save",
-    #     "before_submit": "teller.subscription.before_submit",
-    #     "after_submit": "teller.subscription.after_submit",
-    #     "before_cancel": "teller.subscription.before_cancel",
-    #     "on_trash": "teller.subscription.on_trash",
-    # },
+    "Customer": {
+        "autoname": "teller.teller_customization.customer.customer.autoname"
+    },
+    "Account": {
+        "on_update": "teller.teller_customization.doctype.account.account_handler.on_update"
+    },
 }
 
 # Scheduled Tasks
@@ -255,4 +249,21 @@ scheduler_events = {
 # default_log_clearing_doctypes = {
 # 	"Logging DocType Name": 30  # days to retain logs
 # }
-fixtures =[{"dt":"Client Script"}]
+
+doctype_js = {
+    "Account": "public/js/account.js",
+    "Customer": "public/js/customer.js"
+}
+
+# Fixtures
+# ----------
+fixtures = [
+    {
+        "doctype": "Custom Field",
+        "filters": [
+            ["name", "in", [
+                "Account-custom_teller_treasury"
+            ]]
+        ]
+    }
+]
