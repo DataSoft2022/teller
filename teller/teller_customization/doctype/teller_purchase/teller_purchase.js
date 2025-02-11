@@ -151,9 +151,6 @@ frappe.ui.form.on("Teller Purchase", {
       frm.get_field("fetch_national_id").$input.focus();
     }, 100);
 
-    // Remove commented out contact list update
-    // update_contact_list(frm);
-
     // save and submit and print the invoice on shortcut
     frappe.ui.keys.on("alt+s", function (e) {
       console.log("shift + s was pressed");
@@ -443,52 +440,58 @@ frappe.ui.form.on("Teller Purchase", {
           },
           callback: function (r) {
             // set the fields with r.message.fieldname
-            frm.set_value("customer_name", r.message.customer_name);
-            frm.set_value("gender", r.message.gender);
-            frm.set_value("card_type", r.message.custom_card_type);
-
-            frm.set_value("phone", r.message.custom_phone);
-            frm.set_value("mobile_number", r.message.custom_mobile);
-            frm.set_value("work_for", r.message.custom_work_for);
-            frm.set_value("address", r.message.custom_address);
-            frm.set_value("nationality", r.message.custom_nationality);
-            frm.set_value("issue_date", r.message.custom_issue_date);
-            frm.set_value("address", r.message.custom_address);
-            frm.set_value("expired", r.message.custom_expired);
-            frm.set_value("place_of_birth", r.message.custom_place_of_birth);
-            frm.set_value("date_of_birth", r.message.custom_date_of_birth);
-            frm.set_value("job_title", r.message.custom_job_title);
-            if (frm.doc.card_type == "National ID") {
-              frm.set_value("national_id", r.message.custom_national_id);
-            } else if (frm.doc.card_type == "Passport") {
-              frm.set_value(
-                "passport_number",
-                r.message.custom_passport_number
-              );
-            } else {
-              frm.set_value(
-                "military_number",
-                r.message.custom_military_number
-              );
-            }
+            frm.set_value("buyer_name", r.message.customer_name);
+            frm.set_value("buyer_nationality", r.message.nationality);
+            frm.set_value("buyer_phone", r.message.phone);
+            frm.set_value("buyer_job_title", r.message.job_title);
+            frm.set_value("buyer_date_of_birth", r.message.date_of_birth);
+            frm.set_value("buyer_card_type", r.message.card_type);
+            frm.set_value("buyer_work_for", r.message.work_for);
+            frm.set_value("buyer_issue_date", r.message.issue_date);
+            frm.set_value("buyer_address", r.message.address);
+            frm.set_value("buyer_place_of_birth", r.message.place_of_birth);
+            frm.set_value("buyer_gender", r.message.gender);
+            frm.set_value("buyer_expired", r.message.expired);
+            frm.set_value("buyer_national_id", r.message.national_id);
+            frm.set_value("buyer_passport_number", r.message.passport_number);
+            frm.set_value("buyer_military_number", r.message.military_number);
+            frm.set_value("buyer_mobile_number", r.message.mobile_number);
+            frm.set_value("buyer_national_id_copy", r.message.national_id_copy);
+            frm.set_value("buyer_company_name", r.message.company_name);
+            frm.set_value("buyer_company_address", r.message.company_address);
+            frm.set_value("buyer_company_commercial_no", r.message.company_commercial_no);
+            frm.set_value("buyer_company_start_date", r.message.start_registration_date);
+            frm.set_value("buyer_company_end_date", r.message.end_registration_date);
+            frm.set_value("buyer_company_legal_form", r.message.company_legal_form);
+            frm.set_value("buyer_company_activity", r.message.company_activity);
           },
         });
       } else {
         // clear the fields
-        frm.set_value("customer_name", "");
-        frm.set_value("gender", "");
-        // frm.set_value("card_type", "");
-        // frm.set_value("card_info", "");
-        frm.set_value("mobile_number", "");
-        frm.set_value("work_for", "");
-        frm.set_value("phone", "");
-        frm.set_value("address", "");
-        frm.set_value("nationality", "");
-        frm.set_value("issue_date", "");
-        frm.set_value("expired", "");
-        frm.set_value("place_of_birth", "");
-        frm.set_value("date_of_birth", "");
-        frm.set_value("job_title", "");
+        frm.set_value("buyer_name", "");
+        frm.set_value("buyer_nationality", "");
+        frm.set_value("buyer_phone", "");
+        frm.set_value("buyer_job_title", "");
+        frm.set_value("buyer_date_of_birth", "");
+        frm.set_value("buyer_card_type", "");
+        frm.set_value("buyer_work_for", "");
+        frm.set_value("buyer_issue_date", "");
+        frm.set_value("buyer_address", "");
+        frm.set_value("buyer_place_of_birth", "");
+        frm.set_value("buyer_gender", "");
+        frm.set_value("buyer_expired", "");
+        frm.set_value("buyer_national_id", "");
+        frm.set_value("buyer_passport_number", "");
+        frm.set_value("buyer_military_number", "");
+        frm.set_value("buyer_mobile_number", "");
+        frm.set_value("buyer_national_id_copy", "");
+        frm.set_value("buyer_company_name", "");
+        frm.set_value("buyer_company_address", "");
+        frm.set_value("buyer_company_commercial_no", "");
+        frm.set_value("buyer_company_start_date", "");
+        frm.set_value("buyer_company_end_date", "");
+        frm.set_value("buyer_company_legal_form", "");
+        frm.set_value("buyer_company_activity", "");
       }
     } // get the information for company
     else if (
@@ -504,46 +507,71 @@ frappe.ui.form.on("Teller Purchase", {
           },
           callback: function (r) {
             // set the fields with r.message.fieldname
-            frm.set_value("company_name", r.message.customer_name);
-            frm.set_value(
-              "company_activity",
-              r.message.custom_company_activity
-            );
-            frm.set_value(
-              "company_commercial_no",
-              r.message.custom_commercial_no
-            );
-
-            frm.set_value(
-              "start_registration_date",
-              r.message.custom_start_registration_date
-            );
-
-            frm.set_value(
-              "end_registration_date",
-              r.message.custom_end_registration_date
-            );
-            // frm.set_value("company_number", r.message.custom_company_no);
-            frm.set_value("company_address", r.message.custom_comany_address1);
-            frm.set_value("is_expired", r.message.custom_is_expired);
-            frm.set_value("interbank", r.message.custom_interbank);
-            frm.set_value("company_legal_form", r.message.custom_legal_form);
+            frm.set_value("buyer_name", r.message.customer_name);
+            frm.set_value("buyer_nationality", r.message.nationality);
+            frm.set_value("buyer_phone", r.message.phone);
+            frm.set_value("buyer_job_title", r.message.job_title);
+            frm.set_value("buyer_date_of_birth", r.message.date_of_birth);
+            frm.set_value("buyer_card_type", r.message.card_type);
+            frm.set_value("buyer_work_for", r.message.work_for);
+            frm.set_value("buyer_issue_date", r.message.issue_date);
+            frm.set_value("buyer_address", r.message.address);
+            frm.set_value("buyer_place_of_birth", r.message.place_of_birth);
+            frm.set_value("buyer_gender", r.message.gender);
+            frm.set_value("buyer_expired", r.message.expired);
+            frm.set_value("buyer_national_id", r.message.national_id);
+            frm.set_value("buyer_passport_number", r.message.passport_number);
+            frm.set_value("buyer_military_number", r.message.military_number);
+            frm.set_value("buyer_mobile_number", r.message.mobile_number);
+            frm.set_value("buyer_national_id_copy", r.message.national_id_copy);
+            frm.set_value("buyer_company_name", r.message.company_name);
+            frm.set_value("buyer_company_address", r.message.company_address);
+            frm.set_value("buyer_company_commercial_no", r.message.company_commercial_no);
+            frm.set_value("buyer_company_start_date", r.message.start_registration_date);
+            frm.set_value("buyer_company_end_date", r.message.end_registration_date);
+            frm.set_value("buyer_company_legal_form", r.message.company_legal_form);
+            frm.set_value("buyer_company_activity", r.message.company_activity);
           },
         });
       } else {
         // clear the fields
-        frm.set_value("company_name", "");
-        frm.set_value("company_activity", "");
-        frm.set_value("company_commercial_no", "");
-        // frm.set_value("company_number", "");
-        frm.set_value("end_registration_date", "");
-        frm.set_value("start_registration_date", "");
-        frm.set_value("company_address", "");
-        frm.set_value("is_expired", "");
-        frm.set_value("interbank", "");
-        frm.set_value("company_legal_form", "");
+        frm.set_value("buyer_name", "");
+        frm.set_value("buyer_nationality", "");
+        frm.set_value("buyer_phone", "");
+        frm.set_value("buyer_job_title", "");
+        frm.set_value("buyer_date_of_birth", "");
+        frm.set_value("buyer_card_type", "");
+        frm.set_value("buyer_work_for", "");
+        frm.set_value("buyer_issue_date", "");
+        frm.set_value("buyer_address", "");
+        frm.set_value("buyer_place_of_birth", "");
+        frm.set_value("buyer_gender", "");
+        frm.set_value("buyer_expired", "");
+        frm.set_value("buyer_national_id", "");
+        frm.set_value("buyer_passport_number", "");
+        frm.set_value("buyer_military_number", "");
+        frm.set_value("buyer_mobile_number", "");
+        frm.set_value("buyer_national_id_copy", "");
+        frm.set_value("buyer_company_name", "");
+        frm.set_value("buyer_company_address", "");
+        frm.set_value("buyer_company_commercial_no", "");
+        frm.set_value("buyer_company_start_date", "");
+        frm.set_value("buyer_company_end_date", "");
+        frm.set_value("buyer_company_legal_form", "");
+        frm.set_value("buyer_company_activity", "");
       }
     }
+
+    // Set contact query filters
+    frm.set_query("purchase_commissar", function() {
+      return {
+        query: "frappe.contacts.doctype.contact.contact.contact_query",
+        filters: {
+          link_doctype: "Customer",
+          link_name: frm.doc.buyer
+        }
+      };
+    });
   },
 
   // category_of_buyer(frm) {
@@ -589,25 +617,24 @@ frappe.ui.form.on("Teller Purchase", {
           },
           callback: function (r) {
             // set the fields with r.message.fieldname
-            frm.set_value("com_national_id", r.message.custom_national_id);
-            frm.set_value("com_gender", r.message.custom_com_gender);
-            frm.set_value("com_address", r.message.custom_com_address);
-            frm.set_value("com_name", r.message.first_name);
-
-            frm.set_value("com_phone", r.message.custom_com_phone);
-            frm.set_value("com_job_title", r.message.custom_job_title);
-            frm.set_value("com_mobile_number", r.message.custom_mobile_number);
+            frm.set_value("purchase_com_name", r.message.first_name + ' ' + r.message.last_name);
+            frm.set_value("purchase_com_national_id", r.message.custom_national_id);
+            frm.set_value("purchase_com_address", r.message.address);
+            frm.set_value("purchase_com_gender", r.message.gender);
+            frm.set_value("purchase_com_phone", r.message.phone);
+            frm.set_value("purchase_com_mobile_number", r.message.mobile_no);
+            frm.set_value("purchase_com_job_title", r.message.job_title);
           },
         });
       } else {
         // clear the fields
-        frm.set_value("com_national_id", "");
-        frm.set_value("com_gender", "");
-        frm.set_value("com_address", "");
-        frm.set_value("com_name", "");
-        frm.set_value("com_phone", "");
-        frm.set_value("com_job_title", "");
-        frm.set_value("com_mobile_number", "");
+        frm.set_value("purchase_com_name", "");
+        frm.set_value("purchase_com_national_id", "");
+        frm.set_value("purchase_com_address", "");
+        frm.set_value("purchase_com_gender", "");
+        frm.set_value("purchase_com_phone", "");
+        frm.set_value("purchase_com_mobile_number", "");
+        frm.set_value("purchase_com_job_title", "");
       }
     } else {
       __("Please select Company Name Before add Commissar");
@@ -620,7 +647,7 @@ frappe.ui.form.on("Teller Purchase", {
     ////////
 
     if (frm.doc.buyer) {
-      // update_contact_list(frm);
+      // Continue with any other buyer-related logic
     }
     if (
       (frm.doc.category_of_buyer == "Egyptian" ||
@@ -632,28 +659,28 @@ frappe.ui.form.on("Teller Purchase", {
         args: {
           doc: {
             doctype: "Customer",
-            customer_name: frm.doc.customer_name,
-            gender: frm.doc.gender ? frm.doc.gender : "Male",
-            custom_card_type: frm.doc.card_type,
-            custom_mobile: frm.doc.mobile_number ? frm.doc.mobile_number : "",
+            customer_name: frm.doc.buyer_name,
+            gender: frm.doc.buyer_gender,
+            custom_card_type: frm.doc.buyer_card_type,
+            custom_mobile: frm.doc.buyer_mobile_number ? frm.doc.buyer_mobile_number : "",
             // custom_work_for: frm.doc.work_for,
-            custom_address: frm.doc.address,
+            custom_address: frm.doc.buyer_address,
             // custom_nationality: frm.doc.nationality,
             // custom_issue_date: frm.doc.issue_date,
             // custom_expired: frm.doc.expired,
             // custom_place_of_birth: frm.doc.place_of_birth,
-            custom_date_of_birth: frm.doc.date_of_birth
-              ? frm.doc.date_of_birth
+            custom_date_of_birth: frm.doc.buyer_date_of_birth
+              ? frm.doc.buyer_date_of_birth
               : frappe.datetime.get_today(),
             // custom_job_title: frm.doc.job_title,
             custom_type: frm.doc.category_of_buyer,
             custom_national_id:
-              frm.doc.card_type == "National ID" ? frm.doc.national_id : null,
+              frm.doc.buyer_card_type == "National ID" ? frm.doc.buyer_national_id : null,
             custom_passport_number:
-              frm.doc.card_type == "Passport" ? frm.doc.passport_number : null,
+              frm.doc.buyer_card_type == "Passport" ? frm.doc.buyer_passport_number : null,
             custom_military_number:
-              frm.doc.card_type == "Military ID"
-                ? frm.doc.military_number
+              frm.doc.buyer_card_type == "Military ID"
+                ? frm.doc.buyer_military_number
                 : null,
           },
         },
@@ -697,33 +724,33 @@ frappe.ui.form.on("Teller Purchase", {
                   var latest_client = response.message;
                   // Update the relevant fields
 
-                  latest_client.customer_name = frm.doc.customer_name;
-                  latest_client.custom_card_type = frm.doc.card_type;
+                  latest_client.customer_name = frm.doc.buyer_name;
+                  latest_client.custom_card_type = frm.doc.buyer_card_type;
 
-                  latest_client.custom_work_for = frm.doc.work_for;
+                  latest_client.custom_work_for = frm.doc.buyer_work_for;
 
-                  latest_client.custom_nationality = frm.doc.nationality;
-                  latest_client.custom_mobile = frm.doc.mobile_number;
-                  latest_client.custom_phone = frm.doc.phone;
-                  latest_client.custom_place_of_birth = frm.doc.place_of_birth;
+                  latest_client.custom_nationality = frm.doc.buyer_nationality;
+                  latest_client.custom_mobile = frm.doc.buyer_mobile_number;
+                  latest_client.custom_phone = frm.doc.buyer_phone;
+                  latest_client.custom_place_of_birth = frm.doc.buyer_place_of_birth;
 
-                  latest_client.custom_address = frm.doc.address;
-                  latest_client.custom_issue_date = frm.doc.issue_date;
+                  latest_client.custom_address = frm.doc.buyer_address;
+                  latest_client.custom_issue_date = frm.doc.buyer_issue_date;
 
-                  latest_client.custom_job_title = frm.doc.job_title;
+                  latest_client.custom_job_title = frm.doc.buyer_job_title;
                   latest_client.custom_date_of_birth =
-                    frm.doc.date_of_birth || frappe.datetime.get_today();
+                    frm.doc.buyer_date_of_birth || frappe.datetime.get_today();
                   latest_client.custom_national_id =
-                    frm.doc.card_type == "National ID"
-                      ? frm.doc.national_id
+                    frm.doc.buyer_card_type == "National ID"
+                      ? frm.doc.buyer_national_id
                       : null;
                   latest_client.custom_passport_number =
-                    frm.doc.card_type == "Passport"
-                      ? frm.doc.passport_number
+                    frm.doc.buyer_card_type == "Passport"
+                      ? frm.doc.buyer_passport_number
                       : null;
                   latest_client.custom_military_number =
-                    frm.doc.card_type == "Military ID"
-                      ? frm.doc.military_number
+                    frm.doc.buyer_card_type == "Military ID"
+                      ? frm.doc.buyer_military_number
                       : null;
 
                   // Save the updated client document
@@ -759,34 +786,34 @@ frappe.ui.form.on("Teller Purchase", {
         args: {
           doc: {
             doctype: "Customer",
-            customer_name: frm.doc.company_name,
-            custom_start_registration_date: frm.doc.start_registration_date
-              ? frm.doc.start_registration_date
+            customer_name: frm.doc.buyer_name,
+            custom_start_registration_date: frm.doc.buyer_company_start_date
+              ? frm.doc.buyer_company_start_date
               : frappe.datetime.get_today(),
 
-            custom_end_registration_date: frm.doc.end_registration_date
-              ? frm.doc.end_registration_date
+            custom_end_registration_date: frm.doc.buyer_company_end_date
+              ? frm.doc.buyer_company_end_date
               : frappe.datetime.get_today(),
 
-            custom_comany_address1: frm.doc.company_address
-              ? frm.doc.company_address
+            custom_comany_address1: frm.doc.buyer_company_address
+              ? frm.doc.buyer_company_address
               : "",
 
             custom_type: frm.doc.category_of_buyer,
             custom_interbank:
-              frm.doc.interbank && frm.doc.category_of_buyer == "Interbank"
+              frm.doc.buyer_company_legal_form && frm.doc.category_of_buyer == "Interbank"
                 ? true
                 : false,
 
-            custom_commercial_no: frm.doc.company_commercial_no,
+            custom_commercial_no: frm.doc.buyer_company_commercial_no,
 
-            custom_company_activity: frm.doc.company_activity
-              ? frm.doc.company_activity
+            custom_company_activity: frm.doc.buyer_company_activity
+              ? frm.doc.buyer_company_activity
               : "",
-            custom_legal_form: frm.doc.company_legal_form
-              ? frm.doc.company_legal_form
+            custom_legal_form: frm.doc.buyer_company_legal_form
+              ? frm.doc.buyer_company_legal_form
               : "",
-            custom_is_expired: frm.doc.is_expired,
+            custom_is_expired: frm.doc.buyer_expired,
 
             //company_commercial_no
           },
@@ -834,17 +861,17 @@ frappe.ui.form.on("Teller Purchase", {
                   let latest_company = response.message;
                   // Update the relevant fields
                   latest_company.custom_start_registration_date =
-                    frm.doc.start_registration_date;
+                    frm.doc.buyer_company_start_date;
                   latest_company.custom_end_registration_date =
-                    frm.doc.end_registration_date;
+                    frm.doc.buyer_company_end_date;
                   latest_company.custom_comany_address1 =
-                    frm.doc.company_address || "";
+                    frm.doc.buyer_company_address || "";
                   latest_company.custom_commercial_no =
-                    frm.doc.company_commercial_no;
-                  latest_company.custom_legal_form = frm.doc.company_legal_form;
+                    frm.doc.buyer_company_commercial_no;
+                  latest_company.custom_legal_form = frm.doc.buyer_company_legal_form;
                   // latest_company.custom_company_no = frm.doc.company_number;
                   latest_company.custom_company_activity =
-                    frm.doc.company_activity;
+                    frm.doc.buyer_company_activity;
 
                   // latest_company.custom_interbank = true
                   //   ? frm.doc.interbank && frm.doc.client_type == "Interbank"
@@ -952,6 +979,23 @@ frappe.ui.form.on("Teller Purchase", {
           '<div style="background-color: #f8d7da; color: #721c24; padding: 10px; border-radius: 5px; font-family: Arial, sans-serif; font-size: 14px;">Please enter Customer to validate the transaction</div>',
         title: "Missing Data Error",
         indicator: "red",
+      });
+    }
+  },
+  purchase_commissar: function(frm) {
+    if (frm.doc.purchase_commissar) {
+      frappe.call({
+        method: "frappe.client.get",
+        args: {
+          doctype: "Contact",
+          name: frm.doc.purchase_commissar
+        },
+        callback: function(r) {
+          if (r.message) {
+            // Set contact related fields if needed
+            frm.refresh_field("purchase_commissar");
+          }
+        }
       });
     }
   },
@@ -1175,14 +1219,14 @@ function handleCommissarCreationOrUpdate(frm) {
     ];
 
     // Set the necessary fields
-    newContact.first_name = frm.doc.com_name;
-    newContact.custom_com_gender = frm.doc.com_gender;
+    newContact.first_name = frm.doc.purchase_com_name;
+    newContact.custom_com_gender = frm.doc.purchase_com_gender;
 
-    newContact.custom_com_address = frm.doc.com_address;
-    newContact.custom_com_phone = frm.doc.com_phone;
-    newContact.custom_national_id = frm.doc.com_national_id;
-    newContact.custom_job_title = frm.doc.com_job_title;
-    newContact.custom_mobile_number = frm.doc.com_mobile_number;
+    newContact.custom_com_address = frm.doc.purchase_com_address;
+    newContact.custom_com_phone = frm.doc.purchase_com_phone;
+    newContact.custom_national_id = frm.doc.purchase_com_national_id;
+    newContact.custom_job_title = frm.doc.purchase_com_job_title;
+    newContact.custom_mobile_number = frm.doc.purchase_com_mobile_number;
 
     frappe.call({
       method: "frappe.client.insert",
@@ -1216,13 +1260,13 @@ function handleCommissarCreationOrUpdate(frm) {
           let existing_contact = r.message;
 
           // Update the relevant fields
-          existing_contact.first_name = frm.doc.com_name;
-          existing_contact.custom_com_gender = frm.doc.com_gender;
-          existing_contact.custom_national_id = frm.doc.com_national_id;
-          existing_contact.custom_com_address = frm.doc.com_address || "";
-          existing_contact.custom_com_phone = frm.doc.com_phone;
-          existing_contact.custom_job_title = frm.doc.com_job_title;
-          existing_contact.custom_mobile_number = frm.doc.com_mobile_number;
+          existing_contact.first_name = frm.doc.purchase_com_name;
+          existing_contact.custom_com_gender = frm.doc.purchase_com_gender;
+          existing_contact.custom_national_id = frm.doc.purchase_com_national_id;
+          existing_contact.custom_com_address = frm.doc.purchase_com_address || "";
+          existing_contact.custom_com_phone = frm.doc.purchase_com_phone;
+          existing_contact.custom_job_title = frm.doc.purchase_com_job_title;
+          existing_contact.custom_mobile_number = frm.doc.purchase_com_mobile_number;
 
           frappe.call({
             method: "frappe.client.save",
@@ -1534,7 +1578,7 @@ function get_account (frm, child){
             fields: ["for_value"]
         },
         callback: function(permissionResponse) {
-            console.log("User Permission (response):", permissionResponse.message);
+            console.log("User Permission (response):", permissionResponse);
   
             if (permissionResponse.message && permissionResponse.message.length > 0) {
               console.log("for_value:", permissionResponse.message);

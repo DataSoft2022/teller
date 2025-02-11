@@ -301,6 +301,17 @@ frappe.ui.form.on("Teller Invoice", {
         frm.set_value("company_legal_form", "");
       }
     }
+
+    // Set contact query filters
+    frm.set_query("contact", function() {
+      return {
+        query: "frappe.contacts.doctype.contact.contact.contact_query",
+        filters: {
+          link_doctype: "Customer",
+          link_name: frm.doc.client
+        }
+      };
+    });
   },
 
   // add comissar to invoice
@@ -830,6 +841,37 @@ frappe.ui.form.on("Teller Invoice", {
       validateRegistrationDateExpiration(frm, frm.doc.end_registration_date);
     }
   },
+
+  contact: function(frm) {
+    if (frm.doc.contact) {
+      frappe.call({
+        method: "frappe.client.get",
+        args: {
+          doctype: "Contact",
+          name: frm.doc.contact
+        },
+        callback: function(r) {
+          if (r.message) {
+            // Set contact related fields if needed
+            frm.refresh_field("contact");
+          }
+        }
+      });
+    }
+  },
+
+  client: function(frm) {
+    // Set contact query filters
+    frm.set_query("contact", function() {
+      return {
+        query: "frappe.contacts.doctype.contact.contact.contact_query",
+        filters: {
+          link_doctype: "Customer",
+          link_name: frm.doc.client
+        }
+      };
+    });
+  }
 });
 
 //  teller_invoice_details currency table
@@ -996,51 +1038,30 @@ function set_branch_and_shift(frm) {
 }
 
 //  add contact list to company
-function update_contact_list(frm) {
-  if (!frm.doc.client) {
-    console.error("client not found in form");
-    return;
-  }
-  frappe.call({
-    method: "frappe.client.get_list",
-    args: {
-      doctype: "Contact",
-      filters: [
-        ["Dynamic Link", "link_doctype", "=", "Customer"],
-        ["Dynamic Link", "link_name", "=", frm.doc.client],
-      ],
-      fields: ["name", "email_id", "phone"],
-    },
-    callback: function (r) {
-      if (r.message) {
-        // console.log("contact list are", r.message);
-        // let html = "<ul>";
-        // r.message.forEach((contact) => {
-        //   // html += `<li>${contact.name}: ${contact.email_id} / ${contact.phone}</li>`;
-        //   html += `<li><a href="#Form/Contact/${contact.name}" target="_blank">${contact.name}</a>: ${contact.email_id} / ${contact.phone}</li>`;
-        // });
-        // html += "</ul>";
-        // frm.fields_dict["contact_list"].$wrapper.html(html);
-        console.log("contact list are", r.message);
-        let html = "<ul>";
-        r.message.forEach((contact) => {
-          html += `<li><a href="#" data-contact="${contact.name}" class="contact-link">${contact.name}</a>: ${contact.email_id} / ${contact.phone}</li>`;
-        });
-        html += "</ul>";
-        frm.fields_dict["contact_list"].$wrapper.html(html);
-
-        // Add click event listeners to the links
-        frm.fields_dict["contact_list"].$wrapper
-          .find(".contact-link")
-          .on("click", function (e) {
-            e.preventDefault();
-            var contact_name = $(this).attr("data-contact");
-            frappe.set_route("Form", "Contact", contact_name);
-          });
-      }
-    },
-  });
-}
+// function update_contact_list(frm) {
+//     if (frm.doc.client) {
+//         frappe.call({
+//             method: "frappe.client.get_list",
+//             args: {
+//                 doctype: "Contact",
+//                 filters: {
+//                     "link_doctype": "Customer",
+//                     "link_name": frm.doc.client
+//                 },
+//                 fields: ["name", "first_name", "last_name"]
+//             },
+//             callback: function(r) {
+//                 if (r.message && r.message.length) {
+//                     frm.set_value("contact", r.message[0].name);
+//                 } else {
+//                     frm.set_value("contact", "");
+//                 }
+//             }
+//         });
+//     } else {
+//         frm.set_value("contact", "");
+//     }
+// }
 
 //  check if the if the current invioce or customer total invoices  exceeds the limit
 
@@ -1508,7 +1529,7 @@ if (row.code) {
                   },
                   callback: function(accountResponse) {
                       // console.log("Account fetch response:", accountResponse);
-
+  
                       if (accountResponse.message && accountResponse.message.length > 0) {
                           let matchingAccount = accountResponse.message; // Use the first match
                           console.log("Matching Account Found:", matchingAccount);

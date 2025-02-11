@@ -43,11 +43,43 @@ class TellerPurchase(Document):
         self.set_move_number()
         self.get_printing_roll()
 
+    def validate(self):
+        if self.category_of_buyer == "Egyptian" or self.category_of_buyer == "Foreigner":
+            if not self.buyer_name:
+                frappe.throw("Please enter buyer name")
+            if not self.buyer_card_type:
+                frappe.throw("Please enter card type")
+            if self.buyer_card_type == "National ID" and not self.buyer_national_id:
+                frappe.throw("Please enter national ID")
+            if self.buyer_card_type == "Passport" and not self.buyer_passport_number:
+                frappe.throw("Please enter passport number")
+            if self.buyer_card_type == "Military Card" and not self.buyer_military_number:
+                frappe.throw("Please enter military number")
+        elif self.category_of_buyer == "Company":
+            if not self.buyer_company_name:
+                frappe.throw("Please enter company name")
+            if not self.buyer_company_commercial_no:
+                frappe.throw("Please enter company commercial number")
+            if not self.buyer_company_start_date:
+                frappe.throw("Please enter company start registration date")
+            if not self.buyer_company_end_date:
+                frappe.throw("Please enter company end registration date")
+            if not self.buyer_company_address:
+                frappe.throw("Please enter company address")
+            if not self.buyer_company_legal_form:
+                frappe.throw("Please enter company legal form")
+            if not self.buyer_company_activity:
+                frappe.throw("Please enter company activity")
+
     def before_save(self):
         self.set_customer_invoices()
-        pass
+        if self.category_of_buyer == "Egyptian" or self.category_of_buyer == "Foreigner":
+            self.update_buyer_history()
+        elif self.category_of_buyer == "Company":
+            self.update_company_history()
 
     def on_submit(self):
+        self.update_egy_balance()
 
         for row in self.get("transactions"):
             if row.paid_from and self.egy and row.usd_amount:
@@ -285,6 +317,47 @@ class TellerPurchase(Document):
             "purchase_duration",
         )
         return duration
+
+    def update_buyer_history(self):
+        history = {
+            "buyer_name": self.buyer_name,
+            "buyer_card_type": self.buyer_card_type,
+            "buyer_national_id": self.buyer_national_id if self.buyer_card_type == "National ID" else None,
+            "buyer_passport_number": self.buyer_passport_number if self.buyer_card_type == "Passport" else None,
+            "buyer_military_number": self.buyer_military_number if self.buyer_card_type == "Military Card" else None,
+            "buyer_phone": self.buyer_phone,
+            "buyer_mobile_number": self.buyer_mobile_number,
+            "buyer_work_for": self.buyer_work_for,
+            "buyer_address": self.buyer_address,
+            "buyer_nationality": self.buyer_nationality,
+            "buyer_issue_date": self.buyer_issue_date,
+            "buyer_expired": self.buyer_expired,
+            "buyer_place_of_birth": self.buyer_place_of_birth,
+            "buyer_date_of_birth": self.buyer_date_of_birth,
+            "buyer_job_title": self.buyer_job_title,
+            "buyer_gender": self.buyer_gender
+        }
+        self.append("purchase_history", history)
+
+    def update_company_history(self):
+        history = {
+            "buyer_company_name": self.buyer_company_name,
+            "buyer_company_commercial_no": self.buyer_company_commercial_no,
+            "buyer_company_start_date": self.buyer_company_start_date,
+            "buyer_company_end_date": self.buyer_company_end_date,
+            "buyer_company_address": self.buyer_company_address,
+            "buyer_company_legal_form": self.buyer_company_legal_form,
+            "buyer_company_activity": self.buyer_company_activity,
+            "is_expired": self.is_expired,
+            "interbank": self.interbank
+        }
+        self.append("purchase_history", history)
+
+    def update_egy_balance(self):
+        if self.egy_balance and self.egy_account:
+            account = frappe.get_doc("Account", self.egy_account)
+            account.account_balance = self.egy_balance
+            account.save()
 
 
 # get currency and currency rate from each account

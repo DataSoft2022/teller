@@ -71,7 +71,7 @@
   "start_registration_date",
   "end_registration_date",
   "interbank",
-  "contact_list",
+  "contact",
   "column_break_uyru",
   "company_legal_form",
   "company_num",
@@ -581,9 +581,11 @@
    "label": "Add Commissar"
   },
   {
-   "fieldname": "contact_list",
-   "fieldtype": "HTML",
-   "label": "Contact List"
+   "fieldname": "contact",
+   "fieldtype": "Link",
+   "label": "Contact",
+   "options": "Contact",
+   "description": "Select a contact for this customer"
   },
   {
    "default": "0",
