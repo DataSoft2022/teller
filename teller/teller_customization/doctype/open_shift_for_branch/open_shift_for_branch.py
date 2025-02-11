@@ -2,7 +2,6 @@
 # For license information, please see license.txt
 
 import frappe
-from frappe import whitelist
 from frappe.model.document import Document
 from frappe.permissions import add_user_permission, remove_user_permission
 
@@ -150,7 +149,7 @@ class OpenShiftforBranch(Document):
                 }
             )
 
-@whitelist()
+@frappe.whitelist()
 def get_treasury_employees(treasury):
     # Get the branch from treasury
     treasury_doc = frappe.get_doc("Teller Treasury", treasury)
@@ -175,7 +174,7 @@ def update_shift_end_date(open_shift, end_date):
         doc.db_set('shift_status', 'Closed')
         frappe.db.commit()
 
-@whitelist()
+@frappe.whitelist()
 def make_close_shift(source_name, target_doc=None):
     """Create Close Shift for Branch from Open Shift"""
     from frappe.model.mapper import get_mapped_doc

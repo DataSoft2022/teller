@@ -151,6 +151,9 @@ frappe.ui.form.on("Teller Purchase", {
       frm.get_field("fetch_national_id").$input.focus();
     }, 100);
 
+    // Remove commented out contact list update
+    // update_contact_list(frm);
+
     // save and submit and print the invoice on shortcut
     frappe.ui.keys.on("alt+s", function (e) {
       console.log("shift + s was pressed");
