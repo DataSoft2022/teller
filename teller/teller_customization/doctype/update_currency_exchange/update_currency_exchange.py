@@ -16,7 +16,8 @@ class UpdateCurrencyExchange(Document):
 				t1.from_currency, 
 				t1.creation as latest_date, 
 				t1.exchange_rate, 
-				t1.custom_selling_exchange_rate
+				t1.custom_selling_exchange_rate,
+				t1.creation as last_update
 			FROM 
 				`tabCurrency Exchange` t1
 			INNER JOIN (
@@ -31,6 +32,9 @@ class UpdateCurrencyExchange(Document):
 			ON 
 				t1.from_currency = t2.from_currency 
 				AND t1.creation = t2.latest_date
+			INNER JOIN `tabCurrency` c
+			ON t1.from_currency = c.name
+			WHERE c.enabled = 1
 			""",
             as_dict=True,
         )
@@ -48,6 +52,7 @@ class UpdateCurrencyExchange(Document):
                     "from_currency": d.from_currency,
                     "purchase_exchange_rate": d.exchange_rate,
                     "selling_exchange_rate": d.custom_selling_exchange_rate,
+                    "last_update": d.last_update
                 },
             )
             

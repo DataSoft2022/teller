@@ -3,6 +3,16 @@
 
 frappe.ui.form.on("Close Shift For Branch", {
   setup(frm) {
+    // Hide fields initially
+    frm.toggle_display(['start_date', 'serial'], false);
+
+    // Set query for open_shift to only show active shifts that haven't been closed
+    frm.set_query("open_shift", function() {
+      return {
+        query: "teller.teller_customization.doctype.close_shift_for_branch.close_shift_for_branch.get_unclosed_shifts"
+      };
+    });
+
     frappe.call({
       method:
         "teller.teller_customization.doctype.close_shift_for_branch.close_shift_for_branch.get_active_shift",
@@ -11,19 +21,36 @@ frappe.ui.form.on("Close Shift For Branch", {
         frm.set_value("open_shift", r.message);
       },
     });
-
-  
   },
-  open_shift:(frm)=>{
-    frappe.call({
-      method:
-        "teller.teller_customization.doctype.close_shift_for_branch.close_shift_for_branch.active_active_user",
-        args:{"shift":frm.doc.open_shift},
-      callback: function (r) {
-        console.log(r.message);
-        frm.set_value("current_user", r.message["current_user"]);
-      },
-    });
+  open_shift: function(frm) {
+    if (frm.doc.open_shift) {
+      frappe.call({
+        method: "teller.teller_customization.doctype.close_shift_for_branch.close_shift_for_branch.get_shift_details",
+        args: {
+          "shift": frm.doc.open_shift
+        },
+        callback: function(r) {
+          if (r.message) {
+            // Show start_date field when open_shift is selected
+            frm.toggle_display('start_date', true);
+            
+            // Set the values from open shift
+            frm.set_value('start_date', r.message.start_date);
+            frm.set_value('shift_employee', r.message.current_user);
+            frm.set_value('branch', r.message.branch);
+            
+            // Trigger validation which will fetch invoices
+            frm.save();
+          }
+        }
+      });
+    } else {
+      // Hide and clear fields when open_shift is cleared
+      frm.toggle_display('start_date', false);
+      frm.set_value('start_date', '');
+      frm.set_value('shift_employee', '');
+      frm.set_value('branch', '');
+    }
   },
   serial: (frm) => {
     frappe.call({
@@ -34,63 +61,41 @@ frappe.ui.form.on("Close Shift For Branch", {
       },
     });
   },
-  get_all_invoices(frm){
-    if (!frm.doc.open_shift){
+  get_all_invoices(frm) {
+    if (!frm.doc.open_shift) {
       frappe.throw("Select Open Shift")
     }
-    frappe
-    .call({
-      method:
-        "teller.teller_customization.doctype.close_shift.close_shift.get_sales_invoice",
+    frappe.call({
+      method: "teller.teller_customization.doctype.close_shift.close_shift.get_sales_invoice",
       args: {
         current_open_shift: frm.doc.open_shift,
       },
-    })
-    .then((r) => {
+    }).then((r) => {
       let total = 0;
 
       if (r.message) {
         frm.clear_table("sales_invoice");
-        console.log(r.message);
-        let invocies = r.message;
-        console.log("S Invoice",invocies)
-        // sales_invoice;
-        invocies.forEach((invoice) => {
+        console.log("Sales Invoices:", r.message);
+        let invoices = r.message;
+        
+        invoices.forEach((invoice) => {
           frm.add_child("sales_invoice", {
-            reference: invoice["name"],
-            total: invoice["total"],
-            client: invoice["client"],
-            receipt_number: invoice["receipt_number"],
-            // exceed: invoice["exceed"],
+            invoice: invoice.name,
+            posting_date: invoice.posting_date,
+            client: invoice.client,
+            receipt_no: invoice.receipt_number,
+            movement_no: invoice.movement_number,
+            total: invoice.total,
+            total_amount: invoice.total_amount,
+            total_egy: invoice.total_egy
           });
-          total += invoice["total"];
+          total += flt(invoice.total);
         });
         frm.refresh_field("sales_invoice");
         frm.set_value("total_sales", total);
       } else {
-        frappe.msgprint("no invoices exists");
+        frappe.msgprint("No invoices exist");
       }
-
-      // invoices.forEach((invoice) => {
-      //   let exists = frm.doc.sales_invoice.some((d) => {
-      //     return d.reference === invoice.name;
-      //   });
-      //   if (!exists) {
-      //     frm.add_child("sales_invoice", {
-      //       reference: invoice.name,
-      //       total: invoice.total,
-      //       current_roll: invoice.current_roll,
-      //       date: invoice.date,
-      //       receipt_number: invoice.receipt_number,
-      //     });
-      //   }
-      //   total += invoice.total;
-      //   frm.refresh_field("sales_invoice");
-      // });
-      // frm.set_value("total_sales", total);
-      // }
-
-      //////////////////
     });
     let total = 0;
     // console.log("from purchase");
@@ -158,6 +163,12 @@ frappe.ui.form.on("Close Shift For Branch", {
       },
     });
   },
+  refresh: function(frm) {
+    // Add refresh handlers
+  },
+  validate: function(frm) {
+    // Additional validation if needed
+  }
 });
 
 // sql = """

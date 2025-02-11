@@ -8,14 +8,15 @@
  "engine": "InnoDB",
  "field_order": [
   "section_break_mowb",
+  "open_shift",
   "start_date",
   "serial",
-  "status",
   "column_break_cdxp",
   "end_date",
-  "current_user",
-  "open_shift",
-  "section_break_ganr",
+  "shift_employee",
+  "employee_name",
+  "branch",
+  "column_break_ganr",
   "get_all_invoices",
   "section_break_xmut",
   "purchase_close_table",
@@ -42,144 +43,172 @@
    "options": "Close Shift For Branch",
    "print_hide": 1,
    "read_only": 1,
-   "search_index": 1
+   "search_index": 1,
+   "in_list_view": 1
   },
   {
-   "collapsible": 1,
    "fieldname": "section_break_mowb",
    "fieldtype": "Section Break",
-   "label": "Shift Details"
+   "label": "Shift Details",
+   "in_list_view": 1
   },
   {
    "fieldname": "start_date",
    "fieldtype": "Datetime",
-   "label": "Start Date"
+   "label": "Start Date",
+   "read_only": 1,
+   "hidden": 1,
+   "in_list_view": 1
   },
   {
    "fieldname": "serial",
    "fieldtype": "Int",
    "label": "Serial",
-   "options": "default=1;increment=1"
-  },
-  {
-   "fieldname": "status",
-   "fieldtype": "Select",
-   "label": "Status",
-   "options": "Submit\nShift Closed\nSend To Server"
+   "read_only": 1,
+   "hidden": 1,
+   "in_list_view": 1
   },
   {
    "fieldname": "column_break_cdxp",
-   "fieldtype": "Column Break"
+   "fieldtype": "Column Break",
+   "in_list_view": 1
   },
   {
    "fieldname": "end_date",
    "fieldtype": "Datetime",
-   "label": "End Date "
+   "label": "End Date",
+   "reqd": 1,
+   "bold": 1,
+   "in_list_view": 1
   },
   {
-   "fieldname": "current_user",
+   "fieldname": "shift_employee",
    "fieldtype": "Link",
-   "label": "Shift User",
-   "options": "User"
+   "label": "Shift Employee",
+   "options": "Employee",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "label": "Employee Name",
+   "read_only": 1,
+   "fetch_from": "shift_employee.employee_name",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "branch",
+   "fieldtype": "Link",
+   "label": "Branch",
+   "options": "Branch",
+   "read_only": 1,
+   "reqd": 1,
+   "in_list_view": 1
   },
   {
    "fieldname": "open_shift",
    "fieldtype": "Link",
    "label": "Open Shift",
-   "options": "Open Shift for Branch"
+   "options": "Open Shift for Branch",
+   "in_list_view": 1
   },
   {
    "fieldname": "section_break_ganr",
-   "fieldtype": "Section Break"
+   "fieldtype": "Section Break",
+   "in_list_view": 1
   },
   {
    "fieldname": "get_all_invoices",
    "fieldtype": "Button",
-   "label": "Get All Invoices"
+   "label": "Get All Invoices",
+   "in_list_view": 1
   },
   {
-   "collapsible": 1,
    "fieldname": "section_break_xmut",
    "fieldtype": "Section Break",
-   "label": "Purchase Invoices"
+   "label": "Purchase Invoices",
+   "in_list_view": 1
   },
   {
    "fieldname": "purchase_close_table",
    "fieldtype": "Table",
    "label": "Purchase Close Table",
-   "options": "Purchase Close Table"
+   "options": "Purchase Close Table",
+   "in_list_view": 1
   },
   {
    "fieldname": "invoices_purchase_total_section",
    "fieldtype": "Section Break",
-   "label": "Purchase Invoices "
+   "label": "Purchase Invoices ",
+   "in_list_view": 1
   },
   {
    "fieldname": "column_break_vtfs",
-   "fieldtype": "Column Break"
+   "fieldtype": "Column Break",
+   "in_list_view": 1
   },
   {
    "fieldname": "column_break_pzqx",
-   "fieldtype": "Column Break"
+   "fieldtype": "Column Break",
+   "in_list_view": 1
   },
   {
    "fieldname": "total_purchase",
    "fieldtype": "Currency",
    "label": "Total Purchase",
-   "read_only": 1
+   "read_only": 1,
+   "in_list_view": 1
   },
   {
-   "collapsible": 1,
    "fieldname": "sales_invoices_section",
    "fieldtype": "Section Break",
-   "label": "Sales Invoices"
+   "label": "Sales Invoices",
+   "in_list_view": 1
   },
   {
    "fieldname": "sales_invoice",
    "fieldtype": "Table",
    "label": "Sales Invoice",
    "options": "Shift Sales Child",
-   "read_only": 1
+   "read_only": 1,
+   "in_list_view": 1
   },
   {
    "fieldname": "invoices_sales_total_section",
    "fieldtype": "Section Break",
-   "label": "Invoices Sales Total"
+   "label": "Invoices Sales Total",
+   "in_list_view": 1
   },
   {
    "fieldname": "column_break_lsit",
-   "fieldtype": "Column Break"
+   "fieldtype": "Column Break",
+   "in_list_view": 1
   },
   {
    "fieldname": "column_break_ibdu",
-   "fieldtype": "Column Break"
+   "fieldtype": "Column Break",
+   "in_list_view": 1
   },
   {
    "fieldname": "total_sales",
    "fieldtype": "Data",
    "label": "Total Sales",
-   "read_only": 1
+   "read_only": 1,
+   "in_list_view": 1
   },
   {
    "fieldname": "currency_summay_total_section",
    "fieldtype": "Section Break",
-   "label": "Currency Summay Total"
+   "label": "Currency Summay Total",
+   "in_list_view": 1
   },
   {
    "fieldname": "currency_summary",
    "fieldtype": "Table",
    "label": "Currency Summary",
-   "options": "Currency Summary"
-  },
-  {
-   "fieldname": "amended_from",
-   "fieldtype": "Link",
-   "label": "Amended From",
-   "no_copy": 1,
-   "options": "Close Shift For Branch",
-   "print_hide": 1,
-   "read_only": 1,
-   "search_index": 1
+   "options": "Currency Summary",
+   "in_list_view": 1
   }
  ],
  "index_web_pages_for_search": 1,
@@ -208,5 +237,6 @@
  ],
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "track_changes": 1
 }

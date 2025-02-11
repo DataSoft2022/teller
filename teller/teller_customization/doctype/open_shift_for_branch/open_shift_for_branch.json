@@ -9,13 +9,16 @@
  "field_order": [
   "section_break_otww",
   "start_date",
+  "printing_roll",
   "end_date",
   "serial",
   "column_break_wnku",
-  "current_user",
   "shift_status",
   "amended_from",
-  "branch"
+  "teller_treasury",
+  "current_user",
+  "employee_name",
+  "create_close_shift"
  ],
  "fields": [
   {
@@ -39,10 +42,19 @@
    "reqd": 1
   },
   {
+   "fieldname": "printing_roll",
+   "fieldtype": "Link",
+   "label": "Printing Roll",
+   "options": "Printing Roll",
+   "reqd": 1,
+   "description": "Select the active printing roll for receipt numbers"
+  },
+  {
    "fieldname": "end_date",
    "fieldtype": "Datetime",
    "label": "End Date",
-   "reqd": 1
+   "read_only": 1,
+   "hidden": 1
   },
   {
    "fieldname": "column_break_wnku",
@@ -51,30 +63,33 @@
   {
    "fieldname": "serial",
    "fieldtype": "Data",
-   "label": "Serial"
+   "label": "Serial",
+   "read_only": 1,
+   "hidden": 1
   },
   {
    "fieldname": "current_user",
    "fieldtype": "Link",
-   "label": "Current User",
-   "options": "User",
-   "reqd": 1
+   "label": "Current Employee",
+   "options": "Employee",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "read_only_on_submit": 1
   },
   {
-   "fieldname": "amended_from",
-   "fieldtype": "Link",
-   "label": "Amended From",
-   "no_copy": 1,
-   "options": "Open Shift for Branch",
-   "print_hide": 1,
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "label": "Employee Name",
+   "fetch_from": "current_user.employee_name",
    "read_only": 1,
-   "search_index": 1
+   "in_list_view": 1
   },
   {
-   "fieldname": "branch",
+   "fieldname": "teller_treasury",
    "fieldtype": "Link",
-   "label": "Branch",
-   "options": "Branch",
+   "label": "Teller Treasury",
+   "options": "Teller Treasury",
    "reqd": 1
   },
   {
@@ -87,7 +102,16 @@
    "in_standard_filter": 1,
    "label": "Shift Status",
    "options": "\nActive\nClosed",
-   "translatable": 1
+   "translatable": 1,
+   "read_only": 1,
+   "default": "Active"
+  },
+  {
+   "fieldname": "create_close_shift",
+   "fieldtype": "Button",
+   "label": "Create Close Shift",
+   "hidden": 0,
+   "depends_on": "eval:doc.shift_status=='Active' && doc.docstatus==1"
   }
  ],
  "index_web_pages_for_search": 1,
@@ -101,17 +125,24 @@
  "owner": "Administrator",
  "permissions": [
   {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
    "create": 1,
    "delete": 1,
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "System Manager",
-   "share": 1,
    "submit": 1,
-   "write": 1
+   "cancel": 1,
+   "amend": 1
+  },
+  {
+   "role": "Teller",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "submit": 1,
+   "cancel": 1,
+   "report": 1,
+   "select": 1
   }
  ],
  "sort_field": "modified",

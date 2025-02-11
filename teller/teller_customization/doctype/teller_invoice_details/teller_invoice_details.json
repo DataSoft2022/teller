@@ -7,90 +7,109 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "code",
+  "account_section",
   "currency_code",
-  "paid_from",
+  "account",
   "currency",
-  "usd_amount",
-  "rate",
-  "received_amount",
-  "total_amount",
-  "balance",
-  "booking_interbank"
+  "column_break_1",
+  "balance_after",
+  "transaction_section",
+  "quantity",
+  "exchange_rate",
+  "column_break_2",
+  "amount",
+  "egy_amount"
  ],
  "fields": [
   {
-   "fieldname": "code",
-   "fieldtype": "Data",
-   "label": "Code"
+   "fieldname": "account_section",
+   "fieldtype": "Section Break",
+   "label": "Account Details"
   },
   {
    "fieldname": "currency_code",
    "fieldtype": "Data",
-   "label": "Currency ",
-   "options": "Currency"
+   "label": "Currency Code",
+   "in_list_view": 1,
+   "bold": 1,
+   "reqd": 1,
+   "description": "Enter the currency code to fetch account and exchange rate"
   },
   {
-   "allow_in_quick_entry": 1,
-   "fieldname": "paid_from",
+   "fieldname": "account",
    "fieldtype": "Link",
    "in_list_view": 1,
-   "in_preview": 1,
-   "in_standard_filter": 1,
-   "label": "Teller",
+   "label": "Account",
    "options": "Account",
-   "reqd": 1
+   "reqd": 1,
+   "bold": 1,
+   "read_only": 1
   },
   {
    "fieldname": "currency",
    "fieldtype": "Link",
-   "hidden": 1,
    "label": "Currency",
    "options": "Currency",
-   "read_only": 1
+   "read_only": 1,
+   "description": "Currency based on currency code"
   },
   {
-   "fieldname": "usd_amount",
-   "fieldtype": "Float",
-   "in_list_view": 1,
-   "label": "QTY",
-   "reqd": 1
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
   },
   {
-   "fieldname": "rate",
-   "fieldtype": "Float",
-   "in_list_view": 1,
-   "label": "Rate"
-  },
-  {
-   "fieldname": "received_amount",
+   "fieldname": "balance_after",
    "fieldtype": "Currency",
-   "hidden": 1,
-   "in_list_view": 1,
-   "label": "Received Amount",
-   "read_only": 1
+   "label": "Balance After Transaction",
+   "options": "currency",
+   "read_only": 1,
+   "bold": 1
   },
   {
-   "fieldname": "total_amount",
+   "fieldname": "transaction_section",
+   "fieldtype": "Section Break",
+   "label": "Transaction Details"
+  },
+  {
+   "fieldname": "quantity",
    "fieldtype": "Float",
    "in_list_view": 1,
-   "label": "Total Amount",
-   "read_only": 1
+   "label": "Quantity",
+   "precision": "2",
+   "reqd": 1,
+   "bold": 1
   },
   {
-   "fieldname": "balance",
-   "fieldtype": "Data",
+   "fieldname": "exchange_rate",
+   "fieldtype": "Float",
    "in_list_view": 1,
-   "label": "Balance"
+   "label": "Exchange Rate",
+   "precision": "4",
+   "reqd": 1,
+   "bold": 1,
+   "read_only": 1,
+   "description": "Exchange rate fetched based on currency code"
   },
   {
-   "fieldname": "booking_interbank",
-   "fieldtype": "Link",
+   "fieldname": "column_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "label": "Amount",
+   "options": "currency",
+   "read_only": 1,
+   "bold": 1
+  },
+  {
+   "fieldname": "egy_amount",
+   "fieldtype": "Currency",
    "in_list_view": 1,
-   "in_preview": 1,
-   "in_standard_filter": 1,
-   "label": "Booking Interbank",
-   "options": "Booking Interbank"
+   "label": "EGY Amount",
+   "options": "Company:company:default_currency",
+   "read_only": 1,
+   "bold": 1
   }
  ],
  "index_web_pages_for_search": 1,

@@ -519,3 +519,79 @@ def make_purchase_return2(source_name, target_doc=None):
 	from erpnext.controllers.sales_and_purchase_return import make_return_doc
 
 	return make_return_doc("Teller Purchase", source_name, target_doc)
+
+def get_permission_query_conditions(user=None):
+    """Return SQL conditions with user permissions."""
+    try:
+        if not user:
+            user = frappe.session.user
+            
+        if "System Manager" in frappe.get_roles(user):
+            return ""
+            
+        # Get the employee linked to the current user
+        employee = frappe.db.get_value('Employee', {'user_id': user}, 'name')
+        if not employee:
+            return "1=0"
+            
+        # Get active shift for the employee
+        active_shift = frappe.db.get_value(
+            "Open Shift for Branch",
+            {
+                "current_user": employee,
+                "shift_status": "Active",
+                "docstatus": 1
+            },
+            ["name", "teller_treasury"],
+            as_dict=1
+        )
+        
+        if not active_shift:
+            return "1=0"
+            
+        # Return condition to filter by treasury_code
+        return f"`tabTeller Purchase`.treasury_code = '{active_shift.get('teller_treasury')}'"
+        
+    except Exception as e:
+        frappe.log_error(f"Error in permission query: {str(e)}\n{frappe.get_traceback()}")
+        return "1=0"  # Deny access on error
+
+def has_permission(doc, ptype="read", user=None):
+    """Permission handler for Teller Purchase"""
+    try:
+        if not user:
+            user = frappe.session.user
+            
+        if "System Manager" in frappe.get_roles(user):
+            return True
+            
+        # For new documents
+        if not doc or doc.is_new():
+            return True
+            
+        # Get the employee linked to the current user
+        employee = frappe.db.get_value('Employee', {'user_id': user}, 'name')
+        if not employee:
+            return False
+            
+        # Get active shift
+        active_shift = frappe.db.get_value(
+            "Open Shift for Branch",
+            {
+                "current_user": employee,
+                "shift_status": "Active",
+                "docstatus": 1
+            },
+            ["name", "teller_treasury"],
+            as_dict=1
+        )
+        
+        if not active_shift:
+            return False
+            
+        # Allow access if treasury matches
+        return doc.treasury_code == active_shift.get('teller_treasury')
+        
+    except Exception as e:
+        frappe.log_error(f"Error checking permissions: {str(e)}\n{frappe.get_traceback()}")
+        return False

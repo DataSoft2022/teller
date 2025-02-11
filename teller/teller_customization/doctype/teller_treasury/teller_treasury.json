@@ -1,50 +1,48 @@
 {
  "actions": [],
- "autoname": "naming_series:naming_series",
+ "allow_rename": 1,
+ "autoname": "format:{branch}-{teller_name}-{####}",
  "creation": "2025-02-02 15:20:48.960182",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "treasury_code",
+  "teller_name",
   "branch",
-  "naming_series",
-  "column_break_xzmf",
-  "treasury_currency",
-  "account"
+  "teller_number",
+  "teller_type"
  ],
  "fields": [
   {
-   "fieldname": "treasury_code",
+   "fieldname": "teller_name",
    "fieldtype": "Data",
-   "label": "Treasury Code"
+   "label": "Teller Name",
+   "unique": 1,
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
   },
   {
    "fieldname": "branch",
    "fieldtype": "Link",
    "label": "Branch",
-   "options": "Branch"
+   "options": "Branch",
+   "reqd": 1,
+   "in_list_view": 1
   },
   {
-   "fieldname": "naming_series",
+   "fieldname": "teller_number",
    "fieldtype": "Data",
-   "label": "naming series",
-   "unique": 1
+   "label": "Teller Number",
+   "reqd": 1,
+   "in_list_view": 1
   },
   {
-   "fieldname": "column_break_xzmf",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "treasury_currency",
-   "fieldtype": "Link",
-   "label": "Treasury Currency",
-   "options": "Currency"
-  },
-  {
-   "fieldname": "account",
-   "fieldtype": "Link",
-   "label": "Account",
-   "options": "Account"
+   "fieldname": "teller_type",
+   "fieldtype": "Select",
+   "label": "Teller Type",
+   "options": "\nManager\nTeller",
+   "reqd": 1,
+   "in_list_view": 1
   }
  ],
  "index_web_pages_for_search": 1,
@@ -53,7 +51,6 @@
  "modified_by": "Administrator",
  "module": "Teller Customization",
  "name": "Teller Treasury",
- "naming_rule": "By \"Naming Series\" field",
  "owner": "Administrator",
  "permissions": [
   {
@@ -71,5 +68,5 @@
  ],
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "track_changes": 1
 }

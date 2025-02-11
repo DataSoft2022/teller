@@ -2,16 +2,12 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on("Teller Invoice", {
-  // setup basic inforamation
   client_type(frm) {
     if (frm.doc.client_type === "Interbank") {
-      // frappe.msgprint(`mmmmmmmmmmm`);
-      // frm.set_value("company_name", "");
       frappe.call({
         method: "frappe.client.get",
         args: {
           doctype: "Customer",
-          // name: "Bank al-ahly", 
           name: "البنك الاهلي",
         },
         callback: function (response) {
@@ -38,209 +34,16 @@ frappe.ui.form.on("Teller Invoice", {
     }
   },
 
-  // setup: function (frm) {
-  //   // filters accounts with cash ,is group False and account currency not EGY
-
-  //   frm.fields_dict["teller_invoice_details"].grid.get_field("paid_from").get_query =
-  //     function () {
-  //       var account_types = ["Cash"];
-  //       return {
-  //         filters: {
-  //           account_type: ["in", account_types],
-  //           account_currency: ["!=", "EGP"],
-  //           is_group: 0,
-  //         },
-  //       };
-  //     };
-
-  //   // get query for codes the belongs to currenct user
-  //   frm.fields_dict["teller_invoice_details"].grid.get_field("currency_code").get_query =
-  //     function () {
-  //       let currentUser = frappe.session.logged_in_user;
-  //       return {
-  //         filters: {
-  //           user: currentUser,
-  //         },
-  //       };
-  //     };
-  // },
-
-  // add commissar to company
-
-  // add_commissar: function (frm) {
-  //   // frappe.route_options = { customer: frm.doc.client };
-
-  //   // frappe.set_route("Form", "Customer", frm.doc.client);
-
-  //   if (!frm.doc.client) {
-  //     frappe.msgprint(__("Please select Company first."));
-  //     return;
-  //   }
-
-  //   // create contact for this client of type company
-  //   frappe.model.with_doctype("Contact", function () {
-  //     var doc = frappe.model.get_new_doc("Contact");
-  //     doc.links = [
-  //       {
-  //         link_doctype: "Customer",
-  //         link_name: frm.doc.client,
-  //       },
-  //     ];
-
-  //     var d = new frappe.ui.Dialog({
-  //       title: __("Create a new contact"),
-  //       fields: [
-  //         {
-  //           fieldtype: "Data",
-  //           fieldname: "first_name",
-  //           label: __("Commissar Name"),
-  //           reqd: 1,
-  //         },
-  //         // { fieldtype: "Data", fieldname: "last_name", label: __("Last Name") },
-  //         {
-  //           fieldtype: "Data",
-  //           fieldname: "custom_com_address",
-  //           label: __("Address"),
-  //         },
-  //         {
-  //           fieldtype: "Data",
-  //           fieldname: "custom_com_phone",
-  //           label: __("Phone"),
-  //         },
-  //         {
-  //           fieldtype: "Data",
-  //           fieldname: "custom_national_id",
-  //           label: __("National ID"),
-  //           reqd: 1,
-  //         },
-  //       ],
-  //       primary_action: function () {
-  //         d.hide();
-  //         $.extend(doc, d.get_values());
-  //         frappe.call({
-  //           method: "frappe.client.insert",
-  //           args: {
-  //             doc: doc,
-  //           },
-  //           callback: function (r) {
-  //             if (r.message) {
-  //               // update_contact_list(frm);
-  //               frappe.show_alert({
-  //                 message: __("Contact added successfully"),
-  //                 indicator: "green",
-  //               });
-  //             }
-  //           },
-  //         });
-  //       },
-  //       primary_action_label: __("Create"),
-  //     });
-  //     d.show();
-  //   });
-  // },
-
   refresh(frm) {
-    // set the focus on the fetch_national_id field when the doctype is refreshed
-
+    // Set focus on client field
     setTimeout(function () {
-      frm.get_field("fetch_national_id").$input.focus();
+      frm.get_field("client").$input.focus();
     }, 100);
-    frappe.ui.keys.on("alt+s", function (e) {
-      console.log("alt + s was pressed");
 
-      e.preventDefault();
-
-      // if (frm.doc.docstatus === 0) {
-      //   frm
-      //     .save()
-      //     .then(() => {
-      //       console.log("Form saved");
-      //       return frm.savesubmit();
-      //     })
-      //     .then(() => {
-      //       console.log("Form submitted");
-      //       frm.print_doc();
-      //       console.log("Form printed");
-      //     })
-      //     .catch((error) => console.error("Error:", error));
-      // }
-
-      if (frm.doc.docstatus === 0) {
-        frm
-          .save()
-          .then(() => {
-            console.log("Form saved");
-
-            // Manually submit the form without showing confirmation
-            frappe.call({
-              method: "frappe.client.submit",
-              args: {
-                doc: frm.doc,
-              },
-              callback: function (response) {
-                if (!response.exc) {
-                  console.log("Form submitted");
-                  frm.print_doc();
-                  console.log("Form printed");
-                } else {
-                  console.error("Error submitting:", response.exc);
-                }
-              },
-            });
-          })
-          .catch((error) => console.error("Error:", error));
-      }
-
-      ///////////////////
-    });
-
-    // handle add contact
-    // if (frm.doc.client) {
-    //   // update contact list
-    //   update_contact_list(frm);
-    // } else {
-    //   frm.fields_dict["contact_list"].$wrapper.html(""); // clear the HTML
-
-    //   frm.set_value("contact_list", "");
-    // }
-
-    //test get total amount of client
-    // var customer_amount = frm
-    //   .call({
-    //     method: "customer_total_amount",
-    //     doc: frm.doc,
-    //   })
-    //   .then((r) => {
-    //     if (r.message) {
-    //       // console.log(r.message);
-
-    //       return r.message;
-    //     }
-    //   });
-
-    // console.log(customer_amount, "customer_amount from day2");
-
-    //////////////////
-    // get last submitted Teller  invoice
-    // frappe
-    //   .call({
-    //     method: "frappe.client.get_list",
-    //     args: {
-    //       doctype: "Teller Invoice",
-    //       fields: ["name", "receipt_number"],
-    //       limit: 1,
-    //       order_by: "creation desc",
-    //       filters: {
-    //         docstatus: 1,
-    //       },
-    //     },
-    //   })
-    //   .then((r) => {
-    //     if (r.message) {
-    //       let last_invoice = r.message[0].name;
-    //       console.log("last invoice is", last_invoice);
-    //     }
-    //   });
+    // Make invoice info section collapsible and expanded by default
+    frm.toggle_display('section_break_ugcr', true);
+    frm.set_df_property('section_break_ugcr', 'collapsible', 1);
+    frm.set_df_property('section_break_ugcr', 'collapsed', 0);
 
     // filter clients based on client type
     frm.set_query("client", function (doc) {
@@ -287,6 +90,15 @@ frappe.ui.form.on("Teller Invoice", {
         },
       };
     });
+
+    // Make invoice info section always expandable
+    frm.toggle_display('invoice_info_section', true);
+    frm.set_df_property('invoice_info_section', 'collapsible', 1);
+
+    // Show treasury code for saved or submitted documents
+    if (frm.doc.docstatus || !frm.doc.__islocal) {
+      frm.toggle_display('treasury_code', true);
+    }
   },
   custom_special_price_2(frm) {
     var d = new frappe.ui.Dialog({
@@ -366,121 +178,8 @@ frappe.ui.form.on("Teller Invoice", {
   // },
   // fetch national id or commerical no
 
-  fetch_national_id(frm) {
-    if (frm.doc.fetch_national_id) {
-      if (
-        frm.doc.client_type == "Egyptian" &&
-        frm.doc.card_type == "National ID"
-      ) {
-        // validateNationalId(frm, frm.doc.fetch_national_id);
-        let nationalId = frm.doc.fetch_national_id;
-
-        frappe.call({
-          method:
-            "teller.teller_customization.doctype.teller_invoice.teller_invoice.check_client_exists",
-          args: {
-            doctype_name: nationalId,
-          },
-          callback: function (r) {
-            if (r.message) {
-              console.log(r.message, "exists");
-              frm.set_value("client", nationalId).then(() => {
-                frm.refresh_field("client");
-              });
-            } else {
-              frm.set_value("client", "").then(() => {
-                frm.refresh_field("client");
-                if (validateNationalId(frm, nationalId)) {
-                  frm.set_value("national_id", nationalId);
-                } else {
-                  frm.set_value("national_id", "");
-                }
-              });
-
-              //
-            }
-          },
-        });
-      } else if (frm.doc.client_type == "Company") {
-        // validateNationalId(frm, frm.doc.fetch_national_id);
-        let commiricalNo = frm.doc.fetch_national_id;
-
-        frappe.call({
-          method:
-            "teller.teller_customization.doctype.teller_invoice.teller_invoice.check_client_exists",
-          args: {
-            doctype_name: commiricalNo,
-          },
-          callback: function (r) {
-            if (r.message) {
-              console.log(r.message, "exists");
-              frm.set_value("client", commiricalNo).then(() => {
-                frm.refresh_field("client");
-              });
-            } else {
-              frm.set_value("client", "").then(() => {
-                frm.set_value("company_commercial_no", commiricalNo);
-              });
-            }
-          },
-        });
-      }
-      // fetch or create client with passport number
-      else if (
-        (frm.doc.client_type == "Egyptian" ||
-          frm.doc.client_type == "Foreigner") &&
-        frm.doc.card_type == "Passport"
-      ) {
-        // frappe.msgprint("from passport");
-        let passportNumber = frm.doc.fetch_national_id;
-
-        frappe.call({
-          method:
-            "teller.teller_customization.doctype.teller_invoice.teller_invoice.check_client_exists",
-          args: {
-            doctype_name: passportNumber,
-          },
-          callback: function (r) {
-            if (r.message) {
-              console.log(r.message, "exists");
-              frm.set_value("client", passportNumber).then(() => {
-                frm.refresh_field("client");
-              });
-            } else {
-              frm.set_value("client", "").then(() => {
-                frm.refresh_field("client");
-                if (validateNationalId(frm, passportNumber)) {
-                  frm.set_value("passport_number", passportNumber);
-                } else {
-                  frm.set_value("passport_number", "");
-                }
-              });
-
-              //
-            }
-          },
-        });
-      }
-    } else {
-      frm.set_value("client", "");
-      frm.set_value("national_id", "");
-    }
-  },
-
   // Get customer information if exists
   client: function (frm) {
-    // start test add contact information
-    // if (frm.doc.client) {
-    //   update_contact_list(frm);
-    // } else {
-    //   frm.fields_dict["contact_list"].$wrapper.html(""); // clear the HTML
-
-    //   frm.set_value("contact_list", "");
-    // }
-
-    // let testAllowed = await fetchAllowedAmount();
-    // console.log("Test allowed amount", testAllowed);
-
     // get the information for Egyptian
     if (
       frm.doc.client_type == "Egyptian" ||
@@ -1252,39 +951,48 @@ frappe.ui.form.on("Teller Invoice Details", {
   // },
 });
 function set_branch_and_shift(frm) {
-  frappe.call({
-    method: "frappe.client.get",
-    args: {
-      doctype: "Branch",
-      filters: {
-        custom_active: 1,
-      },
-    },
-    callback: function (r) {
-      if (!r.exc) {
-        let branch = r.message.name;
-        frm.set_value("branch_no", branch);
+  // Only fetch and set treasury details for new documents
+  if (frm.is_new()) {
+    frappe.call({
+      method: "teller.teller_customization.doctype.teller_invoice.teller_invoice.get_employee_shift_details",
+      callback: function(r) {
+        if (r.message) {
+          let shift_details = r.message;
+          
+          // Set shift and teller info
+          frm.set_value("shift", shift_details.shift);
+          frm.set_value("teller", shift_details.teller);
+          frm.set_value("treasury_code", shift_details.treasury_code);
+          frm.set_value("branch_name", shift_details.branch_name);
+          frm.set_value("branch_no", shift_details.branch);
+          
+          // Show the treasury code field since we have shift details
+          frm.toggle_display('treasury_code', true);
+          
+          // Refresh the fields
+          frm.refresh_fields([
+            "shift",
+            "teller",
+            "treasury_code",
+            "branch_name",
+            "branch_no"
+          ]);
+        } else {
+          frappe.msgprint({
+            title: __('Warning'),
+            indicator: 'red',
+            message: __('No active shift found for current user. Please open a shift first.')
+          });
+          
+          // Hide treasury code if no shift details
+          frm.toggle_display('treasury_code', false);
+          
+          // Optionally disable form
+          frm.disable_save();
+        }
       }
-    },
-  });
-  // Set the the active open shift and current user
-  frappe.call({
-    method: "frappe.client.get_value",
-    args: {
-      doctype: "Open Shift for Branch",
-      filters: { shift_status: "Active" },
-      fieldname: ["name", "current_user"],
-    },
-    callback: function (r) {
-      if (!r.exc) {
-        let shift = r.message.name;
-        let current_user = r.message.current_user;
-
-        frm.set_value("shift", shift);
-        frm.set_value("teller", current_user);
-      }
-    },
-  });
+    });
+  }
 }
 
 //  add contact list to company
@@ -1803,7 +1511,7 @@ if (row.code) {
 
                       if (accountResponse.message && accountResponse.message.length > 0) {
                           let matchingAccount = accountResponse.message; // Use the first match
-                          // console.log("Matching Account Found:", matchingAccount);
+                          console.log("Matching Account Found:", matchingAccount);
                           for (let cur of matchingAccount){
                             if (cur.custom_currency_code === row.code){
                               // console.log("ssss",cur.name)
@@ -1976,3 +1684,123 @@ if (frm.doc.client_type == "Egyptian"){
   }
   }
 })
+
+frappe.ui.form.on('Teller Invoice Details', {
+    currency_code: function(frm, cdt, cdn) {
+        let row = locals[cdt][cdn];
+        console.log("Currency code changed:", row.currency_code);
+        
+        if (row.currency_code) {
+            // Get account and currency based on currency code
+            frappe.call({
+                method: 'frappe.client.get_list',
+                args: {
+                    doctype: 'Account',
+                    filters: {
+                        'custom_currency_code': row.currency_code,
+                        'account_type': ['in', ['Bank', 'Cash']]
+                    },
+                    fields: ['name', 'account_currency'],
+                    limit: 1
+                },
+                callback: function(account_response) {
+                    console.log("Account response:", account_response);
+                    if (account_response.message && account_response.message.length > 0) {
+                        let account = account_response.message[0];
+                        
+                        // Set the account
+                        frappe.model.set_value(cdt, cdn, 'account', account.name);
+                        
+                        // Set the currency
+                        frappe.model.set_value(cdt, cdn, 'currency', account.account_currency);
+                        
+                        // Get exchange rate
+                        frappe.call({
+                            method: 'frappe.client.get_list',
+                            args: {
+                                doctype: 'Currency Exchange',
+                                filters: {
+                                    'from_currency': account.account_currency
+                                },
+                                fields: ['custom_selling_exchange_rate'],
+                                order_by: 'creation desc',
+                                limit: 1
+                            },
+                            callback: function(rate_response) {
+                                console.log("Rate response:", rate_response);
+                                if (rate_response.message && rate_response.message.length > 0) {
+                                    frappe.model.set_value(cdt, cdn, 'exchange_rate', 
+                                        rate_response.message[0].custom_selling_exchange_rate);
+                                }
+                            }
+                        });
+                    }
+                }
+            });
+        }
+    },
+
+    account: function(frm, cdt, cdn) {
+        let row = locals[cdt][cdn];
+        if (row.account) {
+            // Get currency and currency code from account
+            frappe.call({
+                method: 'frappe.client.get',
+                args: {
+                    doctype: 'Account',
+                    name: row.account
+                },
+                callback: function(response) {
+                    if (response.message) {
+                        let account = response.message;
+                        
+                        // Set currency code and currency
+                        frappe.model.set_value(cdt, cdn, 'currency_code', account.custom_currency_code);
+                        frappe.model.set_value(cdt, cdn, 'currency', account.account_currency);
+                        
+                        // Get exchange rate
+                        frappe.call({
+                            method: 'frappe.client.get_list',
+                            args: {
+                                doctype: 'Currency Exchange',
+                                filters: {
+                                    'from_currency': account.account_currency
+                                },
+                                fields: ['custom_selling_exchange_rate'],
+                                order_by: 'creation desc',
+                                limit: 1
+                            },
+                            callback: function(rate_response) {
+                                if (rate_response.message && rate_response.message.length > 0) {
+                                    frappe.model.set_value(cdt, cdn, 'exchange_rate', 
+                                        rate_response.message[0].custom_selling_exchange_rate);
+                                }
+                            }
+                        });
+                    }
+                }
+            });
+        }
+    },
+
+    quantity: function(frm, cdt, cdn) {
+        calculate_amounts(frm, cdt, cdn);
+    },
+
+    exchange_rate: function(frm, cdt, cdn) {
+        calculate_amounts(frm, cdt, cdn);
+    }
+});
+
+function calculate_amounts(frm, cdt, cdn) {
+    let row = locals[cdt][cdn];
+    if (row.quantity && row.exchange_rate) {
+        // Calculate amount in original currency
+        let amount = flt(row.quantity);
+        frappe.model.set_value(cdt, cdn, 'amount', amount);
+        
+        // Calculate amount in EGY
+        let egy_amount = flt(amount * row.exchange_rate);
+        frappe.model.set_value(cdt, cdn, 'egy_amount', egy_amount);
+    }
+}
