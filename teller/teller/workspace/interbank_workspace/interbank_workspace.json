@@ -168,6 +168,7 @@
    "link_to": "Currency Exchange Screen",
    "link_type": "Report",
    "onboard": 0,
+   "report_ref_doctype": "Currency Exchange",
    "type": "Link"
   },
   {
@@ -178,6 +179,7 @@
    "link_to": "branches balance",
    "link_type": "Report",
    "onboard": 0,
+   "report_ref_doctype": "GL Entry",
    "type": "Link"
   },
   {
@@ -188,6 +190,7 @@
    "link_to": "branches total currancy",
    "link_type": "Report",
    "onboard": 0,
+   "report_ref_doctype": "GL Entry",
    "type": "Link"
   },
   {
@@ -198,6 +201,7 @@
    "link_to": "Head branch Currency",
    "link_type": "Report",
    "onboard": 0,
+   "report_ref_doctype": "Account",
    "type": "Link"
   },
   {
@@ -388,8 +392,8 @@
    "type": "Link"
   }
  ],
- "modified": "2025-02-02 16:54:55.685767",
- "modified_by": "Administrator",
+ "modified": "2025-02-09 14:56:12.294319",
+ "modified_by": "andrew@datasofteg.com",
  "module": "Teller",
  "name": "Interbank Workspace",
  "number_cards": [],
@@ -405,7 +409,7 @@
    "role": "Interbank HQ"
   }
  ],
- "sequence_id": 9.0,
+ "sequence_id": 12.0,
  "shortcuts": [
   {
    "color": "Red",
