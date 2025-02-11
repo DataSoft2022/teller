@@ -142,6 +142,51 @@ def has_permission(doc, ptype="read", user=None):
         return False
 
 
+def get_permission_query_conditions_for_account(user=None):
+    """Return SQL conditions with user permissions for Account."""
+    if not user:
+        user = frappe.session.user
+        
+    if frappe.session.user == "Administrator" or "System Manager" in frappe.get_roles(user):
+        return ""
+        
+    # Get the EGY account assigned to the user
+    egy_account = frappe.db.get_value("User", user, "egy_account")
+    
+    # Get accounts from currency codes assigned to user
+    currency_accounts = frappe.db.sql("""
+        SELECT account FROM `tabCurrency Code`
+        WHERE user = %s
+    """, user, as_dict=1)
+    
+    account_list = [egy_account] if egy_account else []
+    account_list.extend([d.account for d in currency_accounts if d.account])
+    
+    if not account_list:
+        return "1=0"
+        
+    return f"""(`tabAccount`.name in ({','.join(['%s']*len(account_list))}))""" % tuple(account_list)
+
+def has_permission_for_account(doc, ptype, user):
+    """Permission handler for Account doctype"""
+    if not user:
+        user = frappe.session.user
+        
+    if user == "Administrator" or "System Manager" in frappe.get_roles(user):
+        return True
+        
+    # Check if account is user's EGY account
+    egy_account = frappe.db.get_value("User", user, "egy_account")
+    if egy_account and doc.name == egy_account:
+        return True
+        
+    # Check if account is in user's currency codes
+    return frappe.db.exists("Currency Code", {
+        "user": user,
+        "account": doc.name
+    })
+
+
 class TellerInvoice(Document):
     def before_insert(self):
         """Set initial values before insert"""
@@ -213,16 +258,34 @@ class TellerInvoice(Document):
     def validate(self):
         """Validate document"""
         try:
+            # First validate user permissions for accounts
+            if not self.has_account_permissions():
+                frappe.throw(_("You don't have permission to access one or more accounts in this document"))
+                
             # Log start with key info
             frappe.log_error(
                 message=f"Starting validate for invoice with treasury={self.treasury_code}",
                 title="Teller Invoice Validate"
             )
             
-            # Basic validations
+            # Customer validation
             if not self.client:
-                frappe.throw(_("Client is required"))
+                frappe.throw(_("Customer is required"))
+                
+            # Validate customer exists and is active
+            customer = frappe.db.get_value("Customer", self.client, 
+                ["disabled", "custom_is_exceed"], as_dict=1)
+                
+            if not customer:
+                frappe.throw(_("Selected customer {0} does not exist").format(self.client))
+                
+            if customer.disabled:
+                frappe.throw(_("Selected customer {0} is disabled").format(self.client))
+                
+            if customer.custom_is_exceed and not self.exceed:
+                frappe.throw(_("Customer {0} has exceeded their limit. Please check the 'Exceed' checkbox to proceed.").format(self.client))
             
+            # Basic validations
             if not self.treasury_code:
                 frappe.throw(_("Treasury code is required"))
             
@@ -770,6 +833,31 @@ class TellerInvoice(Document):
                 title="GL Entry Creation Error"
             )
             frappe.throw(_("Error creating GL entries: {0}").format(str(e)))
+
+    def has_account_permissions(self):
+        """Check if user has permissions for all accounts in the document"""
+        user = frappe.session.user
+        
+        if user == "Administrator" or "System Manager" in frappe.get_roles(user):
+            return True
+            
+        # Check EGY account permission
+        if self.egy:
+            egy_account = frappe.db.get_value("User", user, "egy_account")
+            if not egy_account or egy_account != self.egy:
+                return False
+                
+        # Check currency account permissions
+        for row in self.get("teller_invoice_details", []):
+            if row.account:
+                has_permission = frappe.db.exists("Currency Code", {
+                    "user": user,
+                    "account": row.account
+                })
+                if not has_permission:
+                    return False
+                    
+        return True
 
 
 # get currency and exchange rate associated with each account
