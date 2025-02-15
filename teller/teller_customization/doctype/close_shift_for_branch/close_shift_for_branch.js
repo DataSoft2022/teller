@@ -63,104 +63,83 @@ frappe.ui.form.on("Close Shift For Branch", {
   },
   get_all_invoices(frm) {
     if (!frm.doc.open_shift) {
-      frappe.throw("Select Open Shift")
+      frappe.throw(__("Please select an Open Shift first"));
+      return;
     }
-    frappe.call({
-      method: "teller.teller_customization.doctype.close_shift.close_shift.get_sales_invoice",
-      args: {
-        current_open_shift: frm.doc.open_shift,
-      },
-    }).then((r) => {
-      let total = 0;
 
-      if (r.message) {
-        frm.clear_table("sales_invoice");
-        console.log("Sales Invoices:", r.message);
-        let invoices = r.message;
-        
-        invoices.forEach((invoice) => {
-          frm.add_child("sales_invoice", {
-            invoice: invoice.name,
-            posting_date: invoice.posting_date,
-            client: invoice.client,
-            receipt_no: invoice.receipt_number,
-            movement_no: invoice.movement_number,
-            total: invoice.total,
-            total_amount: invoice.total_amount,
-            total_egy: invoice.total_egy
+    console.log("Current open shift:", frm.doc.open_shift);
+
+    // Call both methods directly
+    frappe.call({
+      method: "teller.teller_customization.doctype.close_shift_for_branch.close_shift_for_branch.get_purchase_invoices",
+      args: {
+        current_open_shift: frm.doc.open_shift
+      },
+      callback: function(r) {
+        console.log("Purchase response:", r);
+        if (r.message) {
+          console.log("Purchase transactions:", r.message);
+          frm.clear_table("purchase_close_table");
+          let total_purchases = 0;
+
+          r.message.forEach(trans => {
+            console.log("Processing purchase transaction:", trans);
+            frm.add_child("purchase_close_table", {
+              reference: trans.name,
+              posting_date: trans.posting_date,
+              client: trans.buyer,
+              receipt_number: trans.purchase_receipt_number,
+              movement_no: trans.movement_number,
+              currency_code: trans.currency_code,
+              total: trans.quantity,
+              total_amount: trans.quantity,
+              total_egy: trans.egy_amount
+            });
+            total_purchases += flt(trans.egy_amount);
           });
-          total += flt(invoice.total);
-        });
-        frm.refresh_field("sales_invoice");
-        frm.set_value("total_sales", total);
-      } else {
-        frappe.msgprint("No invoices exist");
+
+          console.log("Total purchases:", total_purchases);
+          frm.refresh_field("purchase_close_table");
+          frm.set_value("total_purchase", `EGP ${format_currency(total_purchases)}`);
+        } else {
+          console.log("No purchase transactions found");
+        }
       }
     });
-    let total = 0;
-    // console.log("from purchase");
+
     frappe.call({
-      method:
-        "teller.teller_customization.doctype.close_shift_for_branch.close_shift_for_branch.get_purchase_invoices",
+      method: "teller.teller_customization.doctype.close_shift_for_branch.close_shift_for_branch.get_sales_invoice",
       args: {
-        current_open_shift: frm.doc.open_shift,
+        current_open_shift: frm.doc.open_shift
       },
-      callback: (r) => {
+      callback: function(r) {
         if (r.message) {
-          console.log("p invoice",r.message);
-          frm.clear_table("purchase_close_table");
-          let log = console.log;
+          frm.clear_table("sales_invoice");
+          let total_sales = 0;
 
-          const invocies = r.message;
-
-          invocies.forEach((invoice) => {
-            frm.add_child("purchase_close_table", {
-              reference: invoice["name"],
-              invoice_total: invoice["total"],
-              client: invoice["buyer"],
-              receipt_number: invoice["receipt_number"],
-              // exceed: invoice["exceed"],
-            });
-            total += invoice["total"];
+          r.message.forEach(invoice => {
+            if (!invoice.is_returned) {
+              invoice.teller_invoice_details.forEach(detail => {
+                frm.add_child("sales_invoice", {
+                  invoice: invoice.name,
+                  posting_date: invoice.posting_date,
+                  client: invoice.client,
+                  receipt_no: invoice.receipt_number,
+                  movement_no: invoice.movement_number,
+                  currency_code: detail.currency,
+                  total: detail.quantity,
+                  total_amount: detail.quantity,
+                  total_egy: detail.egy_amount
+                });
+                total_sales += flt(detail.egy_amount);
+              });
+            }
           });
-          frm.set_value("total_purchase", total);
-        } else {
-          frappe.msgprint("no invoices exists");
+
+          frm.refresh_field("sales_invoice");
+          frm.set_value("total_sales", `EGP ${format_currency(total_sales)}`);
         }
-        // const invocie_names = [];
-        // console.log(r.message);
-        // let egy_total = 0;
-        // let child_total = 0;
-
-        // for (let invocie of invocies) {
-        //   invocie_names.push(invocie["name"]);
-        //   let exists = frm.doc.purchase_close_table.some((d) => {
-        //     return d.reference === invocie.name;
-        //   });
-        //   if (!exists) {
-        //     for (let child of invocie["transactions"]) {
-        //       frm.add_child("purchase_close_table", {
-        //         reference: invocie["name"],
-        //         currency_amount: child["usd_amount"],
-        //         currency: child["currency"],
-        //         egyptian_price: child["total_amount"],
-        //         rate: child["rate"],
-        //       });
-        //       child_total += child["total_amount"];
-        //     }
-        //   }
-
-        //   frm.refresh_field("purchase_close_table");
-        // }
-
-        // egy_total += child_total;
-
-        // log(egy_total);
-        // frm.set_value("total_purchase", egy_total);
-        // frm.refresh_field("total_purchase");
-
-        // log("names are", invocie_names);
-      },
+      }
     });
   },
   refresh: function(frm) {

@@ -6,89 +6,86 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "invoice_info_section",
-  "branch_no",
-  "treasury_code",
+  "section_break_ugcr",
   "reason_for_purchase",
-  "column_break_tvyk",
-  "purchase_receipt_number",
-  "purchase_receipt_number2",
-  "branch_name",
-  "column_break_sgyq",
-  "purchase_date",
-  "shift",
+  "treasury_code",
   "movement_number",
-  "teller",
-  "column_break_nwfq",
-  "cost_center",
-  "current_roll",
-  "egy",
-  "egy_account",
-  "column_break_idhd",
+  "column_break_beht",
+  "purchase_receipt_number",
+  "branch_name",
+  "column_break_racu",
+  "date",
   "closing_date",
-  "is_returned",
-  "original_purchase",
+  "shift",
+  "teller",
+  "column_break_phqr",
+  "cost_center",
+  "egy",
+  "branch_no",
+  "column_break_nkql",
+  "current_roll",
   "know_your_customer_section",
   "purchase_history",
-  "section_break_defd",
+  "section_break_onwq",
   "category_of_buyer",
   "special_price",
-  "column_break_gkcv",
-  "fetch_national_id",
+  "column_break_nlal",
   "buyer",
+  "buyer_search_id",
+  "search_buyer",
+  "is_returned",
+  "original_purchase",
   "individual_section",
   "buyer_name",
   "buyer_nationality",
+  "buyer_gender",
   "buyer_phone",
   "buyer_job_title",
-  "buyer_date_of_birth",
-  "column_break_djgb",
+  "column_break_vdaf",
   "buyer_card_type",
-  "buyer_work_for",
   "buyer_issue_date",
   "buyer_address",
-  "buyer_place_of_birth",
-  "buyer_gender",
   "buyer_expired",
-  "column_break_hhrw",
+  "buyer_work_for",
+  "column_break_cjki",
   "buyer_national_id",
   "buyer_passport_number",
   "buyer_military_number",
+  "buyer_place_of_birth",
+  "buyer_date_of_birth",
   "buyer_mobile_number",
+  "foreigners_section",
+  "buyer_gender_copy",
+  "buyer_name_copy",
+  "buyer_nationality_copy",
   "buyer_national_id_copy",
+  "column_break_tlch",
+  "buyer_work_for_copy",
+  "buyer_mobile_number_copy",
   "companies_section",
   "buyer_company_name",
   "buyer_company_address",
-  "column_break_ndtu",
+  "buyer_company_activity",
+  "column_break_nqxf",
   "buyer_company_commercial_no",
   "buyer_company_start_date",
   "buyer_company_end_date",
-  "is_expired",
   "interbank",
-  "column_break_afav",
   "buyer_company_legal_form",
-  "buyer_company_activity",
+  "column_break_uyru",
+  "company_num",
+  "is_expired1",
   "commissar_info_section",
   "purchase_commissar",
-  "purchase_com_address",
-  "purchase_com_job_title",
-  "column_break_zcwh",
-  "purchase_com_name",
-  "purchase_com_gender",
-  "purchase_com_phone",
-  "column_break_bywf",
-  "purchase_com_national_id",
-  "purchase_com_mobile_number",
-  "foreigners_section",
-  "buyer_name_copy",
-  "buyer_gender_copy",
-  "buyer_nationality_copy",
-  "column_break_gpot",
-  "buyer_primary_contacts_copy",
-  "buyer_work_for_copy",
-  "buyer_mobile_number_copy",
-  "speacial_price_section",
-  "purchase_special_price",
+  "com_address",
+  "com_job_title",
+  "column_break_vgry",
+  "com_name",
+  "com_gender",
+  "com_phone",
+  "column_break_afqs",
+  "com_national_id",
+  "com_mobile_number",
   "transactions_section",
   "purchase_transactions",
   "section_break_icjb",
@@ -101,40 +98,195 @@
   "column_break_oxye",
   "section_break_erkw",
   "notes",
-  "amended_from"
+  "amended_from",
+  "naming_series",
+  "posting_date",
+  "total_amount"
  ],
  "fields": [
   {
+   "fieldname": "section_break_ugcr",
+   "fieldtype": "Section Break",
+   "label": "Invoice Info",
+   "collapsible": 1,
+   "collapsible_depends_on": "eval:1"
+  },
+  {
+   "fieldname": "reason_for_purchase",
+   "fieldtype": "Data",
+   "label": "Reason for Purchase"
+  },
+  {
+   "fieldname": "treasury_code",
+   "fieldtype": "Data",
+   "label": "Treasury Code",
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "movement_number",
+   "fieldtype": "Data",
+   "label": "Movement Number",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_beht",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "purchase_receipt_number",
+   "fieldtype": "Data",
+   "label": "Receipt Number",
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fetch_from": "branch_no.custom_branch_no",
+   "fieldname": "branch_name",
+   "fieldtype": "Data",
+   "label": "Branch Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_racu",
+   "fieldtype": "Column Break"
+  },
+  {
    "default": "Now",
    "fieldname": "date",
-   "fieldtype": "Datetime",
+   "fieldtype": "Date",
    "hidden": 1,
    "label": "Posting Date",
    "read_only": 1
   },
   {
-   "fieldname": "column_break_tvyk",
+   "default": "Today",
+   "fieldname": "closing_date",
+   "fieldtype": "Date",
+   "label": "Posting Date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "shift",
+   "fieldtype": "Link",
+   "label": "Shift",
+   "options": "Open Shift for Branch",
+   "read_only": 1
+  },
+  {
+   "fieldname": "teller",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "Teller",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_phqr",
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "column_break_sgyq",
+   "fetch_from": "branch_no.custom_cost_center",
+   "fieldname": "cost_center",
+   "fieldtype": "Data",
+   "label": "Cost Center",
+   "read_only": 1
+  },
+  {
+   "fieldname": "egy",
+   "fieldtype": "Link",
+   "label": "EGY",
+   "options": "Account",
+   "read_only": 1
+  },
+  {
+   "fieldname": "branch_no",
+   "fieldtype": "Link",
+   "label": "Branch No",
+   "options": "Branch",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_nkql",
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "section_break_defd",
+   "fieldname": "current_roll",
+   "fieldtype": "Link",
+   "label": "Current Printing Roll",
+   "options": "Printing Roll",
+   "read_only": 1,
+   "description": "The printing roll used for this invoice's receipt number"
+  },
+  {
+   "collapsible": 1,
+   "depends_on": "eval:doc.exceed==true",
+   "fieldname": "know_your_customer_section",
+   "fieldtype": "Section Break",
+   "label": "Know Your Customer"
+  },
+  {
+   "fieldname": "purchase_history",
+   "fieldtype": "Table",
+   "label": "Customer History",
+   "options": "Purchase Customer History"
+  },
+  {
+   "fieldname": "section_break_onwq",
    "fieldtype": "Section Break"
   },
   {
    "fieldname": "category_of_buyer",
    "fieldtype": "Select",
-   "in_list_view": 1,
    "label": "Category of Buyer",
    "options": "\nEgyptian\nCompany\nForeigner\nInterbank",
    "reqd": 1
   },
   {
-   "fieldname": "column_break_gkcv",
+   "depends_on": "eval:doc.category_of_buyer==\"Interbank\"",
+   "fieldname": "special_price",
+   "fieldtype": "Button",
+   "label": "Special Price"
+  },
+  {
+   "fieldname": "column_break_nlal",
    "fieldtype": "Column Break"
+  },
+  {
+   "bold": 1,
+   "fieldname": "buyer",
+   "fieldtype": "Link",
+   "label": "Search Buyer",
+   "options": "Customer"
+  },
+  {
+   "fieldname": "buyer_search_id",
+   "fieldtype": "Data",
+   "label": "Search by ID/Number",
+   "description": "Enter National ID, Commercial Number, or Passport Number"
+  },
+  {
+   "fieldname": "search_buyer",
+   "fieldtype": "Button",
+   "label": "Search Buyer"
+  },
+  {
+   "allow_on_submit": 1,
+   "default": "0",
+   "fieldname": "is_returned",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_standard_filter": 1,
+   "label": "Is Returned",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.is_returned ===1",
+   "fieldname": "original_purchase",
+   "fieldtype": "Link",
+   "label": "Teller Purchase",
+   "options": "Teller Purchase"
   },
   {
    "depends_on": "eval:doc.category_of_buyer=='Egyptian' || doc.category_of_buyer==\"Foreigner\"",
@@ -156,19 +308,150 @@
    "mandatory_depends_on": "eval:doc.exceed == 1 && (doc.category_of_buyer === \"Egyptian\" || doc.category_of_buyer === \"Foreigner\")"
   },
   {
-   "fieldname": "column_break_djgb",
+   "depends_on": "eval:(doc.category_of_buyer==\"Egyptian\"||doc.category_of_buyer==\"Foreigner\")&&doc.exceed==1",
+   "fieldname": "buyer_gender",
+   "fieldtype": "Select",
+   "label": "Gender",
+   "options": "Male\nFemale",
+   "mandatory_depends_on": "eval:doc.exceed == 1 && (doc.category_of_buyer === \"Egyptian\" || doc.category_of_buyer === \"Foreigner\")"
+  },
+  {
+   "depends_on": "eval:(doc.category_of_buyer==\"Egyptian\"||doc.category_of_buyer==\"Foreigner\")&&doc.exceed==1",
+   "fieldname": "buyer_phone",
+   "fieldtype": "Data",
+   "label": "Phone",
+   "mandatory_depends_on": "eval:doc.exceed == 1 && (doc.category_of_buyer === \"Egyptian\" || doc.category_of_buyer === \"Foreigner\")"
+  },
+  {
+   "depends_on": "eval:(doc.category_of_buyer==\"Egyptian\"||doc.category_of_buyer==\"Foreigner\")&&doc.exceed==1",
+   "fieldname": "buyer_job_title",
+   "fieldtype": "Data",
+   "label": "Job Title",
+   "mandatory_depends_on": "eval:doc.exceed == 1 && (doc.category_of_buyer === \"Egyptian\" || doc.category_of_buyer === \"Foreigner\")"
+  },
+  {
+   "fieldname": "column_break_vdaf",
    "fieldtype": "Column Break"
+  },
+  {
+   "default": "National ID",
+   "fieldname": "buyer_card_type",
+   "fieldtype": "Select",
+   "label": "Card Type",
+   "mandatory_depends_on": "eval:(doc.category_of_buyer === \"Egyptian\" || doc.category_of_buyer === \"Foreigner\")",
+   "options": "National ID\nPassport\nMilitary Card"
+  },
+  {
+   "depends_on": "eval:(doc.category_of_buyer==\"Egyptian\"||doc.category_of_buyer==\"Foreigner\")&&doc.exceed==1",
+   "fieldname": "buyer_issue_date",
+   "fieldtype": "Date",
+   "label": "Issue Date"
+  },
+  {
+   "depends_on": "eval:(doc.category_of_buyer==\"Egyptian\"||doc.category_of_buyer==\"Foreigner\")&&doc.exceed==1",
+   "fieldname": "buyer_address",
+   "fieldtype": "Data",
+   "label": "Address",
+   "mandatory_depends_on": "eval:doc.exceed == 1 && (doc.category_of_buyer === \"Egyptian\" || doc.category_of_buyer === \"Foreigner\")"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval:(doc.category_of_buyer==\"Egyptian\"||doc.category_of_buyer==\"Foreigner\")&&doc.exceed==1",
+   "fieldname": "buyer_expired",
+   "fieldtype": "Check",
+   "label": "Expired"
   },
   {
    "depends_on": "eval:(doc.category_of_buyer==\"Egyptian\"||doc.category_of_buyer==\"Foreigner\")&&doc.exceed==1",
    "fieldname": "buyer_work_for",
    "fieldtype": "Data",
-   "label": "Work For ",
+   "label": "Work For",
+   "mandatory_depends_on": "eval:doc.exceed == 1 && (doc.category_of_buyer === \"Egyptian\" || doc.category_of_buyer === \"Foreigner\")"
+  },
+  {
+   "fieldname": "column_break_cjki",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "buyer_national_id",
+   "fieldtype": "Data",
+   "label": "National ID",
+   "read_only": 1,
+   "mandatory_depends_on": "eval:(doc.category_of_buyer === \"Egyptian\" || doc.category_of_buyer === \"Foreigner\") &&(doc.buyer_card_type==\"National ID\") "
+  },
+  {
+   "fieldname": "buyer_passport_number",
+   "fieldtype": "Data",
+   "label": "Passport Number",
+   "read_only": 1,
+   "mandatory_depends_on": "eval:(doc.category_of_buyer === \"Egyptian\" || doc.category_of_buyer === \"Foreigner\") &&(doc.buyer_card_type==\"Passport\") "
+  },
+  {
+   "fieldname": "buyer_military_number",
+   "fieldtype": "Data",
+   "label": "Military Number",
+   "read_only": 1,
+   "mandatory_depends_on": "eval:(doc.category_of_buyer === \"Egyptian\" || doc.category_of_buyer === \"Foreigner\") &&(doc.buyer_card_type==\"Military Card\") "
+  },
+  {
+   "depends_on": "eval:(doc.category_of_buyer==\"Egyptian\"||doc.category_of_buyer==\"Foreigner\")&&doc.exceed==1",
+   "fieldname": "buyer_place_of_birth",
+   "fieldtype": "Data",
+   "label": "Place of Birth",
    "mandatory_depends_on": "eval:doc.exceed == 1 && (doc.category_of_buyer === \"Egyptian\" || doc.category_of_buyer === \"Foreigner\")"
   },
   {
    "depends_on": "eval:(doc.category_of_buyer==\"Egyptian\"||doc.category_of_buyer==\"Foreigner\")&&doc.exceed==1",
+   "fieldname": "buyer_date_of_birth",
+   "fieldtype": "Date",
+   "label": "Date of Birth"
+  },
+  {
+   "depends_on": "eval:(doc.category_of_buyer==\"Egyptian\"||doc.category_of_buyer==\"Foreigner\")&&doc.exceed==1",
    "fieldname": "buyer_mobile_number",
+   "fieldtype": "Data",
+   "label": "Mobile Number"
+  },
+  {
+   "collapsible": 1,
+   "collapsible_depends_on": "eval:doc.category_of_buyer=='Foreigners'",
+   "depends_on": "eval:doc.category_of_buyer=='Foreigners'",
+   "fieldname": "foreigners_section",
+   "fieldtype": "Section Break",
+   "label": "Foreigners"
+  },
+  {
+   "fieldname": "buyer_gender_copy",
+   "fieldtype": "Data",
+   "label": "Gender"
+  },
+  {
+   "fieldname": "buyer_name_copy",
+   "fieldtype": "Data",
+   "label": "Customer Name"
+  },
+  {
+   "fieldname": "buyer_nationality_copy",
+   "fieldtype": "Data",
+   "label": "Nationality"
+  },
+  {
+   "fieldname": "buyer_national_id_copy",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "National ID"
+  },
+  {
+   "fieldname": "column_break_tlch",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "buyer_work_for_copy",
+   "fieldtype": "Data",
+   "label": "Work For"
+  },
+  {
+   "fieldname": "buyer_mobile_number_copy",
    "fieldtype": "Data",
    "label": "Mobile Number"
   },
@@ -180,9 +463,15 @@
    "label": "Company"
   },
   {
-   "fieldname": "buyer_company_legal_form",
+   "fieldname": "buyer_company_name",
    "fieldtype": "Data",
-   "label": "Company Legal Form",
+   "label": "Company Name",
+   "mandatory_depends_on": "eval: (doc.category_of_buyer === \"Company\" || doc.category_of_buyer === \"Interbank\")"
+  },
+  {
+   "fieldname": "buyer_company_address",
+   "fieldtype": "Data",
+   "label": "Company Address",
    "mandatory_depends_on": "eval: (doc.category_of_buyer === \"Company\" || doc.category_of_buyer === \"Interbank\")"
   },
   {
@@ -192,13 +481,166 @@
    "mandatory_depends_on": "eval: (doc.category_of_buyer === \"Company\" || doc.category_of_buyer === \"Interbank\")"
   },
   {
+   "fieldname": "column_break_nqxf",
+   "fieldtype": "Column Break"
+  },
+  {
    "fieldname": "buyer_company_commercial_no",
    "fieldtype": "Data",
-   "label": "Company Commercial No ",
+   "label": "Company Commercial No",
    "mandatory_depends_on": "eval: (doc.category_of_buyer === \"Company\" || doc.category_of_buyer === \"Interbank\")"
   },
   {
-   "fieldname": "column_break_ndtu",
+   "fieldname": "buyer_company_start_date",
+   "fieldtype": "Date",
+   "label": "Start Registration Date",
+   "mandatory_depends_on": "eval: (doc.category_of_buyer === \"Company\" || doc.category_of_buyer === \"Interbank\")"
+  },
+  {
+   "fieldname": "buyer_company_end_date",
+   "fieldtype": "Date",
+   "label": "End Registration Date",
+   "mandatory_depends_on": "eval: (doc.category_of_buyer === \"Company\" || doc.category_of_buyer === \"Interbank\")"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval:doc.category_of_buyer==\"Interbank\"",
+   "fieldname": "interbank",
+   "fieldtype": "Check",
+   "label": "InterBank"
+  },
+  {
+   "fieldname": "buyer_company_legal_form",
+   "fieldtype": "Data",
+   "label": "Company Legal Form",
+   "mandatory_depends_on": "eval: (doc.category_of_buyer === \"Company\" || doc.category_of_buyer === \"Interbank\")"
+  },
+  {
+   "fieldname": "column_break_uyru",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "company_num",
+   "fieldtype": "Data",
+   "label": "Company Num"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_expired1",
+   "fieldtype": "Check",
+   "label": "Is Expired",
+   "read_only": 1
+  },
+  {
+   "collapsible": 1,
+   "depends_on": "eval:doc.category_of_buyer=='Company' || doc.category_of_buyer==\"Interbank\"",
+   "fieldname": "commissar_info_section",
+   "fieldtype": "Section Break",
+   "label": "Commissar Info"
+  },
+  {
+   "fieldname": "purchase_commissar",
+   "fieldtype": "Link",
+   "label": "Contact",
+   "options": "Contact",
+   "description": "Select a contact for this buyer"
+  },
+  {
+   "fieldname": "com_address",
+   "fieldtype": "Data",
+   "label": "Address"
+  },
+  {
+   "fieldname": "com_job_title",
+   "fieldtype": "Data",
+   "label": "Job Title"
+  },
+  {
+   "fieldname": "column_break_vgry",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "com_name",
+   "fieldtype": "Data",
+   "label": "Name"
+  },
+  {
+   "fieldname": "com_gender",
+   "fieldtype": "Select",
+   "label": "Gender",
+   "options": "Male\nFemale"
+  },
+  {
+   "fieldname": "com_phone",
+   "fieldtype": "Data",
+   "label": "Phone"
+  },
+  {
+   "fieldname": "column_break_afqs",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "com_national_id",
+   "fieldtype": "Data",
+   "label": "National ID"
+  },
+  {
+   "fieldname": "com_mobile_number",
+   "fieldtype": "Data",
+   "label": "Mobile Number"
+  },
+  {
+   "fieldname": "transactions_section",
+   "fieldtype": "Section Break",
+   "label": "Transactions"
+  },
+  {
+   "fieldname": "purchase_transactions",
+   "fieldtype": "Table",
+   "label": "Transactions",
+   "options": "Teller Purchase Child",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_break_icjb",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "egy_balance",
+   "fieldtype": "Currency",
+   "label": "EGY Balance"
+  },
+  {
+   "default": "0",
+   "fieldname": "exceed",
+   "fieldtype": "Check",
+   "label": "Exceed",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_ynum",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "total",
+   "fieldtype": "Currency",
+   "label": "Total"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "invoice_information_section",
+   "fieldtype": "Section Break",
+   "hidden": 1,
+   "label": "Invoice Information"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company"
+  },
+  {
+   "fieldname": "column_break_oxye",
    "fieldtype": "Column Break"
   },
   {
@@ -223,459 +665,25 @@
    "search_index": 1
   },
   {
-   "fieldname": "shift",
-   "fieldtype": "Link",
-   "label": "Shift",
-   "options": "Open Shift for Branch",
-   "read_only": 1
-  },
-  {
-   "collapsible": 1,
-   "fieldname": "invoice_information_section",
-   "fieldtype": "Section Break",
-   "hidden": 1,
-   "label": "Invoice Information"
-  },
-  {
-   "fieldname": "column_break_oxye",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "column_break_nwfq",
-   "fieldtype": "Column Break"
-  },
-  {
-   "bold": 1,
-   "fieldname": "buyer",
-   "fieldtype": "Link",
-   "label": "Search Buyer",
-   "options": "Customer"
-  },
-  {
-   "fieldname": "teller",
-   "fieldtype": "Link",
-   "hidden": 1,
-   "label": "Teller",
-   "options": "User",
-   "read_only": 1
-  },
-  {
-   "fieldname": "speacial_price_section",
-   "fieldtype": "Section Break",
-   "hidden": 1,
-   "label": "Speacial Price"
-  },
-  {
-   "depends_on": "eval:doc.category_of_buyer=='Company'",
-   "fieldname": "purchase_special_price",
-   "fieldtype": "Button",
-   "label": "Set Speacial Price"
-  },
-  {
-   "fieldname": "transactions_section",
-   "fieldtype": "Section Break",
-   "label": "Transactions"
-  },
-  {
-   "fieldname": "purchase_transactions",
-   "fieldtype": "Table",
-   "label": "Transactions",
-   "options": "Teller Purchase Child",
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Series",
+   "options": "TP-.YYYY.-",
    "reqd": 1
   },
   {
-   "fieldname": "section_break_icjb",
-   "fieldtype": "Section Break"
-  },
-  {
-   "fetch_from": "branch_no.custom_cost_center",
-   "fieldname": "cost_center",
-   "fieldtype": "Data",
-   "label": "Cost Center",
-   "read_only": 1
-  },
-  {
-   "fieldname": "company",
-   "fieldtype": "Link",
-   "label": "Company",
-   "options": "Company"
-  },
-  {
-   "default": "5635536",
-   "fieldname": "treasury_code",
-   "fieldtype": "Data",
-   "label": "Treasury Code"
-  },
-  {
-   "fieldname": "column_break_idhd",
-   "fieldtype": "Column Break"
-  },
-  {
-   "depends_on": "eval:doc.category_of_buyer==\"Interbank\"",
-   "fieldname": "special_price",
-   "fieldtype": "Button",
-   "label": "Special Price"
-  },
-  {
-   "collapsible": 1,
-   "collapsible_depends_on": "eval:doc.category_of_buyer=='Foreigners'",
-   "depends_on": "eval:doc.category_of_buyer=='Foreigners'",
-   "fieldname": "foreigners_section",
-   "fieldtype": "Section Break",
-   "label": "Foreigners"
-  },
-  {
-   "fieldname": "buyer_name_copy",
-   "fieldtype": "Data",
-   "label": "Customer Name "
-  },
-  {
-   "fieldname": "buyer_gender_copy",
-   "fieldtype": "Data",
-   "label": "Gender "
-  },
-  {
-   "fieldname": "buyer_nationality_copy",
-   "fieldtype": "Data",
-   "label": "Nationality "
-  },
-  {
-   "fieldname": "column_break_gpot",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "buyer_national_id_copy",
-   "fieldtype": "Data",
-   "hidden": 1,
-   "label": "National ID "
-  },
-  {
-   "fieldname": "buyer_primary_contacts_copy",
-   "fieldtype": "Small Text",
-   "label": "Primary Contacts "
-  },
-  {
-   "fieldname": "buyer_work_for_copy",
-   "fieldtype": "Data",
-   "label": "Work For  "
-  },
-  {
-   "fieldname": "buyer_mobile_number_copy",
-   "fieldtype": "Data",
-   "label": "Mobile Number "
-  },
-  {
-   "fieldname": "egy_balance",
-   "fieldtype": "Currency",
-   "label": "Egy Balance"
-  },
-  {
-   "fieldname": "column_break_ynum",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "total",
-   "fieldtype": "Currency",
-   "label": "Total"
-  },
-  {
-   "fieldname": "egy",
-   "fieldtype": "Link",
-   "label": "EGY",
-   "options": "Account",
-   "read_only": 1
-  },
-  {
-   "fieldname": "branch_no",
-   "fieldtype": "Link",
-   "label": "Branch No",
-   "options": "Branch",
-   "read_only": 1
-  },
-  {
-   "fetch_from": "branch_no.custom_branch_no",
-   "fieldname": "branch_name",
-   "fieldtype": "Data",
-   "label": "Branch Name",
-   "read_only": 1
-  },
-  {
-   "allow_on_submit": 1,
-   "default": "Roll Series",
-   "fieldname": "purchase_receipt_number",
-   "fieldtype": "Data",
-   "hidden": 1,
-   "label": "Receipt number",
-   "read_only": 1
-  },
-  {
-   "fieldname": "movement_number",
-   "fieldtype": "Data",
-   "label": "Movement Number",
-   "read_only": 1
-  },
-  {
-   "allow_on_submit": 1,
-   "fieldname": "current_roll",
-   "fieldtype": "Data",
-   "label": "Current Roll",
-   "read_only": 1
-  },
-  {
-   "depends_on": "eval:(doc.category_of_buyer==\"Egyptian\"||doc.category_of_buyer==\"Foreigner\")&&doc.exceed==1",
-   "fieldname": "buyer_phone",
-   "fieldtype": "Data",
-   "label": "Phone",
-   "mandatory_depends_on": "eval:doc.exceed == 1 && (doc.category_of_buyer === \"Egyptian\" || doc.client_type === \"Foreigner\")"
-  },
-  {
-   "depends_on": "eval:(doc.category_of_buyer==\"Egyptian\"||doc.category_of_buyer==\"Foreigner\")&&doc.exceed==1",
-   "fieldname": "buyer_job_title",
-   "fieldtype": "Data",
-   "label": "Job Title",
-   "mandatory_depends_on": "eval:doc.exceed == 1 && (doc.category_of_buyer === \"Egyptian\" || doc.category_of_buyer === \"Foreigner\")"
-  },
-  {
-   "depends_on": "eval:(doc.category_of_buyer==\"Egyptian\"||doc.category_of_buyer==\"Foreigner\")&&doc.exceed==1",
-   "fieldname": "buyer_address",
-   "fieldtype": "Data",
-   "label": "Address",
-   "mandatory_depends_on": "eval:doc.exceed == 1 && (doc.category_of_buyer === \"Egyptian\" || doc.category_of_buyer === \"Foreigner\")"
-  },
-  {
-   "depends_on": "eval:(doc.category_of_buyer==\"Egyptian\"||doc.category_of_buyer==\"Foreigner\")&&doc.exceed==1",
-   "fieldname": "buyer_place_of_birth",
-   "fieldtype": "Data",
-   "label": "Place Of Birth",
-   "mandatory_depends_on": "eval:doc.exceed == 1 && (doc.category_of_buyer === \"Egyptian\" || doc.category_of_buyer === \"Foreigner\")"
-  },
-  {
-   "fieldname": "buyer_company_name",
-   "fieldtype": "Data",
-   "label": "Company Name",
-   "mandatory_depends_on": "eval: (doc.category_of_buyer === \"Company\" || doc.category_of_buyer === \"Interbank\")"
-  },
-  {
-   "default": "0",
-   "fieldname": "is_expired",
-   "fieldtype": "Check",
-   "label": "Is Expired",
-   "read_only": 1
-  },
-  {
-   "default": "0",
-   "depends_on": "eval:doc.category_of_buyer==\"Interbank\"",
-   "fieldname": "interbank",
-   "fieldtype": "Check",
-   "label": "InterBank"
-  },
-  {
-   "default": "0",
-   "fieldname": "exceed",
-   "fieldtype": "Check",
-   "label": "exceed",
-   "read_only": 1
-  },
-  {
-   "default": "National ID",
-   "fieldname": "buyer_card_type",
-   "fieldtype": "Select",
-   "label": "Card Type",
-   "mandatory_depends_on": "eval:(doc.category_of_buyer === \"Egyptian\" || doc.category_of_buyer === \"Foreigner\")",
-   "options": "National ID\nPassport\nMilitary Card"
-  },
-  {
-   "fieldname": "column_break_hhrw",
-   "fieldtype": "Column Break"
-  },
-  {
-   "depends_on": "eval:doc.buyer_card_type==\"National ID\"",
-   "fieldname": "buyer_national_id",
-   "fieldtype": "Data",
-   "label": "National ID",
-   "mandatory_depends_on": "eval:(doc.category_of_buyer === \"Egyptian\" || doc.category_of_buyer === \"Foreigner\") &&(doc.buyer_card_type==\"National ID\") "
-  },
-  {
-   "depends_on": "eval:doc.buyer_card_type==\"Passport\"",
-   "fieldname": "buyer_passport_number",
-   "fieldtype": "Data",
-   "label": "Passport Number",
-   "mandatory_depends_on": "eval:(doc.category_of_buyer === \"Egyptian\" || doc.category_of_buyer === \"Foreigner\") &&(doc.buyer_card_type==\"Passport\") "
-  },
-  {
-   "depends_on": "eval:doc.buyer_card_type==\"Military Card\"",
-   "fieldname": "buyer_military_number",
-   "fieldtype": "Data",
-   "label": "Military Number",
-   "mandatory_depends_on": "eval:(doc.category_of_buyer === \"Egyptian\" || doc.category_of_buyer === \"Foreigner\") &&(doc.buyer_card_type==\"Military Card\") "
-  },
-  {
-   "default": "0",
-   "depends_on": "eval:(doc.category_of_buyer==\"Egyptian\"||doc.category_of_buyer==\"Foreigner\")&&doc.exceed==1",
-   "fieldname": "buyer_expired",
-   "fieldtype": "Check",
-   "label": "expired"
-  },
-  {
-   "fieldname": "buyer_company_address",
-   "fieldtype": "Data",
-   "label": "Company Address",
-   "mandatory_depends_on": "eval: (doc.category_of_buyer === \"Company\" || doc.category_of_buyer === \"Interbank\")"
-  },
-  {
-   "fieldname": "buyer_company_start_date",
-   "fieldtype": "Date",
-   "label": "Start Registration Date",
-   "mandatory_depends_on": "eval: (doc.category_of_buyer === \"Company\" || doc.category_of_buyer === \"Interbank\")"
-  },
-  {
-   "fieldname": "buyer_company_end_date",
-   "fieldtype": "Date",
-   "label": "End Registration Date",
-   "mandatory_depends_on": "eval: (doc.category_of_buyer === \"Company\" || doc.category_of_buyer === \"Interbank\")"
-  },
-  {
-   "fieldname": "column_break_afav",
-   "fieldtype": "Column Break"
-  },
-  {
-   "collapsible": 1,
-   "depends_on": "eval:doc.category_of_buyer=='Company' || doc.category_of_buyer==\"Interbank\"",
-   "fieldname": "commissar_info_section",
-   "fieldtype": "Section Break",
-   "label": "Commissar Info"
-  },
-  {
-   "fieldname": "purchase_commissar",
-   "fieldtype": "Link",
-   "label": "Contact",
-   "options": "Contact",
-   "description": "Select a contact for this buyer"
-  },
-  {
-   "fieldname": "column_break_zcwh",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "purchase_com_name",
-   "fieldtype": "Data",
-   "label": "com name"
-  },
-  {
-   "fieldname": "column_break_bywf",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "purchase_com_national_id",
-   "fieldtype": "Data",
-   "label": "com national id"
-  },
-  {
-   "fieldname": "purchase_com_address",
-   "fieldtype": "Data",
-   "label": "com address"
-  },
-  {
-   "fieldname": "purchase_com_gender",
-   "fieldtype": "Select",
-   "label": "com gender",
-   "options": "Male\nFemale"
-  },
-  {
-   "fieldname": "purchase_com_phone",
-   "fieldtype": "Data",
-   "label": "com phone"
-  },
-  {
-   "fieldname": "purchase_com_mobile_number",
-   "fieldtype": "Data",
-   "label": "com mobile number"
-  },
-  {
-   "fieldname": "purchase_com_job_title",
-   "fieldtype": "Data",
-   "label": "com_job_title"
-  },
-  {
-   "collapsible": 1,
-   "depends_on": "eval:doc.exceed==true",
-   "fieldname": "know_your_customer_section",
-   "fieldtype": "Section Break",
-   "label": "Know Your Customer"
-  },
-  {
-   "fieldname": "purchase_history",
-   "fieldtype": "Table",
-   "label": "Customer History",
-   "options": "Purchase Customer History"
-  },
-  {
-   "collapsible": 1,
-   "fieldname": "invoice_info_section",
-   "fieldtype": "Section Break",
-   "label": "Invoice Info"
-  },
-  {
-   "fieldname": "egy_account",
-   "fieldtype": "Data",
-   "label": "Egy Account",
-   "read_only": 1
-  },
-  {
    "default": "Today",
-   "fieldname": "closing_date",
+   "fieldname": "posting_date",
    "fieldtype": "Date",
-   "label": "Closing Date",
+   "in_list_view": 1,
+   "label": "Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "total_amount",
+   "fieldtype": "Currency",
+   "label": "Total Amount",
    "read_only": 1
-  },
-  {
-   "fieldname": "fetch_national_id",
-   "fieldtype": "Data",
-   "label": "Enter Unique ID"
-  },
-  {
-   "depends_on": "eval:(doc.category_of_buyer==\"Egyptian\"||doc.category_of_buyer==\"Foreigner\")&&doc.exceed==1",
-   "fieldname": "buyer_date_of_birth",
-   "fieldtype": "Date",
-   "label": "Date of birth"
-  },
-  {
-   "depends_on": "eval:(doc.category_of_buyer==\"Egyptian\"||doc.category_of_buyer==\"Foreigner\")&&doc.exceed==1",
-   "fieldname": "buyer_issue_date",
-   "fieldtype": "Date",
-   "label": "issue date"
-  },
-  {
-   "depends_on": "eval:(doc.category_of_buyer==\"Egyptian\"||doc.category_of_buyer==\"Foreigner\")&&doc.exceed==1",
-   "fieldname": "buyer_gender",
-   "fieldtype": "Select",
-   "label": "gender",
-   "options": "Male\nFemale"
-  },
-  {
-   "default": "######",
-   "fieldname": "purchase_receipt_number2",
-   "fieldtype": "Data",
-   "label": "Receipt number",
-   "read_only": 1
-  },
-  {
-   "default": "0",
-   "fieldname": "is_returned",
-   "fieldtype": "Check",
-   "label": "Is Returned"
-  },
-  {
-   "depends_on": "eval:doc.is_returned ===1",
-   "fieldname": "original_purchase",
-   "fieldtype": "Link",
-   "label": "Teller Purchase ",
-   "options": "Teller Purchase"
-  },
-  {
-   "fieldname": "reason_for_purchase",
-   "fieldtype": "Data",
-   "label": "Reason For Purchase"
   }
  ],
  "index_web_pages_for_search": 1,

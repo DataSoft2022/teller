@@ -27,12 +27,14 @@ def call_from_class(self):
     return self.current_user, len(self.sales_table)
 @whitelist(allow_guest=True)
 def get_sales_invoice(current_open_shift):
-  
-
     invoices = []
     invoice_names = frappe.db.get_all(
         "Teller Invoice",
-        {"docstatus": 1, "shift": current_open_shift},
+        filters={
+            "docstatus": 1, 
+            "shift": current_open_shift,
+            "is_returned": 0  # Only get non-returned invoices
+        },
         order_by="name desc",
     )
 
@@ -44,19 +46,48 @@ def get_sales_invoice(current_open_shift):
 
 @whitelist()
 def get_purchase_invoices(current_open_shift):
-
-    invoice_list = []
-
-    invoice_names = frappe.db.get_list(
-        "Teller Purchase",
-        {"docstatus": 1, "shift": current_open_shift},
-        order_by="name desc",
-    )
-    for i in invoice_names:
-        doc = frappe.get_doc("Teller Purchase", i)
-        invoice_list.append(doc)
-
-    return invoice_list
+    """Get all purchase transactions for the current shift"""
+    try:
+        frappe.log_error(f"Fetching purchases for shift: {current_open_shift}", "Debug Purchases")
+        
+        # First check if there are any purchases for this shift
+        purchase_count = frappe.db.count('Teller Purchase', 
+            {'shift': current_open_shift, 'docstatus': 1, 'is_returned': 0})
+            
+        frappe.log_error(f"Found {purchase_count} purchases", "Debug Purchases")
+        
+        if purchase_count == 0:
+            return []
+            
+        # Get all submitted teller purchases for this shift
+        purchases = frappe.db.sql("""
+            SELECT 
+                tp.name,
+                tp.posting_date,
+                tp.buyer,
+                tp.purchase_receipt_number,
+                tp.movement_number,
+                tpc.currency_code,
+                tpc.quantity,
+                tpc.exchange_rate,
+                tpc.egy_amount
+            FROM `tabTeller Purchase` tp
+            INNER JOIN `tabTeller Purchase Child` tpc ON tp.name = tpc.parent
+            WHERE tp.docstatus = 1 
+            AND tp.shift = %(shift)s
+            AND tp.is_returned = 0
+            ORDER BY tp.posting_date DESC
+        """, {'shift': current_open_shift}, as_dict=1)
+        
+        frappe.log_error(f"Found {len(purchases)} purchase transactions: {purchases}", "Debug Purchases")
+        return purchases
+        
+    except Exception as e:
+        frappe.log_error(
+            message=f"Error in get_purchase_invoices: {str(e)}\n{frappe.get_traceback()}",
+            title="Purchase Fetch Error"
+        )
+        return []
 
 class CloseShiftForBranch(Document):
     def validate(self):
@@ -64,6 +95,7 @@ class CloseShiftForBranch(Document):
             frappe.throw(_("Please select an Open Shift"))
             
         self.fetch_and_set_invoices()
+        self.fetch_and_set_purchases()
             
     def fetch_and_set_invoices(self):
         """Fetch and set all sales invoices for this shift"""
@@ -73,19 +105,19 @@ class CloseShiftForBranch(Document):
             
             # Get all submitted teller invoices for this shift with their details
             invoices = frappe.db.sql("""
-                SELECT 
+                SELECT DISTINCT
                     ti.name,
                     ti.posting_date,
                     ti.client,
                     ti.receipt_number,
                     ti.movement_number,
-                    COALESCE(tid.currency, a.account_currency) as currency_code,
-                    tid.quantity as total,
-                    tid.amount as total_amount,
+                    c.name as currency_name,
+                    tid.currency_code,
+                    tid.quantity,
                     tid.egy_amount as total_egy
                 FROM `tabTeller Invoice` ti
-                LEFT JOIN `tabTeller Invoice Details` tid ON ti.name = tid.parent
-                LEFT JOIN `tabAccount` a ON tid.account = a.name
+                INNER JOIN `tabTeller Invoice Details` tid ON ti.name = tid.parent
+                LEFT JOIN `tabCurrency` c ON c.custom_currency_code = tid.currency_code
                 WHERE ti.docstatus = 1 
                 AND ti.shift = %s
                 AND ti.is_returned = 0
@@ -95,6 +127,11 @@ class CloseShiftForBranch(Document):
             total_sales = 0
             
             for inv in invoices:
+                # Get the actual Currency document name (USD, EUR, etc.)
+                currency_doc = frappe.get_value('Currency', {'custom_currency_code': inv.currency_code}, 'name')
+                if not currency_doc:
+                    frappe.throw(_(f"Currency not found for code {inv.currency_code}"))
+                
                 # Add each invoice to the sales_invoice table with proper currency
                 self.append("sales_invoice", {
                     "invoice": inv.name,
@@ -102,18 +139,16 @@ class CloseShiftForBranch(Document):
                     "client": inv.client,
                     "receipt_no": inv.receipt_number,
                     "movement_no": inv.movement_number,
-                    "currency_code": inv.currency_code,
-                    "total": inv.total,
-                    "total_amount": inv.total_amount,
-                    "total_egy": inv.total_egy
+                    "currency_code": currency_doc,  # This should be the Currency document name (USD, EUR, etc.)
+                    "total": inv.quantity,  # Original currency amount
+                    "total_amount": inv.quantity,  # Original currency amount
+                    "total_egy": flt(inv.total_egy)  # EGY amount
                 })
                 
                 total_sales += flt(inv.total_egy)  # Use EGY amount for total
             
-            # Set the total sales
-            self.total_sales = total_sales
-            
-            frappe.msgprint(_("Successfully fetched {0} sales invoices").format(len(invoices)))
+            # Format total_sales with EGP currency indicator
+            self.total_sales = f"EGP {frappe.format(total_sales, 'Currency')}"
             
         except Exception as e:
             frappe.log_error(
@@ -121,12 +156,88 @@ class CloseShiftForBranch(Document):
                 title="Close Shift Error"
             )
             frappe.throw(_("Error fetching sales invoices: {0}").format(str(e)))
+
+    def fetch_and_set_purchases(self):
+        """Fetch and set all purchase transactions for this shift"""
+        try:
+            # Clear existing purchase entries
+            self.purchase_close_table = []
             
+            # Get all submitted teller purchases for this shift with their details
+            purchases = frappe.db.sql("""
+                SELECT DISTINCT
+                    tp.name,
+                    tp.posting_date,
+                    tp.buyer,
+                    tp.purchase_receipt_number,
+                    tp.movement_number,
+                    c.name as currency_name,
+                    tpc.currency_code,
+                    tpc.quantity,
+                    tpc.egy_amount as total_egy
+                FROM `tabTeller Purchase` tp
+                INNER JOIN `tabTeller Purchase Child` tpc ON tp.name = tpc.parent
+                LEFT JOIN `tabCurrency` c ON c.custom_currency_code = tpc.currency_code
+                WHERE tp.docstatus = 1 
+                AND tp.shift = %s
+                AND tp.is_returned = 0
+                ORDER BY tp.posting_date ASC
+            """, self.open_shift, as_dict=1)
+            
+            total_purchases = 0
+            
+            for purchase in purchases:
+                # Get the actual Currency document name (USD, EUR, etc.)
+                currency_doc = frappe.get_value('Currency', {'custom_currency_code': purchase.currency_code}, 'name')
+                if not currency_doc:
+                    frappe.throw(_(f"Currency not found for code {purchase.currency_code}"))
+                
+                # Add each purchase to the purchase_close_table with proper currency
+                self.append("purchase_close_table", {
+                    "reference": purchase.name,
+                    "posting_date": purchase.posting_date,
+                    "client": purchase.buyer,
+                    "receipt_number": purchase.purchase_receipt_number,
+                    "movement_no": purchase.movement_number,
+                    "currency_code": currency_doc,  # This should be the Currency document name (USD, EUR, etc.)
+                    "total": purchase.quantity,  # Original currency amount
+                    "total_amount": purchase.quantity,  # Original currency amount
+                    "total_egy": flt(purchase.total_egy)  # EGY amount
+                })
+                
+                total_purchases += flt(purchase.total_egy)  # Use EGY amount for total
+            
+            # Format total_purchases with EGP currency indicator
+            self.total_purchase = f"EGP {frappe.format(total_purchases, 'Currency')}"
+            
+        except Exception as e:
+            frappe.log_error(
+                message=f"Error fetching purchase transactions: {str(e)}\n{frappe.get_traceback()}",
+                title="Close Shift Error"
+            )
+            frappe.throw(_("Error fetching purchase transactions: {0}").format(str(e)))
+
     def on_submit(self):
-        from teller.teller_customization.doctype.open_shift_for_branch.open_shift_for_branch import update_shift_end_date
-        
-        if self.open_shift:
+        """Handle shift closure on submit"""
+        try:
+            if not self.open_shift:
+                frappe.throw(_("Please select an Open Shift"))
+            
+            if not self.end_date:
+                frappe.throw(_("Please set an End Date"))
+            
+            # Import the function directly from the module
+            from teller.teller_customization.doctype.open_shift_for_branch.open_shift_for_branch import update_shift_end_date
+            
+            # Update the open shift's end date and status
             update_shift_end_date(self.open_shift, self.end_date)
+            
+        except Exception as e:
+            frappe.log_error(
+                message=f"Error during shift closure: {str(e)}\n{frappe.get_traceback()}",
+                title="Close Shift Error"
+            )
+            frappe.throw(_("Error closing shift: {0}").format(str(e)))
 
 @whitelist()
 def get_shift_details(shift):

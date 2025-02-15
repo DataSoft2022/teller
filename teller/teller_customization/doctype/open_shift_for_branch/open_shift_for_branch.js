@@ -6,49 +6,62 @@ frappe.ui.form.on("Open Shift for Branch", {
     if(frm.is_new()) {
       frm.set_value('shift_status', 'Active');
     }
-    // Hide current_user and end_date fields initially
-    frm.toggle_display('current_user', false);
-    frm.toggle_display('end_date', false);
+    
+    // Set query for printing roll to only show active rolls
+    frm.set_query("printing_roll", function() {
+      return {
+        filters: {
+          "active": 1
+        }
+      };
+    });
   },
 
   refresh: function(frm) {
-    // Show end_date only if shift is closed
-    frm.toggle_display('end_date', frm.doc.shift_status === 'Closed');
-  },
-
-  teller_treasury(frm) {
-    if (frm.doc.teller_treasury) {
-      // Show the current_user field
-      frm.toggle_display('current_user', true);
-      
-      frappe.call({
-        method: "teller.teller_customization.doctype.open_shift_for_branch.open_shift_for_branch.get_treasury_employees",
-        args: { treasury: frm.doc.teller_treasury },
-        callback: function (r) {
-          if (r.message && r.message.length > 0) {
-            frm.set_query("current_user", function () {
-              return {
-                filters: {
-                  name: ["in", r.message]
-                }
-              };
-            });
-          }
-        }
+    // Add close shift button for active shifts
+    if(frm.doc.docstatus === 1 && frm.doc.shift_status === "Active") {
+      frm.page.set_primary_action(__("Close Shift"), function() {
+        frappe.model.open_mapped_doc({
+          method: "teller.teller_customization.doctype.open_shift_for_branch.open_shift_for_branch.make_close_shift",
+          frm: frm
+        });
       });
-    } else {
-      // Hide the current_user field if no treasury is selected
-      frm.toggle_display('current_user', false);
-      frm.set_value('current_user', ''); // Clear the value
-      frappe.throw("Select a Teller Treasury");
     }
   },
 
-  create_close_shift: function(frm) {
-    frappe.model.open_mapped_doc({
-      method: "teller.teller_customization.doctype.open_shift_for_branch.open_shift_for_branch.make_close_shift",
-      frm: frm
-    });
+  current_user: function(frm) {
+    // When employee is selected, fetch their details
+    if(frm.doc.current_user) {
+      // First get employee details including user_id
+      frappe.db.get_value('Employee', frm.doc.current_user, 
+        ['branch', 'employee_name', 'user_id'])
+        .then(r => {
+          let values = r.message;
+          frm.set_value('branch', values.branch);
+          frm.set_value('employee_name', values.employee_name);
+          
+          // Then get teller_treasury from user permissions
+          if (values.user_id) {
+            return frappe.db.get_list('User Permission', {
+              filters: {
+                'user': values.user_id,
+                'allow': 'Teller Treasury'
+              },
+              fields: ['for_value']
+            });
+          }
+        })
+        .then(r => {
+          if (r && r.length > 0) {
+            frm.set_value('treasury_permission', r[0].for_value);
+          }
+        });
+    } else {
+      // Clear values if no employee selected
+      frm.set_value('branch', '');
+      frm.set_value('employee_name', '');
+      frm.set_value('treasury_permission', '');
+    }
   }
 });
 
@@ -56,19 +69,13 @@ frappe.ui.form.on("Open Shift for Branch", {
 ///////////////////////////////  indecators status  //////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////
 frappe.listview_settings["Open Shift For Branch"]= {
-  add_fields: [
-    "shift_status", // Ensure entry_type is included in the fields
-    // other fields...
-  ],
+  add_fields: ["shift_status"],
   
   get_indicator: function (doc) {
-    console.log("Processing document:", doc);
     if (doc.shift_status === "Active") {
-      return [__("Active"), "green", "status,=,Active"];
-  
-    }else if (doc.status == "Closed") {
-      return [__("Closed"), "red", "status,=,Closed"];
+      return [__("Active"), "green", "shift_status,=,Active"];
+    } else if (doc.shift_status === "Closed") {
+      return [__("Closed"), "red", "shift_status,=,Closed"];
     }
-  
   }
 }
