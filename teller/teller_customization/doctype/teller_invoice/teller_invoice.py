@@ -740,28 +740,48 @@ class TellerInvoice(Document):
         pass
 
     def set_treasury_details(self):
-        # Get the employee linked to the current user
-        employee = frappe.db.get_value('Employee', {'user_id': frappe.session.user}, 'name')
-        if not employee:
-            frappe.throw(_("No employee found for user {0}").format(frappe.session.user))
-        
-        # Get active shift for current employee
-        active_shift = frappe.db.get_value(
-            "Open Shift for Branch",
-            {
-                "current_user": employee,
-                "shift_status": "Active",
-                "docstatus": 1
-            },
-            "treasury_permission"
-        )
-        
-        if active_shift:
-            treasury = frappe.get_doc("Teller Treasury", active_shift)
-            if treasury:
-                self.treasury_code = treasury.name
+        """Set treasury details from employee's active shift"""
+        try:
+            # Get the employee linked to the current user
+            employee = frappe.db.get_value('Employee', {'user_id': frappe.session.user}, 'name')
+            if not employee:
+                frappe.throw(_("No employee found for user {0}. Please link an Employee record to this user.").format(frappe.session.user))
+            
+            # Get active shift for current employee
+            active_shift = frappe.get_all(
+                "Open Shift for Branch",
+                filters={
+                    "current_user": employee,
+                    "shift_status": "Active",
+                    "docstatus": 1
+                },
+                fields=["name", "treasury_permission"],
+                order_by="creation desc",
+                limit=1
+            )
+            
+            if not active_shift:
+                frappe.throw(_("No active shift found. Please ask your supervisor to open a shift for you."))
+                
+            shift = active_shift[0]
+            
+            # Get Teller Treasury details
+            treasury = frappe.get_doc("Teller Treasury", shift.treasury_permission)
+            if not treasury:
+                frappe.throw(_("Teller Treasury not found"))
+                
+            # Set treasury code and branch details
+            self.treasury_code = treasury.name
+            if treasury.branch:
                 self.branch_no = treasury.branch
                 self.branch_name = frappe.db.get_value("Branch", treasury.branch, "custom_branch_no")
+            
+        except Exception as e:
+            frappe.log_error(
+                message=f"Error setting treasury details: {str(e)}\nTraceback: {frappe.get_traceback()}",
+                title="Treasury Setup Error"
+            )
+            frappe.throw(_("Error setting treasury details: {0}").format(str(e)))
 
     def validate_active_shift(self):
         """Validate user has active shift"""
