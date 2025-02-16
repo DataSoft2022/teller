@@ -273,7 +273,6 @@ class TellerPurchase(Document):
             for row in self.purchase_transactions:
                 if not row.egy_amount:
                     continue
-                
                 if not row.account:
                     frappe.throw(_("You must enter all required fields in row {0}").format(row.idx))
                 
