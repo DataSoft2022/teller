@@ -461,11 +461,13 @@ class TellerPurchase(Document):
             # Set receipt number
             self.purchase_receipt_number = formatted_number
             
-            # Update printing roll's last number
-            # We'll only save this after successful submission in on_submit
-            self.next_receipt_number = next_number
+            # Update printing roll's last number immediately
+            printing_roll.db_set('last_printed_number', next_number)
+            
+            frappe.db.commit()
             
         except Exception as e:
+            frappe.db.rollback()
             frappe.log_error(
                 message=f"Error in before_submit: {str(e)}\nTraceback: {frappe.get_traceback()}",
                 title="Submit Error"
@@ -711,6 +713,29 @@ class TellerPurchase(Document):
             )
             raise
 
+    def get_modified_fields(self):
+        """Get list of fields that were modified"""
+        modified_fields = []
+        doc_before_save = self.get_doc_before_save()
+        if not doc_before_save:
+            return modified_fields
+            
+        # System fields that should be ignored in modification check
+        ignored_fields = {
+            'modified', 'modified_by', 'creation', 'owner', 
+            'idx', 'naming_series', 'docstatus', 'name',
+            'amended_from', 'amendment_date', '_user_tags', 
+            '_comments', '_assign', '_liked_by', '__islocal',
+            '__unsaved', '__run_link_triggers', '__onload'
+        }
+        
+        for key in self.as_dict():
+            if (key not in ignored_fields and 
+                doc_before_save.get(key) != self.get(key)):
+                modified_fields.append(key)
+            
+        return modified_fields
+
     def validate_update_after_submit(self):
         """Custom validation for updates after submission"""
         if self.docstatus == 1:
@@ -721,7 +746,12 @@ class TellerPurchase(Document):
                 return
                 
             # Only allow specific fields to be updated after submit
-            allowed_fields = ['is_returned', 'egy']
+            allowed_fields = [
+                'is_returned', 
+                'egy',
+                'purchase_receipt_number',  # Allow receipt number changes
+                'movement_number'  # Also allow movement number as it's related
+            ]
             
             # For system managers/administrators, allow a few more fields
             if frappe.session.user == "Administrator" or "System Manager" in frappe.get_roles():
