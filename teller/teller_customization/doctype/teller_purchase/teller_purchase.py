@@ -597,7 +597,7 @@ class TellerPurchase(Document):
                 self.branch_no = treasury.branch
                 self.branch_name = frappe.db.get_value("Branch", treasury.branch, "custom_branch_no")
             
-            # Just set the current_roll field, don't generate receipt number yet
+            # Handle printing roll
             if shift.printing_roll:
                 printing_roll = frappe.get_doc("Printing Roll", shift.printing_roll)
                 if not printing_roll.active:
@@ -606,6 +606,7 @@ class TellerPurchase(Document):
                 if printing_roll.last_printed_number >= printing_roll.end_count:
                     frappe.throw(_("Printing roll has reached its end count. Please configure a new roll."))
                     
+                # Set current_roll as string instead of list
                 self.current_roll = printing_roll.name
             
         except Exception as e:
@@ -710,6 +711,41 @@ class TellerPurchase(Document):
                 title="Shift Validation Error"
             )
             raise
+
+    def validate_update_after_submit(self):
+        """Custom validation for updates after submission"""
+        if self.docstatus == 1:
+            # Get the list of changed fields
+            changed_fields = self.get_modified_fields()
+            
+            if not changed_fields:
+                return
+                
+            # Only allow specific fields to be updated after submit
+            allowed_fields = ['is_returned', 'egy']
+            
+            # For system managers/administrators, allow a few more fields
+            if frappe.session.user == "Administrator" or "System Manager" in frappe.get_roles():
+                allowed_fields.extend(['workflow_state', 'status'])
+            
+            # Check if any non-allowed fields were changed
+            for field in changed_fields:
+                if field not in allowed_fields:
+                    # Special handling for egy_balance
+                    if field == 'egy_balance':
+                        self.db_set('egy_balance', self.get_doc_before_save().egy_balance)
+                    else:
+                        frappe.throw(
+                            _("Not allowed to change {0} after submission").format(field),
+                            title=_("Cannot Modify")
+                        )
+
+    def on_update_after_submit(self):
+        """Handle updates after submit"""
+        # Prevent egy_balance from being changed directly
+        doc_before_save = self.get_doc_before_save()
+        if doc_before_save and self.egy_balance != doc_before_save.egy_balance:
+            self.db_set('egy_balance', doc_before_save.egy_balance)
 
 
 # get currency and currency rate from each account
