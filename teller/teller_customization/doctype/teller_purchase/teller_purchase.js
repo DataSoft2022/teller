@@ -18,6 +18,17 @@ frappe.ui.form.on("Teller Purchase", {
     if (frm.doc.docstatus === 1) {
       makeIdentificationFieldsReadOnly(frm);
     }
+    
+    // Set branch details if missing
+    if (!frm.doc.branch_name && frm.doc.branch_no) {
+      frappe.db.get_value('Branch', frm.doc.branch_no, 'custom_branch_no')
+        .then(r => {
+          if (r.message && r.message.custom_branch_no) {
+            frm.set_value('branch_name', r.message.custom_branch_no);
+            frm.refresh_field('branch_name');
+          }
+        });
+    }
   },
 
   buyer_card_type: function(frm) {
@@ -208,6 +219,16 @@ frappe.ui.form.on("Teller Purchase", {
     if (frm.doc.buyer_national_id) {
       validateNationalId(frm, frm.doc.buyer_national_id);
     }
+
+    // Ensure branch details are set before saving
+    if (!frm.doc.branch_name && frm.doc.branch_no) {
+      frappe.db.get_value('Branch', frm.doc.branch_no, 'custom_branch_no')
+        .then(r => {
+          if (r.message && r.message.custom_branch_no) {
+            frm.set_value('branch_name', r.message.custom_branch_no);
+          }
+        });
+    }
   },
   // filters accounts with cash ,is group False and account currency not EGY
   // setup: function (frm) {
@@ -281,34 +302,40 @@ frappe.ui.form.on("Teller Purchase", {
   },
 
   refresh(frm) {
-    // Make ID fields visible and read-only
-    makeIdentificationFieldsReadOnly(frm);
-    
-    if (frm.doc.docstatus == 1 && !frm.doc.is_return) {
-      frm.add_custom_button(__("Return / Credit Note"), () => {
-        frappe.confirm(
-          'Are you sure you want to convert this document to a return? This will reverse all GL entries.',
-          () => {
-            frm.call({
-              method: "teller.teller_customization.doctype.teller_purchase.teller_purchase.make_purchase_return",
-              args: {
-                doc: frm.doc
-              },
-              freeze: true,
-              freeze_message: __("Converting to Return..."),
-              callback: (r) => {
-                if (r.message) {
-                  frappe.show_alert({
-                    message: __("Document converted to return successfully"),
-                    indicator: 'green'
-                  });
-                  frm.reload_doc();
-                }
-              }
-            });
+    // Ensure branch name is displayed correctly
+    if (!frm.doc.branch_name && frm.doc.branch_no) {
+      frappe.db.get_value('Branch', frm.doc.branch_no, 'custom_branch_no')
+        .then(r => {
+          if (r.message && r.message.custom_branch_no) {
+            frm.set_value('branch_name', r.message.custom_branch_no);
+            frm.refresh_field('branch_name');
           }
-        );
-      }, __("Create"));
+        });
+    }
+    
+    // Handle submit button visibility
+    if (frm.doc.docstatus === 0) {
+      setTimeout(() => {
+        if (frm.page.btn_primary && frm.page.btn_primary.is(':hidden')) {
+          frm.page.btn_primary.show();
+        }
+      }, 100);
+    }
+    
+    // Add custom buttons for submitted documents
+    if (frm.doc.docstatus === 1) {
+      if (!frm.doc.is_returned) {
+        frm.add_custom_button(__('Return'), function() {
+          make_return(frm);
+        }, __('Create'));
+      }
+      
+      // Add print button if needed
+      if (frm.doc.purchase_receipt_number) {
+        frm.add_custom_button(__('Print Receipt'), function() {
+          frappe.show_alert('Printing functionality to be implemented');
+        });
+      }
     }
 
     // Show general ledger button
