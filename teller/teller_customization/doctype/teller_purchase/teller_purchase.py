@@ -750,7 +750,10 @@ class TellerPurchase(Document):
                 'is_returned', 
                 'egy',
                 'purchase_receipt_number',  # Allow receipt number changes
-                'movement_number'  # Also allow movement number as it's related
+                'movement_number',  # Also allow movement number as it's related
+                'date',  # Allow date to be set during submission
+                'closing_date',  # Allow closing date to be set during submission
+                'posting_date'  # Allow posting date to be set during submission
             ]
             
             # For system managers/administrators, allow a few more fields
