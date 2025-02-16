@@ -1423,7 +1423,7 @@ async function getCustomerTotalAmount(buyerName) {
       method:
         "teller.teller_customization.doctype.teller_purchase.teller_purchase.get_customer_total_amount",
       args: {
-        buyer_name: buyerName,
+        client_name: buyerName,
         duration: limiDuration,
       },
       callback: function (r) {
