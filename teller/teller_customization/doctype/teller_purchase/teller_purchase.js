@@ -7,13 +7,23 @@ frappe.ui.form.on("Teller Purchase", {
   },
 
   onload: function(frm) {
-    // Set initial values for ID fields
-    frm.set_value('buyer_national_id', '');
-    frm.set_value('buyer_passport_number', '');
-    frm.set_value('buyer_military_number', '');
+    // Only clear ID fields for new documents
+    if (frm.is_new()) {
+      frm.set_value('buyer_national_id', '');
+      frm.set_value('buyer_passport_number', '');
+      frm.set_value('buyer_military_number', '');
+    }
+    
+    // For submitted documents, ensure fields are read-only
+    if (frm.doc.docstatus === 1) {
+      makeIdentificationFieldsReadOnly(frm);
+    }
   },
 
   buyer_card_type: function(frm) {
+    // Don't modify fields if document is submitted
+    if (frm.doc.docstatus === 1) return;
+    
     // Clear all ID fields first
     frm.set_value('buyer_national_id', '');
     frm.set_value('buyer_passport_number', '');
@@ -1527,8 +1537,8 @@ function showIdentificationFields(frm) {
   fields.forEach(field => {
     // Make field visible
     frm.set_df_property(field, 'hidden', 0);
-    // Make field read-only
-    frm.set_df_property(field, 'read_only', 1);
+    // Make field read-only only if document is submitted
+    frm.set_df_property(field, 'read_only', frm.doc.docstatus === 1);
     // Ensure field is rendered
     if (frm.fields_dict[field]) {
       frm.fields_dict[field].refresh();
@@ -1555,7 +1565,8 @@ function makeIdentificationFieldsReadOnly(frm) {
   
   fields.forEach(field => {
     frm.set_df_property(field, 'hidden', 0);
-    frm.set_df_property(field, 'read_only', 1);
+    // Make field read-only only if document is submitted
+    frm.set_df_property(field, 'read_only', frm.doc.docstatus === 1);
     if (frm.fields_dict[field]) {
       frm.fields_dict[field].refresh();
     }
@@ -1565,22 +1576,25 @@ function makeIdentificationFieldsReadOnly(frm) {
 }
 
 function clearFieldsBasedOnCategory(frm) {
-  if (frm.doc.category_of_buyer !== "Egyptian" && frm.doc.category_of_buyer !== "Foreigner") {
-    const individualFields = [
-      'buyer_name', 'buyer_gender', 'buyer_nationality',
-      'buyer_mobile_number', 'buyer_work_for', 'buyer_phone', 'buyer_place_of_birth',
-      'buyer_date_of_birth', 'buyer_job_title', 'buyer_address'
-    ];
-    individualFields.forEach(field => frm.set_value(field, ''));
-  }
-  
-  if (frm.doc.category_of_buyer !== "Company" && frm.doc.category_of_buyer !== "Interbank") {
-    const companyFields = [
-      'buyer_company_name', 'buyer_company_activity', 'buyer_company_commercial_no',
-      'buyer_company_end_date', 'buyer_company_start_date',
-      'buyer_company_address', 'buyer_expired', 'interbank', 'buyer_company_legal_form'
-    ];
-    companyFields.forEach(field => frm.set_value(field, ''));
+  // Only clear fields if document is not submitted
+  if (frm.doc.docstatus !== 1) {
+    if (frm.doc.category_of_buyer !== "Egyptian" && frm.doc.category_of_buyer !== "Foreigner") {
+      const individualFields = [
+        'buyer_name', 'buyer_gender', 'buyer_nationality',
+        'buyer_mobile_number', 'buyer_work_for', 'buyer_phone', 'buyer_place_of_birth',
+        'buyer_date_of_birth', 'buyer_job_title', 'buyer_address'
+      ];
+      individualFields.forEach(field => frm.set_value(field, ''));
+    }
+    
+    if (frm.doc.category_of_buyer !== "Company" && frm.doc.category_of_buyer !== "Interbank") {
+      const companyFields = [
+        'buyer_company_name', 'buyer_company_activity', 'buyer_company_commercial_no',
+        'buyer_company_end_date', 'buyer_company_start_date',
+        'buyer_company_address', 'buyer_expired', 'interbank', 'buyer_company_legal_form'
+      ];
+      companyFields.forEach(field => frm.set_value(field, ''));
+    }
   }
   
   frm.refresh_fields();
