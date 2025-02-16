@@ -1,19 +1,11 @@
 # Copyright (c) 2024, Mohamed AbdElsabour and contributors
 # For license information, please see license.txt
+
 import frappe
 from frappe import _
 import json
 from frappe.model.mapper import get_mapped_doc
 from frappe.utils import get_url_to_form
-
-from frappe.utils import (# Copyright (c) 2024, Mohamed AbdElsabour and contributors
-# For license information, please see license.txt
-import frappe
-from frappe import _
-import json
-from frappe.model.mapper import get_mapped_doc
-from frappe.utils import get_url_to_form
-
 from frappe.utils import (
     add_days,
     cint,
@@ -33,7 +25,6 @@ from erpnext.accounts.utils import (
     get_fiscal_year,
 )
 from frappe import _, utils
-
 from erpnext.accounts.general_ledger import (
     make_reverse_gl_entries,
     make_gl_entries,
@@ -1150,12 +1141,40 @@ def account_to_balance(paid_to):
 
 @frappe.whitelist(allow_guest=True)
 def get_printing_roll():
-    active_roll = frappe.db.get_list(
-        "Printing Roll", {"active": 1}, ["name", "last_printed_number"]
-    )
-    if active_roll:
-        return active_roll[0]["name"], active_roll[0]["last_printed_number"]
-    else:
+    """Get the active printing roll and its last printed number"""
+    try:
+        # Get the employee linked to the current user
+        employee = frappe.db.get_value('Employee', {'user_id': frappe.session.user}, 'name')
+        if not employee:
+            return None, None
+            
+        # Get active shift for current employee
+        active_shift = frappe.db.get_value(
+            "Open Shift for Branch",
+            {
+                "current_user": employee,
+                "shift_status": "Active",
+                "docstatus": 1
+            },
+            ["name", "printing_roll"],
+            as_dict=1
+        )
+        
+        if not active_shift or not active_shift.printing_roll:
+            return None, None
+            
+        # Get printing roll details
+        printing_roll = frappe.get_doc("Printing Roll", active_shift.printing_roll)
+        if not printing_roll.active:
+            return None, None
+            
+        return printing_roll.name, printing_roll.last_printed_number
+        
+    except Exception as e:
+        frappe.log_error(
+            message=f"Error getting printing roll: {str(e)}\nTraceback: {frappe.get_traceback()}",
+            title="Printing Roll Error"
+        )
         return None, None
 
 
