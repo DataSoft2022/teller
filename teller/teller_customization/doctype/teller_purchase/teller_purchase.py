@@ -115,11 +115,22 @@ class TellerPurchase(Document):
             frappe.throw(_("Validation error: {0}").format(str(e)))
 
     def before_save(self):
-        self.set_customer_invoices()
-        if self.category_of_buyer == "Egyptian" or self.category_of_buyer == "Foreigner":
-            self.update_buyer_history()
-        elif self.category_of_buyer == "Company":
-            self.update_company_history()
+        """Handle operations before saving"""
+        try:
+            # Set customer invoices if buyer exists
+            if self.buyer:
+                self.set_customer_invoices()
+            
+            # Ensure branch details are preserved
+            if not self.branch_name and self.branch_no:
+                self.branch_name = frappe.db.get_value("Branch", self.branch_no, "custom_branch_no")
+            
+        except Exception as e:
+            frappe.log_error(
+                message=f"Error in before_save: {str(e)}\nTraceback: {frappe.get_traceback()}",
+                title="Save Error"
+            )
+            frappe.throw(_("Error before saving: {0}").format(str(e)))
 
     def on_submit(self):
         """Create GL entries when document is submitted"""
@@ -749,11 +760,13 @@ class TellerPurchase(Document):
             allowed_fields = [
                 'is_returned', 
                 'egy',
-                'purchase_receipt_number',  # Allow receipt number changes
-                'movement_number',  # Also allow movement number as it's related
-                'date',  # Allow date to be set during submission
-                'closing_date',  # Allow closing date to be set during submission
-                'posting_date'  # Allow posting date to be set during submission
+                'purchase_receipt_number',
+                'movement_number',
+                'date',
+                'closing_date',
+                'posting_date',
+                'branch_name',  # Allow branch_name to be updated
+                'branch_no'     # Allow branch_no to be updated
             ]
             
             # For system managers/administrators, allow a few more fields
@@ -774,10 +787,24 @@ class TellerPurchase(Document):
 
     def on_update_after_submit(self):
         """Handle updates after submit"""
-        # Prevent egy_balance from being changed directly
-        doc_before_save = self.get_doc_before_save()
-        if doc_before_save and self.egy_balance != doc_before_save.egy_balance:
-            self.db_set('egy_balance', doc_before_save.egy_balance)
+        try:
+            # Prevent egy_balance from being changed directly
+            doc_before_save = self.get_doc_before_save()
+            if doc_before_save and self.egy_balance != doc_before_save.egy_balance:
+                self.db_set('egy_balance', doc_before_save.egy_balance)
+            
+            # Ensure branch details are preserved
+            if not self.branch_name and self.branch_no:
+                branch_name = frappe.db.get_value("Branch", self.branch_no, "custom_branch_no")
+                if branch_name:
+                    self.db_set('branch_name', branch_name)
+                
+        except Exception as e:
+            frappe.log_error(
+                message=f"Error in on_update_after_submit: {str(e)}\nTraceback: {frappe.get_traceback()}",
+                title="Update Error"
+            )
+            frappe.throw(_("Error during update: {0}").format(str(e)))
 
 
 # get currency and currency rate from each account
