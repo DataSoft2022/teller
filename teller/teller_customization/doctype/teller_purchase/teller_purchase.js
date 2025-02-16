@@ -1008,11 +1008,13 @@ frappe.ui.form.on("Teller Purchase", {
 frappe.ui.form.on("Teller Purchase Child", {
     currency_code: function(frm, cdt, cdn) {
         let row = locals[cdt][cdn];
+        console.log("Currency code changed:", row.currency_code); // Debug message
+        
         if (row.currency_code) {
             // Get account and currency based on currency code
-      frappe.call({
+            frappe.call({
                 method: 'frappe.client.get_list',
-        args: {
+                args: {
                     doctype: 'Account',
                     filters: {
                         'custom_currency_code': row.currency_code,
@@ -1022,56 +1024,70 @@ frappe.ui.form.on("Teller Purchase Child", {
                     limit: 1
                 },
                 callback: function(account_response) {
+                    console.log("Account response:", account_response); // Debug message
                     if (account_response.message && account_response.message.length > 0) {
                         let account = account_response.message[0];
                         
-                        // Set the account
-                        frappe.model.set_value(cdt, cdn, 'account', account.name);
-                        
-                        // Set the currency
+                        // Set the currency first
                         frappe.model.set_value(cdt, cdn, 'currency', account.account_currency);
                         
-                        // Get exchange rate
+                        // Get exchange rate before setting account
                         frappe.call({
                             method: 'frappe.client.get_list',
                             args: {
                                 doctype: 'Currency Exchange',
                                 filters: {
-                                    'from_currency': account.account_currency
+                                    'from_currency': account.account_currency,
+                                    'to_currency': 'EGP'
                                 },
-                                fields: ['custom_special_purchasing'],
-                                order_by: 'creation desc',
+                                fields: ['custom_special_purchasing', 'exchange_rate'],
+                                order_by: 'date desc, creation desc',
                                 limit: 1
                             },
                             callback: function(rate_response) {
+                                console.log("Rate response:", rate_response); // Debug message
                                 if (rate_response.message && rate_response.message.length > 0) {
-                                    frappe.model.set_value(cdt, cdn, 'exchange_rate', 
-                                        rate_response.message[0].custom_special_purchasing);
+                                    let rate = rate_response.message[0];
+                                    // Use special purchasing rate if available, otherwise use regular exchange rate
+                                    let exchange_rate = rate.custom_special_purchasing || rate.exchange_rate;
+                                    
+                                    if (exchange_rate) {
+                                        // Set both the account and exchange rate together to prevent race conditions
+                                        frappe.model.set_value(cdt, cdn, 'exchange_rate', exchange_rate);
+                                        frappe.model.set_value(cdt, cdn, 'account', account.name);
+                                        
+                                        // Get account balance
+                                        frappe.call({
+                                            method: 'teller.teller_customization.doctype.teller_purchase.teller_purchase.account_from_balance',
+                                            args: {
+                                                paid_from: account.name
+                                            },
+                                            callback: function(balance_response) {
+                                                if (balance_response.message) {
+                                                    frappe.model.set_value(cdt, cdn, 'balance_after', balance_response.message);
+                                                }
+                                            }
+                                        });
+                                    } else {
+                                        frappe.msgprint(__('No valid exchange rate found for currency ' + account.account_currency));
+                                    }
+                                } else {
+                                    frappe.msgprint(__('No exchange rate record found for currency ' + account.account_currency));
                                 }
                             }
                         });
-
-                        // Get account balance
-      frappe.call({
-                            method: 'teller.teller_customization.doctype.teller_purchase.teller_purchase.account_from_balance',
-        args: {
-                                paid_from: account.name
-                            },
-                            callback: function(balance_response) {
-                                if (balance_response.message) {
-                                    frappe.model.set_value(cdt, cdn, 'balance_after', balance_response.message);
-                                }
-                            }
-                        });
+                    } else {
+                        frappe.msgprint(__('No account found for currency code ' + row.currency_code));
                     }
                 }
-      });
-    }
-  },
+            });
+        }
+    },
 
     account: function(frm, cdt, cdn) {
         let row = locals[cdt][cdn];
-        if (row.account) {
+        // Only proceed if the exchange rate is not already set
+        if (row.account && !row.exchange_rate) {
             // Get currency and currency code from account
             frappe.call({
                 method: 'frappe.client.get',
@@ -1087,25 +1103,31 @@ frappe.ui.form.on("Teller Purchase Child", {
                         frappe.model.set_value(cdt, cdn, 'currency_code', account.custom_currency_code);
                         frappe.model.set_value(cdt, cdn, 'currency', account.account_currency);
                         
-                        // Get exchange rate
-    frappe.call({
-                            method: 'frappe.client.get_list',
-      args: {
-                                doctype: 'Currency Exchange',
-                                filters: {
-                                    'from_currency': account.account_currency
+                        // Only get exchange rate if it's not already set
+                        if (!row.exchange_rate) {
+                            frappe.call({
+                                method: 'frappe.client.get_list',
+                                args: {
+                                    doctype: 'Currency Exchange',
+                                    filters: {
+                                        'from_currency': account.account_currency,
+                                        'to_currency': 'EGP'
+                                    },
+                                    fields: ['custom_special_purchasing', 'exchange_rate'],
+                                    order_by: 'date desc, creation desc',
+                                    limit: 1
                                 },
-                                fields: ['custom_special_purchasing'],
-                                order_by: 'creation desc',
-                                limit: 1
-                            },
-                            callback: function(rate_response) {
-                                if (rate_response.message && rate_response.message.length > 0) {
-                                    frappe.model.set_value(cdt, cdn, 'exchange_rate', 
-                                        rate_response.message[0].custom_special_purchasing);
+                                callback: function(rate_response) {
+                                    if (rate_response.message && rate_response.message.length > 0) {
+                                        let rate = rate_response.message[0];
+                                        let exchange_rate = rate.custom_special_purchasing || rate.exchange_rate;
+                                        if (exchange_rate) {
+                                            frappe.model.set_value(cdt, cdn, 'exchange_rate', exchange_rate);
+                                        }
+                                    }
                                 }
-                            }
-                        });
+                            });
+                        }
                     }
                 }
             });
