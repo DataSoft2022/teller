@@ -115,11 +115,22 @@ class TellerPurchase(Document):
             frappe.throw(_("Validation error: {0}").format(str(e)))
 
     def before_save(self):
-        self.set_customer_invoices()
-        if self.category_of_buyer == "Egyptian" or self.category_of_buyer == "Foreigner":
-            self.update_buyer_history()
-        elif self.category_of_buyer == "Company":
-            self.update_company_history()
+        """Handle operations before saving"""
+        try:
+            # Set customer invoices if buyer exists
+            if self.buyer:
+                self.set_customer_invoices()
+            
+            # Ensure branch details are preserved
+            if not self.branch_name and self.branch_no:
+                self.branch_name = frappe.db.get_value("Branch", self.branch_no, "custom_branch_no")
+            
+        except Exception as e:
+            frappe.log_error(
+                message=f"Error in before_save: {str(e)}\nTraceback: {frappe.get_traceback()}",
+                title="Save Error"
+            )
+            frappe.throw(_("Error before saving: {0}").format(str(e)))
 
     def on_submit(self):
         """Create GL entries when document is submitted"""
@@ -273,7 +284,6 @@ class TellerPurchase(Document):
             for row in self.purchase_transactions:
                 if not row.egy_amount:
                     continue
-                
                 if not row.account:
                     frappe.throw(_("You must enter all required fields in row {0}").format(row.idx))
                 
@@ -462,11 +472,13 @@ class TellerPurchase(Document):
             # Set receipt number
             self.purchase_receipt_number = formatted_number
             
-            # Update printing roll's last number
-            # We'll only save this after successful submission in on_submit
-            self.next_receipt_number = next_number
+            # Update printing roll's last number immediately
+            printing_roll.db_set('last_printed_number', next_number)
+            
+            frappe.db.commit()
             
         except Exception as e:
+            frappe.db.rollback()
             frappe.log_error(
                 message=f"Error in before_submit: {str(e)}\nTraceback: {frappe.get_traceback()}",
                 title="Submit Error"
@@ -597,7 +609,7 @@ class TellerPurchase(Document):
                 self.branch_no = treasury.branch
                 self.branch_name = frappe.db.get_value("Branch", treasury.branch, "custom_branch_no")
             
-            # Just set the current_roll field, don't generate receipt number yet
+            # Handle printing roll
             if shift.printing_roll:
                 printing_roll = frappe.get_doc("Printing Roll", shift.printing_roll)
                 if not printing_roll.active:
@@ -606,6 +618,7 @@ class TellerPurchase(Document):
                 if printing_roll.last_printed_number >= printing_roll.end_count:
                     frappe.throw(_("Printing roll has reached its end count. Please configure a new roll."))
                     
+                # Set current_roll as string instead of list
                 self.current_roll = printing_roll.name
             
         except Exception as e:
@@ -710,6 +723,117 @@ class TellerPurchase(Document):
                 title="Shift Validation Error"
             )
             raise
+
+    def get_modified_fields(self):
+        """Get list of fields that were modified"""
+        modified_fields = []
+        doc_before_save = self.get_doc_before_save()
+        if not doc_before_save:
+            return modified_fields
+            
+        # System fields that should be ignored in modification check
+        ignored_fields = {
+            'modified', 'modified_by', 'creation', 'owner', 
+            'idx', 'naming_series', 'docstatus', 'name',
+            'amended_from', 'amendment_date', '_user_tags', 
+            '_comments', '_assign', '_liked_by', '__islocal',
+            '__unsaved', '__run_link_triggers', '__onload'
+        }
+        
+        for key in self.as_dict():
+            if (key not in ignored_fields and 
+                doc_before_save.get(key) != self.get(key)):
+                modified_fields.append(key)
+            
+        return modified_fields
+
+    def validate_update_after_submit(self):
+        """Custom validation for updates after submission"""
+        if self.docstatus == 1:
+            # Get the list of changed fields
+            changed_fields = self.get_modified_fields()
+            
+            if not changed_fields:
+                return
+                
+            # Only allow specific fields to be updated after submit
+            allowed_fields = [
+                'is_returned', 
+                'egy',
+                'purchase_receipt_number',
+                'movement_number',
+                'date',
+                'closing_date',
+                'posting_date',
+                'branch_name',
+                'branch_no',
+                # Allow child table updates
+                'purchase_transactions',
+                # Buyer-related fields that can be updated
+                'buyer_name',
+                'buyer_date_of_birth',
+                'buyer_nationality',
+                'buyer_mobile_number',
+                'buyer_work_for',
+                'buyer_phone',
+                'buyer_place_of_birth',
+                'buyer_job_title',
+                'buyer_address',
+                'buyer_expired',
+                'buyer_issue_date',
+                'buyer_gender',
+                # Company-related fields
+                'buyer_company_name',
+                'buyer_company_activity',
+                'buyer_company_commercial_no',
+                'buyer_company_start_date',
+                'buyer_company_end_date',
+                'buyer_company_address',
+                'buyer_company_legal_form',
+                'is_expired1',
+                'interbank'
+            ]
+            
+            # For system managers/administrators, allow a few more fields
+            if frappe.session.user == "Administrator" or "System Manager" in frappe.get_roles():
+                allowed_fields.extend(['workflow_state', 'status'])
+            
+            # Check if any non-allowed fields were changed
+            for field in changed_fields:
+                if field not in allowed_fields:
+                    # Special handling for egy_balance
+                    if field == 'egy_balance':
+                        self.db_set('egy_balance', self.get_doc_before_save().egy_balance)
+                    else:
+                        # Special handling for child table changes
+                        if field == 'purchase_transactions' and self.is_returned:
+                            # Allow changes to purchase_transactions if this is a return
+                            continue
+                        frappe.throw(
+                            _("Not allowed to change {0} after submission").format(field),
+                            title=_("Cannot Modify")
+                        )
+
+    def on_update_after_submit(self):
+        """Handle updates after submit"""
+        try:
+            # Prevent egy_balance from being changed directly
+            doc_before_save = self.get_doc_before_save()
+            if doc_before_save and self.egy_balance != doc_before_save.egy_balance:
+                self.db_set('egy_balance', doc_before_save.egy_balance)
+            
+            # Ensure branch details are preserved
+            if not self.branch_name and self.branch_no:
+                branch_name = frappe.db.get_value("Branch", self.branch_no, "custom_branch_no")
+                if branch_name:
+                    self.db_set('branch_name', branch_name)
+                
+        except Exception as e:
+            frappe.log_error(
+                message=f"Error in on_update_after_submit: {str(e)}\nTraceback: {frappe.get_traceback()}",
+                title="Update Error"
+            )
+            frappe.throw(_("Error during update: {0}").format(str(e)))
 
 
 # get currency and currency rate from each account
@@ -1122,3 +1246,43 @@ def search_buyer_by_id(search_id):
         })
     
     return response
+
+@frappe.whitelist()
+def get_treasury_accounts(doctype, txt, searchfield, start, page_len, filters):
+    """Get accounts linked to the specified treasury"""
+    try:
+        # Get the treasury code from filters
+        treasury_code = filters.get('treasury_code')
+        if not treasury_code:
+            return []
+            
+        # Build the query to get accounts linked to the treasury
+        # Only get accounts that:
+        # 1. Are linked to the treasury via custom_teller_treasury
+        # 2. Are not group accounts
+        # 3. Have a currency other than EGP
+        # 4. Are of type Cash or Bank
+        return frappe.db.sql("""
+            SELECT name, account_name, account_currency
+            FROM `tabAccount`
+            WHERE custom_teller_treasury = %s
+            AND is_group = 0
+            AND account_currency != 'EGP'
+            AND account_type in ('Cash', 'Bank')
+            AND (name LIKE %s OR account_name LIKE %s)
+            ORDER BY name
+            LIMIT %s, %s
+        """, (
+            treasury_code,
+            f"%{txt}%",
+            f"%{txt}%",
+            start,
+            page_len
+        ))
+            
+    except Exception as e:
+        frappe.log_error(
+            message=f"Error fetching treasury accounts: {str(e)}\nTraceback: {frappe.get_traceback()}",
+            title="Account Query Error"
+        )
+        return []

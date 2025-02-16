@@ -7,13 +7,34 @@ frappe.ui.form.on("Teller Purchase", {
   },
 
   onload: function(frm) {
-    // Set initial values for ID fields
-    frm.set_value('buyer_national_id', '');
-    frm.set_value('buyer_passport_number', '');
-    frm.set_value('buyer_military_number', '');
+    // Only clear ID fields for new documents
+    if (frm.is_new()) {
+      frm.set_value('buyer_national_id', '');
+      frm.set_value('buyer_passport_number', '');
+      frm.set_value('buyer_military_number', '');
+    }
+    
+    // For submitted documents, ensure fields are read-only
+    if (frm.doc.docstatus === 1) {
+      makeIdentificationFieldsReadOnly(frm);
+    }
+    
+    // Set branch details if missing
+    if (!frm.doc.branch_name && frm.doc.branch_no) {
+      frappe.db.get_value('Branch', frm.doc.branch_no, 'custom_branch_no')
+        .then(r => {
+          if (r.message && r.message.custom_branch_no) {
+            frm.set_value('branch_name', r.message.custom_branch_no);
+            frm.refresh_field('branch_name');
+          }
+        });
+    }
   },
 
   buyer_card_type: function(frm) {
+    // Don't modify fields if document is submitted
+    if (frm.doc.docstatus === 1) return;
+    
     // Clear all ID fields first
     frm.set_value('buyer_national_id', '');
     frm.set_value('buyer_passport_number', '');
@@ -198,6 +219,16 @@ frappe.ui.form.on("Teller Purchase", {
     if (frm.doc.buyer_national_id) {
       validateNationalId(frm, frm.doc.buyer_national_id);
     }
+
+    // Ensure branch details are set before saving
+    if (!frm.doc.branch_name && frm.doc.branch_no) {
+      frappe.db.get_value('Branch', frm.doc.branch_no, 'custom_branch_no')
+        .then(r => {
+          if (r.message && r.message.custom_branch_no) {
+            frm.set_value('branch_name', r.message.custom_branch_no);
+          }
+        });
+    }
   },
   // filters accounts with cash ,is group False and account currency not EGY
   // setup: function (frm) {
@@ -227,6 +258,16 @@ frappe.ui.form.on("Teller Purchase", {
   // },
 
   setup(frm) {
+    // Filter accounts in child table to only show accounts linked to user's treasury
+    frm.fields_dict["purchase_transactions"].grid.get_field("account").get_query = function(doc) {
+      return {
+        query: "teller.teller_customization.doctype.teller_purchase.teller_purchase.get_treasury_accounts",
+        filters: {
+          treasury_code: doc.treasury_code
+        }
+      };
+    };
+    
     // Make ID fields visible and read-only
     frm.set_df_property('buyer_national_id', 'hidden', 0);
     frm.set_df_property('buyer_passport_number', 'hidden', 0);
@@ -271,34 +312,40 @@ frappe.ui.form.on("Teller Purchase", {
   },
 
   refresh(frm) {
-    // Make ID fields visible and read-only
-    makeIdentificationFieldsReadOnly(frm);
+    // Ensure branch name is displayed correctly
+    if (!frm.doc.branch_name && frm.doc.branch_no) {
+      frappe.db.get_value('Branch', frm.doc.branch_no, 'custom_branch_no')
+        .then(r => {
+          if (r.message && r.message.custom_branch_no) {
+            frm.set_value('branch_name', r.message.custom_branch_no);
+            frm.refresh_field('branch_name');
+          }
+        });
+    }
     
-    if (frm.doc.docstatus == 1 && !frm.doc.is_return) {
-      frm.add_custom_button(__("Return / Credit Note"), () => {
-        frappe.confirm(
-          'Are you sure you want to convert this document to a return? This will reverse all GL entries.',
-          () => {
-            frm.call({
-              method: "teller.teller_customization.doctype.teller_purchase.teller_purchase.make_purchase_return",
-        args: {
-                doc: frm.doc
-              },
-              freeze: true,
-              freeze_message: __("Converting to Return..."),
-              callback: (r) => {
-          if (r.message) {
-                  frappe.show_alert({
-                    message: __("Document converted to return successfully"),
-                    indicator: 'green'
-                  });
-                  frm.reload_doc();
-          }
+    // Handle submit button visibility
+    if (frm.doc.docstatus === 0) {
+      setTimeout(() => {
+        if (frm.page.btn_primary && frm.page.btn_primary.is(':hidden')) {
+          frm.page.btn_primary.show();
         }
-      });
-          }
-        );
-      }, __("Create"));
+      }, 100);
+    }
+    
+    // Add custom buttons for submitted documents
+    if (frm.doc.docstatus === 1) {
+      if (!frm.doc.is_returned) {
+        frm.add_custom_button(__('Return'), function() {
+          make_return(frm);
+        }, __('Create'));
+      }
+      
+      // Add print button if needed
+      if (frm.doc.purchase_receipt_number) {
+        frm.add_custom_button(__('Print Receipt'), function() {
+          frappe.show_alert('Printing functionality to be implemented');
+        });
+      }
     }
 
     // Show general ledger button
@@ -331,7 +378,14 @@ frappe.ui.form.on("Teller Purchase", {
         method: "teller.teller_customization.doctype.teller_invoice.teller_invoice.get_printing_roll",
         callback: function(r) {
           if (r.message) {
-            frm.set_value('current_roll', r.message);
+            // Set current_roll as string value only (first element of the tuple)
+            frm.set_value('current_roll', r.message[0]);
+            
+            // Show a message to the user with the roll info
+            frappe.show_alert({
+              message: __(`Using Printing Roll: ${r.message[0]} (Last number: ${r.message[1]})`),
+              indicator: 'blue'
+            });
           }
         }
       });
@@ -355,7 +409,7 @@ frappe.ui.form.on("Teller Purchase", {
           if (user_account) {
             frm.set_value("egy", user_account);
           } else {
-          frappe.throw("There is no EGY account linked to this user");
+            frappe.throw("There is no EGY account linked to this user");
           }
         } else {
           frappe.throw("Error while getting user");
@@ -1008,11 +1062,13 @@ frappe.ui.form.on("Teller Purchase", {
 frappe.ui.form.on("Teller Purchase Child", {
     currency_code: function(frm, cdt, cdn) {
         let row = locals[cdt][cdn];
+        console.log("Currency code changed:", row.currency_code); // Debug message
+        
         if (row.currency_code) {
             // Get account and currency based on currency code
-      frappe.call({
+            frappe.call({
                 method: 'frappe.client.get_list',
-        args: {
+                args: {
                     doctype: 'Account',
                     filters: {
                         'custom_currency_code': row.currency_code,
@@ -1022,56 +1078,70 @@ frappe.ui.form.on("Teller Purchase Child", {
                     limit: 1
                 },
                 callback: function(account_response) {
+                    console.log("Account response:", account_response); // Debug message
                     if (account_response.message && account_response.message.length > 0) {
                         let account = account_response.message[0];
                         
-                        // Set the account
-                        frappe.model.set_value(cdt, cdn, 'account', account.name);
-                        
-                        // Set the currency
+                        // Set the currency first
                         frappe.model.set_value(cdt, cdn, 'currency', account.account_currency);
                         
-                        // Get exchange rate
+                        // Get exchange rate before setting account
                         frappe.call({
                             method: 'frappe.client.get_list',
                             args: {
                                 doctype: 'Currency Exchange',
                                 filters: {
-                                    'from_currency': account.account_currency
+                                    'from_currency': account.account_currency,
+                                    'to_currency': 'EGP'
                                 },
-                                fields: ['custom_special_purchasing'],
-                                order_by: 'creation desc',
+                                fields: ['custom_special_purchasing', 'exchange_rate'],
+                                order_by: 'date desc, creation desc',
                                 limit: 1
                             },
                             callback: function(rate_response) {
+                                console.log("Rate response:", rate_response); // Debug message
                                 if (rate_response.message && rate_response.message.length > 0) {
-                                    frappe.model.set_value(cdt, cdn, 'exchange_rate', 
-                                        rate_response.message[0].custom_special_purchasing);
+                                    let rate = rate_response.message[0];
+                                    // Use special purchasing rate if available, otherwise use regular exchange rate
+                                    let exchange_rate = rate.custom_special_purchasing || rate.exchange_rate;
+                                    
+                                    if (exchange_rate) {
+                                        // Set both the account and exchange rate together to prevent race conditions
+                                        frappe.model.set_value(cdt, cdn, 'exchange_rate', exchange_rate);
+                                        frappe.model.set_value(cdt, cdn, 'account', account.name);
+                                        
+                                        // Get account balance
+                                        frappe.call({
+                                            method: 'teller.teller_customization.doctype.teller_purchase.teller_purchase.account_from_balance',
+                                            args: {
+                                                paid_from: account.name
+                                            },
+                                            callback: function(balance_response) {
+                                                if (balance_response.message) {
+                                                    frappe.model.set_value(cdt, cdn, 'balance_after', balance_response.message);
+                                                }
+                                            }
+                                        });
+                                    } else {
+                                        frappe.msgprint(__('No valid exchange rate found for currency ' + account.account_currency));
+                                    }
+                                } else {
+                                    frappe.msgprint(__('No exchange rate record found for currency ' + account.account_currency));
                                 }
                             }
                         });
-
-                        // Get account balance
-      frappe.call({
-                            method: 'teller.teller_customization.doctype.teller_purchase.teller_purchase.account_from_balance',
-        args: {
-                                paid_from: account.name
-                            },
-                            callback: function(balance_response) {
-                                if (balance_response.message) {
-                                    frappe.model.set_value(cdt, cdn, 'balance_after', balance_response.message);
-                                }
-                            }
-                        });
+                    } else {
+                        frappe.msgprint(__('No account found for currency code ' + row.currency_code));
                     }
                 }
-      });
-    }
-  },
+            });
+        }
+    },
 
     account: function(frm, cdt, cdn) {
         let row = locals[cdt][cdn];
-        if (row.account) {
+        // Only proceed if the exchange rate is not already set
+        if (row.account && !row.exchange_rate) {
             // Get currency and currency code from account
             frappe.call({
                 method: 'frappe.client.get',
@@ -1087,25 +1157,31 @@ frappe.ui.form.on("Teller Purchase Child", {
                         frappe.model.set_value(cdt, cdn, 'currency_code', account.custom_currency_code);
                         frappe.model.set_value(cdt, cdn, 'currency', account.account_currency);
                         
-                        // Get exchange rate
-    frappe.call({
-                            method: 'frappe.client.get_list',
-      args: {
-                                doctype: 'Currency Exchange',
-                                filters: {
-                                    'from_currency': account.account_currency
+                        // Only get exchange rate if it's not already set
+                        if (!row.exchange_rate) {
+                            frappe.call({
+                                method: 'frappe.client.get_list',
+                                args: {
+                                    doctype: 'Currency Exchange',
+                                    filters: {
+                                        'from_currency': account.account_currency,
+                                        'to_currency': 'EGP'
+                                    },
+                                    fields: ['custom_special_purchasing', 'exchange_rate'],
+                                    order_by: 'date desc, creation desc',
+                                    limit: 1
                                 },
-                                fields: ['custom_special_purchasing'],
-                                order_by: 'creation desc',
-                                limit: 1
-                            },
-                            callback: function(rate_response) {
-                                if (rate_response.message && rate_response.message.length > 0) {
-                                    frappe.model.set_value(cdt, cdn, 'exchange_rate', 
-                                        rate_response.message[0].custom_special_purchasing);
+                                callback: function(rate_response) {
+                                    if (rate_response.message && rate_response.message.length > 0) {
+                                        let rate = rate_response.message[0];
+                                        let exchange_rate = rate.custom_special_purchasing || rate.exchange_rate;
+                                        if (exchange_rate) {
+                                            frappe.model.set_value(cdt, cdn, 'exchange_rate', exchange_rate);
+                                        }
+                                    }
                                 }
-                            }
-                        });
+                            });
+                        }
                     }
                 }
             });
@@ -1394,7 +1470,7 @@ async function getCustomerTotalAmount(buyerName) {
       method:
         "teller.teller_customization.doctype.teller_purchase.teller_purchase.get_customer_total_amount",
       args: {
-        buyer_name: buyerName,
+        client_name: buyerName,
         duration: limiDuration,
       },
       callback: function (r) {
@@ -1498,8 +1574,8 @@ function showIdentificationFields(frm) {
   fields.forEach(field => {
     // Make field visible
     frm.set_df_property(field, 'hidden', 0);
-    // Make field read-only
-    frm.set_df_property(field, 'read_only', 1);
+    // Make field read-only only if document is submitted
+    frm.set_df_property(field, 'read_only', frm.doc.docstatus === 1);
     // Ensure field is rendered
     if (frm.fields_dict[field]) {
       frm.fields_dict[field].refresh();
@@ -1526,7 +1602,8 @@ function makeIdentificationFieldsReadOnly(frm) {
   
   fields.forEach(field => {
     frm.set_df_property(field, 'hidden', 0);
-    frm.set_df_property(field, 'read_only', 1);
+    // Make field read-only only if document is submitted
+    frm.set_df_property(field, 'read_only', frm.doc.docstatus === 1);
     if (frm.fields_dict[field]) {
       frm.fields_dict[field].refresh();
     }
@@ -1536,22 +1613,25 @@ function makeIdentificationFieldsReadOnly(frm) {
 }
 
 function clearFieldsBasedOnCategory(frm) {
-  if (frm.doc.category_of_buyer !== "Egyptian" && frm.doc.category_of_buyer !== "Foreigner") {
-    const individualFields = [
-      'buyer_name', 'buyer_gender', 'buyer_nationality',
-      'buyer_mobile_number', 'buyer_work_for', 'buyer_phone', 'buyer_place_of_birth',
-      'buyer_date_of_birth', 'buyer_job_title', 'buyer_address'
-    ];
-    individualFields.forEach(field => frm.set_value(field, ''));
-  }
-  
-  if (frm.doc.category_of_buyer !== "Company" && frm.doc.category_of_buyer !== "Interbank") {
-    const companyFields = [
-      'buyer_company_name', 'buyer_company_activity', 'buyer_company_commercial_no',
-      'buyer_company_end_date', 'buyer_company_start_date',
-      'buyer_company_address', 'buyer_expired', 'interbank', 'buyer_company_legal_form'
-    ];
-    companyFields.forEach(field => frm.set_value(field, ''));
+  // Only clear fields if document is not submitted
+  if (frm.doc.docstatus !== 1) {
+    if (frm.doc.category_of_buyer !== "Egyptian" && frm.doc.category_of_buyer !== "Foreigner") {
+      const individualFields = [
+        'buyer_name', 'buyer_gender', 'buyer_nationality',
+        'buyer_mobile_number', 'buyer_work_for', 'buyer_phone', 'buyer_place_of_birth',
+        'buyer_date_of_birth', 'buyer_job_title', 'buyer_address'
+      ];
+      individualFields.forEach(field => frm.set_value(field, ''));
+    }
+    
+    if (frm.doc.category_of_buyer !== "Company" && frm.doc.category_of_buyer !== "Interbank") {
+      const companyFields = [
+        'buyer_company_name', 'buyer_company_activity', 'buyer_company_commercial_no',
+        'buyer_company_end_date', 'buyer_company_start_date',
+        'buyer_company_address', 'buyer_expired', 'interbank', 'buyer_company_legal_form'
+      ];
+      companyFields.forEach(field => frm.set_value(field, ''));
+    }
   }
   
   frm.refresh_fields();

@@ -1,11 +1,11 @@
 # Copyright (c) 2024, Mohamed AbdElsabour and contributors
 # For license information, please see license.txt
+
 import frappe
 from frappe import _
 import json
 from frappe.model.mapper import get_mapped_doc
 from frappe.utils import get_url_to_form
-
 from frappe.utils import (
     add_days,
     cint,
@@ -25,7 +25,6 @@ from erpnext.accounts.utils import (
     get_fiscal_year,
 )
 from frappe import _, utils
-
 from erpnext.accounts.general_ledger import (
     make_reverse_gl_entries,
     make_gl_entries,
@@ -273,107 +272,73 @@ class TellerInvoice(Document):
             self.calculate_totals()
             
             # Always generate receipt number in validate if not a submitted document
-            if self.docstatus == 0:  # Only for draft documents
-                frappe.log_error(
-                    message=f"Starting receipt number generation for branch: {self.branch_no}",
-                    title="Receipt Number Debug"
-                )
-                
-                # Get the employee linked to the current user
-                employee = frappe.db.get_value('Employee', {'user_id': frappe.session.user}, 'name')
-                if not employee:
-                    frappe.throw(_("No employee found for user {0}").format(frappe.session.user))
-                
-                # Log search criteria
-                frappe.log_error(
-                    message=f"Searching for active shift with:\nEmployee: {employee}\nTreasury Code: {self.treasury_code}\nUser: {frappe.session.user}",
-                    title="Active Shift Search Criteria"
-                )
-                
-                # Get all active shifts for debugging
-                all_active_shifts = frappe.get_all("Open Shift for Branch",
-                    filters={
-                        "docstatus": 1,
-                        "shift_status": "Active"
-                    },
-                    fields=["name", "current_user", "treasury_permission", "printing_roll"]
-                )
-                
-                frappe.log_error(
-                    message=f"All active shifts found: {all_active_shifts}",
-                    title="All Active Shifts"
-                )
-                
-                # Get the active shift and its printing roll
-                active_shift = frappe.get_value("Open Shift for Branch", 
-                    {
-                        "current_user": employee,
-                        "treasury_permission": self.treasury_code,
-                        "docstatus": 1,
-                        "shift_status": "Active"
-                    }, 
-                    ["name", "printing_roll"])
-                
-                frappe.log_error(
-                    message=f"Found active shift: {active_shift}",
-                    title="Receipt Number Debug"
-                )
-                
-                if not active_shift or not active_shift[1]:
-                    frappe.throw(_("No active shift found with a printing roll configured. Please ask your supervisor to configure a printing roll."))
-                    
-                printing_roll = frappe.get_doc("Printing Roll", active_shift[1])
-                
-                frappe.log_error(
-                    message=f"Found printing roll: {printing_roll.name}, Last number: {printing_roll.last_printed_number}, Start: {printing_roll.start_count}, End: {printing_roll.end_count}",
-                    title="Receipt Number Debug"
-                )
-                
-                if not printing_roll.active:
-                    frappe.throw("Selected printing roll is not active")
-                    
-                if printing_roll.last_printed_number >= printing_roll.end_count:
-                    frappe.throw("Printing roll has reached its end count. Please configure a new roll.")
-                    
-                # Calculate next number
-                next_number = (printing_roll.last_printed_number or printing_roll.start_count) + 1
-                
-                # Format the receipt number based on add_zeros
-                if printing_roll.add_zeros:
-                    # If add_zeros is set, pad the number with zeros
-                    formatted_number = f"{printing_roll.starting_letters}{str(next_number).zfill(printing_roll.add_zeros)}"
-                else:
-                    # If no add_zeros, just concatenate the number
-                    formatted_number = f"{printing_roll.starting_letters}{next_number}"
-                
-                frappe.log_error(
-                    message=f"Generated receipt number: {formatted_number}, Next number: {next_number}",
-                    title="Receipt Number Debug"
-                )
-                
-                # Update both receipt number and current roll
-                self.receipt_number = formatted_number
-                self.current_roll = printing_roll.name
-                
-                # Update the printing roll's last number and show_number
-                frappe.db.set_value("Printing Roll", printing_roll.name, {
-                    "last_printed_number": next_number,
-                    "show_number": len(str(next_number))
-                })
-                
-                frappe.db.commit()
-            
-            frappe.log_error(
-                message="Completed validate successfully",
-                title="Teller Invoice Validated"
-            )
+            # AND only if it's a new document (not already saved)
+            if self.docstatus == 0 and self.is_new():  # Only for draft documents
+                self.generate_receipt_number()
             
         except Exception as e:
             frappe.log_error(
-                message=f"Error in validate: {str(e)}\n{frappe.get_traceback()}",
+                message=f"Validation error: {str(e)}\nTraceback: {frappe.get_traceback()}",
                 title="Teller Invoice Validation Error"
             )
             frappe.throw(_("Validation error: {0}").format(str(e)))
+
+    def generate_receipt_number(self):
+        """Generate receipt number only for new documents"""
+        try:
+            if self.receipt_number:
+                return  # Already has a receipt number
+                
+            # Get the employee linked to the current user
+            employee = frappe.db.get_value('Employee', {'user_id': frappe.session.user}, 'name')
+            if not employee:
+                frappe.throw(_("No employee found for user {0}").format(frappe.session.user))
+            
+            # Get active shift
+            active_shift = frappe.db.get_value(
+                "Open Shift for Branch",
+                {
+                    "current_user": employee,
+                    "shift_status": "Active",
+                    "docstatus": 1
+                },
+                ["name", "printing_roll"],
+                as_dict=1
+            )
+            
+            if not active_shift or not active_shift.get('printing_roll'):
+                frappe.throw(_("No active shift with printing roll found"))
+                
+            # Get printing roll
+            printing_roll = frappe.get_doc("Printing Roll", active_shift.get('printing_roll'))
+            if not printing_roll.active:
+                frappe.throw(_("Selected printing roll is not active"))
+                
+            if printing_roll.last_printed_number >= printing_roll.end_count:
+                frappe.throw(_("Printing roll has reached its end count. Please configure a new roll."))
+                
+            # Calculate next number
+            next_number = (printing_roll.last_printed_number or printing_roll.start_count) + 1
+            
+            # Format receipt number
+            if printing_roll.add_zeros:
+                formatted_number = f"{printing_roll.starting_letters}{str(next_number).zfill(printing_roll.add_zeros)}"
+            else:
+                formatted_number = f"{printing_roll.starting_letters}{next_number}"
+            
+            # Set receipt number and current roll
+            self.receipt_number = formatted_number
+            self.current_roll = printing_roll.name
+            
+            # Store next number for use during submission
+            self.next_receipt_number = next_number
+            
+        except Exception as e:
+            frappe.log_error(
+                message=f"Error generating receipt number: {str(e)}\nTraceback: {frappe.get_traceback()}",
+                title="Receipt Number Error"
+            )
+            frappe.throw(_("Error generating receipt number: {0}").format(str(e)))
 
     def before_save(self):
         """Handle operations before saving"""
@@ -422,40 +387,14 @@ class TellerInvoice(Document):
     def before_submit(self):
         """Handle document submission"""
         try:
-            # Check amount and update customer info
-            self.check_allow_amount()
-            
-            # Set movement number
-            self.set_move_number()
-            
-            # Get and validate printing roll
-            if not self.current_roll:
-                frappe.throw(_("Please select a printing roll"))
-                
-            printing_roll = frappe.get_doc("Printing Roll", self.current_roll)
-            if not printing_roll.active:
-                frappe.throw(_("Selected printing roll is not active"))
-                
-            if printing_roll.last_printed_number >= printing_roll.end_count:
-                frappe.throw(_("Printing roll has reached its end count. Please configure a new roll."))
-                
-            # Generate receipt number
-            next_number = (printing_roll.last_printed_number or printing_roll.start_count) + 1
-            
-            # Format receipt number
-            if printing_roll.add_zeros:
-                formatted_number = f"{printing_roll.starting_letters}{str(next_number).zfill(printing_roll.add_zeros)}"
-            else:
-                formatted_number = f"{printing_roll.starting_letters}{next_number}"
-            
-            # Set receipt number
-            self.receipt_number = formatted_number
-            
-            # Update printing roll's last number
-            # We'll only save this after successful submission in on_submit
-            self.next_receipt_number = next_number
+            # Only update printing roll's last number during submission
+            if hasattr(self, 'next_receipt_number'):
+                printing_roll = frappe.get_doc("Printing Roll", self.current_roll)
+                printing_roll.db_set('last_printed_number', self.next_receipt_number)
+                frappe.db.commit()
             
         except Exception as e:
+            frappe.db.rollback()
             frappe.log_error(
                 message=f"Error in before_submit: {str(e)}\nTraceback: {frappe.get_traceback()}",
                 title="Submit Error"
@@ -740,28 +679,48 @@ class TellerInvoice(Document):
         pass
 
     def set_treasury_details(self):
-        # Get the employee linked to the current user
-        employee = frappe.db.get_value('Employee', {'user_id': frappe.session.user}, 'name')
-        if not employee:
-            frappe.throw(_("No employee found for user {0}").format(frappe.session.user))
-        
-        # Get active shift for current employee
-        active_shift = frappe.db.get_value(
-            "Open Shift for Branch",
-            {
-                "current_user": employee,
-                "shift_status": "Active",
-                "docstatus": 1
-            },
-            "treasury_permission"
-        )
-        
-        if active_shift:
-            treasury = frappe.get_doc("Teller Treasury", active_shift)
-            if treasury:
-                self.treasury_code = treasury.name
+        """Set treasury details from employee's active shift"""
+        try:
+            # Get the employee linked to the current user
+            employee = frappe.db.get_value('Employee', {'user_id': frappe.session.user}, 'name')
+            if not employee:
+                frappe.throw(_("No employee found for user {0}. Please link an Employee record to this user.").format(frappe.session.user))
+            
+            # Get active shift for current employee
+            active_shift = frappe.get_all(
+                "Open Shift for Branch",
+                filters={
+                    "current_user": employee,
+                    "shift_status": "Active",
+                    "docstatus": 1
+                },
+                fields=["name", "treasury_permission"],
+                order_by="creation desc",
+                limit=1
+            )
+            
+            if not active_shift:
+                frappe.throw(_("No active shift found. Please ask your supervisor to open a shift for you."))
+                
+            shift = active_shift[0]
+            
+            # Get Teller Treasury details
+            treasury = frappe.get_doc("Teller Treasury", shift.treasury_permission)
+            if not treasury:
+                frappe.throw(_("Teller Treasury not found"))
+                
+            # Set treasury code and branch details
+            self.treasury_code = treasury.name
+            if treasury.branch:
                 self.branch_no = treasury.branch
                 self.branch_name = frappe.db.get_value("Branch", treasury.branch, "custom_branch_no")
+            
+        except Exception as e:
+            frappe.log_error(
+                message=f"Error setting treasury details: {str(e)}\nTraceback: {frappe.get_traceback()}",
+                title="Treasury Setup Error"
+            )
+            frappe.throw(_("Error setting treasury details: {0}").format(str(e)))
 
     def validate_active_shift(self):
         """Validate user has active shift"""
@@ -1038,7 +997,30 @@ class TellerInvoice(Document):
                 return
                 
             # Only allow specific fields to be updated after submit
-            allowed_fields = ['is_returned', 'egy']
+            allowed_fields = [
+                'is_returned',
+                'egy',
+                'movement_number',
+                'date',
+                'closing_date',
+                'posting_date',
+                'branch_name',
+                'branch_no',
+                'teller_invoice_details',  # Allow child table updates for returns
+                # Client-related fields
+                'client_name',
+                'client_date_of_birth',
+                'client_nationality',
+                'client_mobile_number',
+                'client_work_for',
+                'client_phone',
+                'client_place_of_birth',
+                'client_job_title',
+                'client_address',
+                'client_expired',
+                'client_issue_date',
+                'client_gender'
+            ]
             
             # For system managers/administrators, allow a few more fields
             if frappe.session.user == "Administrator" or "System Manager" in frappe.get_roles():
@@ -1051,6 +1033,10 @@ class TellerInvoice(Document):
                     if field == 'egy_balance':
                         self.db_set('egy_balance', self.get_doc_before_save().egy_balance)
                     else:
+                        # Special handling for child table changes
+                        if field == 'teller_invoice_details' and self.is_returned:
+                            # Allow changes to teller_invoice_details if this is a return
+                            continue
                         frappe.throw(
                             _("Not allowed to change {0} after submission").format(field),
                             title=_("Cannot Modify")
@@ -1122,12 +1108,40 @@ def account_to_balance(paid_to):
 
 @frappe.whitelist(allow_guest=True)
 def get_printing_roll():
-    active_roll = frappe.db.get_list(
-        "Printing Roll", {"active": 1}, ["name", "last_printed_number"]
-    )
-    if active_roll:
-        return active_roll[0]["name"], active_roll[0]["last_printed_number"]
-    else:
+    """Get the active printing roll and its last printed number"""
+    try:
+        # Get the employee linked to the current user
+        employee = frappe.db.get_value('Employee', {'user_id': frappe.session.user}, 'name')
+        if not employee:
+            return None, None
+            
+        # Get active shift for current employee
+        active_shift = frappe.db.get_value(
+            "Open Shift for Branch",
+            {
+                "current_user": employee,
+                "shift_status": "Active",
+                "docstatus": 1
+            },
+            ["name", "printing_roll"],
+            as_dict=1
+        )
+        
+        if not active_shift or not active_shift.printing_roll:
+            return None, None
+            
+        # Get printing roll details
+        printing_roll = frappe.get_doc("Printing Roll", active_shift.printing_roll)
+        if not printing_roll.active:
+            return None, None
+            
+        return printing_roll.name, printing_roll.last_printed_number
+        
+    except Exception as e:
+        frappe.log_error(
+            message=f"Error getting printing roll: {str(e)}\nTraceback: {frappe.get_traceback()}",
+            title="Printing Roll Error"
+        )
         return None, None
 
 

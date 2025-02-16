@@ -67,79 +67,113 @@ frappe.ui.form.on("Close Shift For Branch", {
       return;
     }
 
-    console.log("Current open shift:", frm.doc.open_shift);
-
-    // Call both methods directly
-    frappe.call({
-      method: "teller.teller_customization.doctype.close_shift_for_branch.close_shift_for_branch.get_purchase_invoices",
-      args: {
-        current_open_shift: frm.doc.open_shift
-      },
-      callback: function(r) {
-        console.log("Purchase response:", r);
-        if (r.message) {
-          console.log("Purchase transactions:", r.message);
-          frm.clear_table("purchase_close_table");
-          let total_purchases = 0;
-
-          r.message.forEach(trans => {
-            console.log("Processing purchase transaction:", trans);
-            frm.add_child("purchase_close_table", {
-              reference: trans.name,
-              posting_date: trans.posting_date,
-              client: trans.buyer,
-              receipt_number: trans.purchase_receipt_number,
-              movement_no: trans.movement_number,
-              currency_code: trans.currency_code,
-              total: trans.quantity,
-              total_amount: trans.quantity,
-              total_egy: trans.egy_amount
-            });
-            total_purchases += flt(trans.egy_amount);
-          });
-
-          console.log("Total purchases:", total_purchases);
-          frm.refresh_field("purchase_close_table");
-          frm.set_value("total_purchase", `EGP ${format_currency(total_purchases)}`);
-        } else {
-          console.log("No purchase transactions found");
-        }
+    // Check if the shift is already closed
+    frappe.db.get_value("Open Shift for Branch", frm.doc.open_shift, "shift_status", (r) => {
+      if (r && r.shift_status !== "Active") {
+        frappe.throw(__("This shift is already closed. Cannot fetch invoices."));
+        return;
       }
-    });
 
-    frappe.call({
-      method: "teller.teller_customization.doctype.close_shift_for_branch.close_shift_for_branch.get_sales_invoice",
-      args: {
-        current_open_shift: frm.doc.open_shift
-      },
-      callback: function(r) {
-        if (r.message) {
-          frm.clear_table("sales_invoice");
-          let total_sales = 0;
+      console.log("Current open shift:", frm.doc.open_shift);
 
-          r.message.forEach(invoice => {
-            if (!invoice.is_returned) {
-              invoice.teller_invoice_details.forEach(detail => {
-                frm.add_child("sales_invoice", {
-                  invoice: invoice.name,
-                  posting_date: invoice.posting_date,
-                  client: invoice.client,
-                  receipt_no: invoice.receipt_number,
-                  movement_no: invoice.movement_number,
-                  currency_code: detail.currency,
-                  total: detail.quantity,
-                  total_amount: detail.quantity,
-                  total_egy: detail.egy_amount
+      // Call both methods directly
+      frappe.call({
+        method: "teller.teller_customization.doctype.close_shift_for_branch.close_shift_for_branch.get_purchase_invoices",
+        args: {
+          current_open_shift: frm.doc.open_shift
+        },
+        callback: function(r) {
+          if (!r.exc) {  // Only process if no exception
+            console.log("Purchase response:", r);
+            if (r.message) {
+              console.log("Purchase transactions:", r.message);
+              frm.clear_table("purchase_close_table");
+              let total_purchases = 0;
+
+              r.message.forEach(trans => {
+                console.log("Processing purchase transaction:", trans);
+                frm.add_child("purchase_close_table", {
+                  reference: trans.name,
+                  posting_date: trans.posting_date,
+                  client: trans.buyer,
+                  receipt_number: trans.purchase_receipt_number,
+                  movement_no: trans.movement_number,
+                  currency_code: trans.currency_name,  // Use currency_name instead of currency_code
+                  total: trans.quantity,
+                  total_amount: trans.quantity,
+                  total_egy: trans.egy_amount
                 });
-                total_sales += flt(detail.egy_amount);
+                total_purchases += flt(trans.egy_amount);
+              });
+
+              console.log("Total purchases:", total_purchases);
+              frm.refresh_field("purchase_close_table");
+              frm.set_value("total_purchase", `EGP ${format_currency(total_purchases)}`);
+            } else {
+              console.log("No purchase transactions found");
+            }
+          }
+        },
+        error: function(r) {
+          // Handle any errors gracefully
+          console.error("Error fetching purchase transactions:", r);
+          frappe.msgprint({
+            title: __("Error"),
+            indicator: "red",
+            message: __("Failed to fetch purchase transactions. Please try again.")
+          });
+        }
+      });
+
+      frappe.call({
+        method: "teller.teller_customization.doctype.close_shift_for_branch.close_shift_for_branch.get_sales_invoice",
+        args: {
+          current_open_shift: frm.doc.open_shift
+        },
+        callback: function(r) {
+          if (!r.exc) {  // Only process if no exception
+            if (r.message) {
+              frm.clear_table("sales_invoice");
+              let total_sales = 0;
+
+              r.message.forEach(invoice => {
+                if (!invoice.is_returned) {
+                  invoice.teller_invoice_details.forEach(detail => {
+                    // Get currency name from the currency code
+                    frappe.db.get_value("Currency", {"custom_currency_code": detail.currency_code}, "name", (result) => {
+                      if (result && result.name) {
+                        frm.add_child("sales_invoice", {
+                          invoice: invoice.name,
+                          posting_date: invoice.posting_date,
+                          client: invoice.client,
+                          receipt_no: invoice.receipt_number,
+                          movement_no: invoice.movement_number,
+                          currency_code: result.name,  // Use the actual currency name
+                          total: detail.quantity,
+                          total_amount: detail.quantity,
+                          total_egy: detail.egy_amount
+                        });
+                        total_sales += flt(detail.egy_amount);
+                        frm.refresh_field("sales_invoice");
+                        frm.set_value("total_sales", `EGP ${format_currency(total_sales)}`);
+                      }
+                    });
+                  });
+                }
               });
             }
+          }
+        },
+        error: function(r) {
+          // Handle any errors gracefully
+          console.error("Error fetching sales transactions:", r);
+          frappe.msgprint({
+            title: __("Error"),
+            indicator: "red",
+            message: __("Failed to fetch sales transactions. Please try again.")
           });
-
-          frm.refresh_field("sales_invoice");
-          frm.set_value("total_sales", `EGP ${format_currency(total_sales)}`);
         }
-      }
+      });
     });
   },
   refresh: function(frm) {
