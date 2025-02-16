@@ -281,21 +281,21 @@ frappe.ui.form.on("Teller Purchase", {
           () => {
             frm.call({
               method: "teller.teller_customization.doctype.teller_purchase.teller_purchase.make_purchase_return",
-        args: {
+              args: {
                 doc: frm.doc
               },
               freeze: true,
               freeze_message: __("Converting to Return..."),
               callback: (r) => {
-          if (r.message) {
+                if (r.message) {
                   frappe.show_alert({
                     message: __("Document converted to return successfully"),
                     indicator: 'green'
                   });
                   frm.reload_doc();
-          }
-        }
-      });
+                }
+              }
+            });
           }
         );
       }, __("Create"));
@@ -331,7 +331,14 @@ frappe.ui.form.on("Teller Purchase", {
         method: "teller.teller_customization.doctype.teller_invoice.teller_invoice.get_printing_roll",
         callback: function(r) {
           if (r.message) {
-            frm.set_value('current_roll', r.message);
+            // Set current_roll as string value only (first element of the tuple)
+            frm.set_value('current_roll', r.message[0]);
+            
+            // Show a message to the user with the roll info
+            frappe.show_alert({
+              message: __(`Using Printing Roll: ${r.message[0]} (Last number: ${r.message[1]})`),
+              indicator: 'blue'
+            });
           }
         }
       });
@@ -355,7 +362,7 @@ frappe.ui.form.on("Teller Purchase", {
           if (user_account) {
             frm.set_value("egy", user_account);
           } else {
-          frappe.throw("There is no EGY account linked to this user");
+            frappe.throw("There is no EGY account linked to this user");
           }
         } else {
           frappe.throw("Error while getting user");
