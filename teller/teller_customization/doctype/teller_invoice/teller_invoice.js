@@ -50,6 +50,13 @@ frappe.ui.form.on("Teller Invoice", {
     frm.set_df_property('section_break_ugcr', 'collapsible', 1);
     frm.set_df_property('section_break_ugcr', 'collapsed', 0);
 
+    // Ensure total field is always visible
+    frm.toggle_display('total', true);
+    frm.set_df_property('total', 'hidden', 0);
+    
+    // Make the total field read-only to prevent manual editing
+    frm.set_df_property('total', 'read_only', 1);
+
     // filter clients based on client type
     frm.set_query("client", function (doc) {
       return {
@@ -1220,8 +1227,6 @@ function handleCommissarCreationOrUpdate(frm) {
               frappe.throw(__("Error while updating Commissar"));
             },
           });
-        } else {
-          frappe.throw(__("Commissar not found"));
         }
       },
       error: function () {
@@ -1801,5 +1806,26 @@ function calculate_amounts(frm, cdt, cdn) {
         // Calculate amount in EGY
         let egy_amount = flt(amount * row.exchange_rate);
         frappe.model.set_value(cdt, cdn, 'egy_amount', egy_amount);
+        
+        // Update total by summing all egy_amounts
+        let total = 0;
+        frm.doc.teller_invoice_details.forEach((item) => {
+            total += flt(item.egy_amount);
+        });
+        frm.set_value('total', total);
+        frm.refresh_field('total');
     }
 }
+
+// Add handler for teller_invoice_details table
+frappe.ui.form.on('Teller Invoice Details', {
+    teller_invoice_details_remove: function(frm) {
+        // Recalculate total when a row is removed
+        let total = 0;
+        frm.doc.teller_invoice_details.forEach((item) => {
+            total += flt(item.egy_amount);
+        });
+        frm.set_value('total', total);
+        frm.refresh_field('total');
+    }
+});

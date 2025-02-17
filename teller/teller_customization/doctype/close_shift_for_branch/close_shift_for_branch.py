@@ -5,6 +5,7 @@ import frappe
 from frappe import whitelist, _
 from frappe.model.document import Document
 from frappe.utils import flt
+import json
 
 
 class CloseShiftForBranch(Document):
@@ -276,8 +277,9 @@ class CloseShiftForBranch(Document):
 			if not self.open_shift:
 				frappe.throw(_("Please select an Open Shift"))
 			
-			if not self.end_date:
-				frappe.throw(_("Please set an End Date"))
+			# Set end_date to current time on submission
+			self.end_date = frappe.utils.now()
+			self.db_set('end_date', self.end_date)
 			
 			# Import the function directly from the module
 			from teller.teller_customization.doctype.open_shift_for_branch.open_shift_for_branch import update_shift_end_date
@@ -292,59 +294,66 @@ class CloseShiftForBranch(Document):
 			)
 			frappe.throw(_("Error closing shift: {0}").format(str(e)))
 
+	@whitelist()
 	def calculate_currency_summary(self):
 		"""Calculate currency summary for all accounts used in transactions during the shift"""
 		try:
-			# Clear existing currency summary
-			self.currency_summary = []
+			currency_summary = []
 			
 			# Get the shift details
 			shift = frappe.get_doc("Open Shift for Branch", self.open_shift)
 			if not shift:
 				frappe.throw(_("Invalid shift selected"))
 				
-			# Get all accounts used in sales (Teller Invoice)
-			sales_accounts = frappe.db.sql("""
+			# Get all currencies and accounts used in sales (Teller Invoice)
+			sales_currencies = frappe.db.sql("""
 				SELECT DISTINCT 
-					tid.account,
 					tid.currency_code,
-					a.account_currency as currency
+					tid.account,
+					c.name as currency_name
 				FROM `tabTeller Invoice Details` tid
 				INNER JOIN `tabTeller Invoice` ti ON ti.name = tid.parent
-				INNER JOIN `tabAccount` a ON a.name = tid.account
+				LEFT JOIN `tabCurrency` c ON c.custom_currency_code = tid.currency_code
 				WHERE ti.shift = %s 
 				AND ti.docstatus = 1
 				AND ti.is_returned = 0
 			""", self.open_shift, as_dict=1)
 			
-			# Get all accounts used in purchases (Teller Purchase)
-			purchase_accounts = frappe.db.sql("""
+			# Get all currencies and accounts used in purchases (Teller Purchase)
+			purchase_currencies = frappe.db.sql("""
 				SELECT DISTINCT 
-					tpc.account,
 					tpc.currency_code,
-					a.account_currency as currency
+					tpc.account,
+					c.name as currency_name
 				FROM `tabTeller Purchase Child` tpc
 				INNER JOIN `tabTeller Purchase` tp ON tp.name = tpc.parent
-				INNER JOIN `tabAccount` a ON a.name = tpc.account
+				LEFT JOIN `tabCurrency` c ON c.custom_currency_code = tpc.currency_code
 				WHERE tp.shift = %s 
 				AND tp.docstatus = 1
 				AND tp.is_returned = 0
 			""", self.open_shift, as_dict=1)
 			
-			# Combine unique accounts from both sales and purchases
-			all_accounts = {(acc.account, acc.currency_code, acc.currency): acc 
-						  for acc in sales_accounts + purchase_accounts}
+			# Combine unique currencies and accounts from both sales and purchases
+			all_currencies = {}
+			for curr in sales_currencies + purchase_currencies:
+				key = (curr.currency_code, curr.account)
+				if key not in all_currencies:
+					all_currencies[key] = {
+						'currency_name': curr.currency_name,
+						'account': curr.account
+					}
 			
-			# For each account, calculate the summary
-			for key, account_data in all_accounts.items():
-				account, currency_code, currency = key
+			# For each currency and account combination, calculate the summary
+			for (currency_code, account), data in all_currencies.items():
+				currency_name = data['currency_name'] or currency_code  # Fallback to code if name not found
 				
-				# Get opening balance at shift start date
+				# Get the account's balance at shift start date
 				opening_balance = frappe.db.sql("""
 					SELECT sum(debit_in_account_currency) - sum(credit_in_account_currency) as balance
 					FROM `tabGL Entry`
 					WHERE account = %s
 					AND posting_date <= %s
+					AND is_cancelled = 0
 				""", (account, shift.start_date), as_dict=1)[0].balance or 0
 				
 				# Calculate sold amount (from Teller Invoice)
@@ -355,8 +364,9 @@ class CloseShiftForBranch(Document):
 					WHERE ti.shift = %s 
 					AND ti.docstatus = 1
 					AND ti.is_returned = 0
+					AND tid.currency_code = %s
 					AND tid.account = %s
-				""", (self.open_shift, account), as_dict=1)[0].total or 0
+				""", (self.open_shift, currency_code, account), as_dict=1)[0].total or 0
 				
 				# Calculate bought amount (from Teller Purchase)
 				bought_amount = frappe.db.sql("""
@@ -366,40 +376,27 @@ class CloseShiftForBranch(Document):
 					WHERE tp.shift = %s 
 					AND tp.docstatus = 1
 					AND tp.is_returned = 0
+					AND tpc.currency_code = %s
 					AND tpc.account = %s
-				""", (self.open_shift, account), as_dict=1)[0].total or 0
-				
-				# Calculate transferred amount (from Journal Entry)
-				transferred_amount = frappe.db.sql("""
-					SELECT COALESCE(SUM(
-						CASE 
-							WHEN credit_in_account_currency > 0 THEN credit_in_account_currency
-							ELSE debit_in_account_currency
-						END
-					), 0) as total
-					FROM `tabGL Entry`
-					WHERE account = %s
-					AND posting_date BETWEEN %s AND %s
-					AND voucher_type = 'Journal Entry'
-					AND is_cancelled = 0
-				""", (account, shift.start_date, self.end_date), as_dict=1)[0].total or 0
+				""", (self.open_shift, currency_code, account), as_dict=1)[0].total or 0
 				
 				# Calculate final balance
-				final_balance = opening_balance - flt(sold_amount) + flt(bought_amount) - flt(transferred_amount)
+				final_balance = flt(opening_balance) - flt(sold_amount) + flt(bought_amount)
 				
-				# Add to currency summary table
-				self.append("currency_summary", {
-					"account": account,
-					"currency": currency,
+				# Add to currency summary list
+				currency_summary.append({
+					"currency": currency_name,
 					"currency_code": currency_code,
+					"account": account,
 					"opening_balance": opening_balance,
-					"transferred_amount": transferred_amount,
 					"sold_amount": sold_amount,
 					"bought_amount": bought_amount,
 					"final_balance": final_balance,
 					"actual_amount": 0  # This will be filled manually by the user
 				})
 				
+			return currency_summary
+			
 		except Exception as e:
 			frappe.log_error(
 				message=f"Error calculating currency summary: {str(e)}\n{frappe.get_traceback()}",
@@ -446,3 +443,24 @@ def get_unclosed_shifts(doctype, txt, searchfield, start, page_len, filters):
 		'start': start,
 		'page_len': page_len
 	})
+
+@whitelist()
+def calculate_currency_summary(doc):
+	"""API endpoint to calculate currency summary"""
+	try:
+		if isinstance(doc, str):
+			doc = json.loads(doc)
+		
+		# Always create a new temporary document
+		temp_doc = frappe.new_doc("Close Shift For Branch")
+		temp_doc.update(doc)
+		
+		# Call the instance method
+		return temp_doc.calculate_currency_summary()
+		
+	except Exception as e:
+		frappe.log_error(
+			message=f"Error in calculate_currency_summary API: {str(e)}\n{frappe.get_traceback()}",
+			title="Currency Summary API Error"
+		)
+		frappe.throw(_("Error calculating currency summary: {0}").format(str(e)))

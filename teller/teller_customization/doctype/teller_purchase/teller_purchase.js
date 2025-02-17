@@ -24,10 +24,33 @@ frappe.ui.form.on("Teller Purchase", {
       frappe.db.get_value('Branch', frm.doc.branch_no, 'custom_branch_no')
         .then(r => {
           if (r.message && r.message.custom_branch_no) {
-            frm.set_value('branch_name', r.message.custom_branch_no);
+            frm.doc.branch_name = r.message.custom_branch_no;
             frm.refresh_field('branch_name');
           }
         });
+    }
+
+    // Update egy_balance when form loads
+    if (frm.doc.egy && !frm.is_new()) {
+      frappe.call({
+        method: "teller.teller_customization.doctype.teller_purchase.teller_purchase.account_to_balance",
+        args: {
+          paid_to: frm.doc.egy,
+        },
+        callback: function (r) {
+          if (r.message) {
+            frm.doc.egy_balance = r.message;
+            frm.refresh_field('egy_balance');
+            
+            // Only save if document is submitted and there are actual changes
+            if (frm.doc.docstatus === 1 && frm.doc.__unsaved) {
+              frm.save('Update').then(() => {
+                frm.reload_doc();
+              });
+            }
+          }
+        },
+      });
     }
   },
 
@@ -55,6 +78,9 @@ frappe.ui.form.on("Teller Purchase", {
       frm.set_df_property('buyer_military_number', 'reqd', 1);
     }
     
+    // Show/hide fields based on selection
+    showIdentificationFields(frm);
+    
     frm.refresh_fields(['buyer_national_id', 'buyer_passport_number', 'buyer_military_number']);
   },
 
@@ -65,9 +91,14 @@ frappe.ui.form.on("Teller Purchase", {
       frm.set_value("buyer_card_type", "National ID");
     }
     
-    // Clear fields based on category
+    // Clear fields but don't show ID fields yet
     clearFieldsBasedOnCategory(frm);
     makeIdentificationFieldsReadOnly(frm);
+    
+    // Hide all ID fields when category changes
+    frm.set_df_property('buyer_national_id', 'hidden', 1);
+    frm.set_df_property('buyer_passport_number', 'hidden', 1);
+    frm.set_df_property('buyer_military_number', 'hidden', 1);
   },
 
   search_buyer: function(frm) {
@@ -110,6 +141,24 @@ frappe.ui.form.on("Teller Purchase", {
             } else if (customer.buyer_card_type === "Military Card") {
               frm.set_value('buyer_military_number', customer.buyer_military_number);
             }
+            
+            // Explicitly show/hide fields after setting values
+            setTimeout(() => {
+              if (customer.buyer_card_type === "National ID") {
+                frm.set_df_property('buyer_national_id', 'hidden', 0);
+                frm.set_df_property('buyer_passport_number', 'hidden', 1);
+                frm.set_df_property('buyer_military_number', 'hidden', 1);
+              } else if (customer.buyer_card_type === "Passport") {
+                frm.set_df_property('buyer_national_id', 'hidden', 1);
+                frm.set_df_property('buyer_passport_number', 'hidden', 0);
+                frm.set_df_property('buyer_military_number', 'hidden', 1);
+              } else if (customer.buyer_card_type === "Military Card") {
+                frm.set_df_property('buyer_national_id', 'hidden', 1);
+                frm.set_df_property('buyer_passport_number', 'hidden', 1);
+                frm.set_df_property('buyer_military_number', 'hidden', 0);
+              }
+              frm.refresh_fields(['buyer_national_id', 'buyer_passport_number', 'buyer_military_number']);
+            }, 100);
             
             // Set other fields
             frm.set_value('buyer_nationality', customer.buyer_nationality);
@@ -258,6 +307,40 @@ frappe.ui.form.on("Teller Purchase", {
   // },
 
   setup(frm) {
+    // Get user's egy_account and set it
+    frappe.call({
+      method: "frappe.client.get_value",
+      args: {
+        doctype: "User",
+        filters: { name: frappe.session.user },
+        fieldname: "egy_account"
+      },
+      callback: function(r) {
+        if (r.message && r.message.egy_account) {
+          frm.set_value('egy', r.message.egy_account);
+          // After setting egy account, fetch its balance
+          frappe.call({
+            method: "teller.teller_customization.doctype.teller_purchase.teller_purchase.account_to_balance",
+            args: {
+              paid_to: r.message.egy_account
+            },
+            callback: function(r) {
+              if (r.message) {
+                frm.set_value('egy_balance', r.message);
+                frm.refresh_field('egy_balance');
+              }
+            }
+          });
+        }
+      }
+    });
+    
+    // Make treasury_code and shift read-only after submission
+    if (frm.doc.docstatus === 1) {
+      frm.set_df_property('treasury_code', 'read_only', 1);
+      frm.set_df_property('shift', 'read_only', 1);
+    }
+    
     // Filter accounts in child table to only show accounts linked to user's treasury
     frm.fields_dict["purchase_transactions"].grid.get_field("account").get_query = function(doc) {
       return {
@@ -268,23 +351,24 @@ frappe.ui.form.on("Teller Purchase", {
       };
     };
     
-    // Make ID fields visible and read-only
-    frm.set_df_property('buyer_national_id', 'hidden', 0);
-    frm.set_df_property('buyer_passport_number', 'hidden', 0);
-    frm.set_df_property('buyer_military_number', 'hidden', 0);
+    // Hide all ID fields by default
+    frm.set_df_property('buyer_national_id', 'hidden', 1);
+    frm.set_df_property('buyer_passport_number', 'hidden', 1);
+    frm.set_df_property('buyer_military_number', 'hidden', 1);
     
+    // Set ID fields as read-only
     frm.set_df_property('buyer_national_id', 'read_only', 1);
     frm.set_df_property('buyer_passport_number', 'read_only', 1);
     frm.set_df_property('buyer_military_number', 'read_only', 1);
     
     // Set focus on buyer field only for new documents
     if (frm.is_new()) {
-    setTimeout(function () {
+      setTimeout(function () {
         const buyerField = frm.get_field("buyer");
         if (buyerField && buyerField.$input) {
           buyerField.$input.focus();
         }
-    }, 100);
+      }, 100);
     }
 
     // Make invoice info section collapsible and expanded by default
@@ -309,9 +393,58 @@ frappe.ui.form.on("Teller Purchase", {
         }
       };
     });
+
+    // Make total and egy_balance read-only but visible
+    frm.set_df_property('total', 'read_only', 1);
+    frm.set_df_property('egy_balance', 'read_only', 1);
+    frm.set_df_property('egy_balance', 'hidden', 0);
+
+    // Ensure egy_balance is always visible
+    frm.toggle_display('egy_balance', true);
+    frm.set_df_property('egy_balance', 'hidden', 0);
   },
 
   refresh(frm) {
+    // Handle submit button visibility
+    if (frm.doc.docstatus === 0) {
+      // For new documents or unsaved changes
+      if (frm.is_new() || frm.doc.__unsaved) {
+        frm.page.set_primary_action(__('Save'), () => frm.save());
+      } else {
+        // For saved but unsubmitted documents
+        frm.page.set_primary_action(__('Submit'), () => frm.savesubmit());
+      }
+    }
+
+    // Add return button for submitted documents
+    if (frm.doc.docstatus === 1 && !frm.doc.is_returned) {
+      frm.add_custom_button(__('Return'), function() {
+        make_return(frm);
+      }, __('Create'));
+    }
+
+    // Make treasury_code and shift read-only after submission
+    if (frm.doc.docstatus === 1) {
+      frm.set_df_property('treasury_code', 'read_only', 1);
+      frm.set_df_property('shift', 'read_only', 1);
+    }
+
+    // Update egy_balance if egy account is set
+    if (frm.doc.egy) {
+      frappe.call({
+        method: "teller.teller_customization.doctype.teller_purchase.teller_purchase.account_to_balance",
+        args: {
+          paid_to: frm.doc.egy
+        },
+        callback: function(r) {
+          if (r.message) {
+            frm.set_value('egy_balance', r.message);
+            frm.refresh_field('egy_balance');
+          }
+        }
+      });
+    }
+
     // Ensure branch name is displayed correctly
     if (!frm.doc.branch_name && frm.doc.branch_no) {
       frappe.db.get_value('Branch', frm.doc.branch_no, 'custom_branch_no')
@@ -323,23 +456,8 @@ frappe.ui.form.on("Teller Purchase", {
         });
     }
     
-    // Handle submit button visibility
-    if (frm.doc.docstatus === 0) {
-      setTimeout(() => {
-        if (frm.page.btn_primary && frm.page.btn_primary.is(':hidden')) {
-          frm.page.btn_primary.show();
-        }
-      }, 100);
-    }
-    
     // Add custom buttons for submitted documents
     if (frm.doc.docstatus === 1) {
-      if (!frm.doc.is_returned) {
-        frm.add_custom_button(__('Return'), function() {
-          make_return(frm);
-        }, __('Create'));
-      }
-      
       // Add print button if needed
       if (frm.doc.purchase_receipt_number) {
         frm.add_custom_button(__('Print Receipt'), function() {
@@ -395,26 +513,20 @@ frappe.ui.form.on("Teller Purchase", {
     frm.events.show_general_ledger(frm);
     set_branch_and_shift(frm);
     
-    // Get and set EGY account from logged in user
-    let loginUser = frappe.session.logged_in_user;
-    frappe.call({
-        method: "frappe.client.get",
+    // Get and set EGY account balance
+    if (frm.doc.egy_account) {
+      frappe.call({
+        method: "teller.teller_customization.doctype.teller_purchase.teller_purchase.account_to_balance",
         args: {
-          doctype: "User",
-          name: loginUser,
+          paid_to: frm.doc.egy_account
         },
-    }).then((r) => {
-        if (r.message) {
-          let user_account = r.message.egy_account;
-          if (user_account) {
-            frm.set_value("egy", user_account);
-          } else {
-            frappe.throw("There is no EGY account linked to this user");
+        callback: function(r) {
+          if (r.message) {
+            frm.set_value('egy_balance', r.message);
           }
-        } else {
-          frappe.throw("Error while getting user");
         }
       });
+    }
 
     // filters commissar based on company name
     frm.set_query("purchase_commissar", function (doc) {
@@ -426,6 +538,10 @@ frappe.ui.form.on("Teller Purchase", {
         },
       };
     });
+
+    // Ensure egy_balance is always visible
+    frm.toggle_display('egy_balance', true);
+    frm.set_df_property('egy_balance', 'hidden', 0);
   },
 
   // add ledger report button on submit doctype
@@ -468,13 +584,13 @@ frappe.ui.form.on("Teller Purchase", {
       return;  // Exit if no buyer selected
     }
 
-        frappe.call({
-          method: "frappe.client.get",
-          args: {
-            doctype: "Customer",
-            name: frm.doc.buyer,
-          },
-          callback: function (r) {
+    frappe.call({
+      method: "frappe.client.get",
+      args: {
+        doctype: "Customer",
+        name: frm.doc.buyer,
+      },
+      callback: function (r) {
         if (!r.message) {
           return;
         }
@@ -501,21 +617,32 @@ frappe.ui.form.on("Teller Purchase", {
             "buyer_mobile_number": customer.custom_mobile_number
           };
 
-          // Set ID fields based on card type
-          if (customer.custom_card_type === "National ID") {
-            frm.set_value("buyer_national_id", customer.custom_national_id);
-          } else if (customer.custom_card_type === "Passport") {
-            frm.set_value("buyer_passport_number", customer.custom_passport_number);
-          } else if (customer.custom_card_type === "Military Card") {
-            frm.set_value("buyer_military_number", customer.custom_military_number);
-          }
-
           // Set individual fields only if they have values
           Object.entries(individualFields).forEach(([field, value]) => {
             if (value) {
               frm.set_value(field, value);
             }
           });
+
+          // First hide all ID fields
+          frm.set_df_property('buyer_national_id', 'hidden', 1);
+          frm.set_df_property('buyer_passport_number', 'hidden', 1);
+          frm.set_df_property('buyer_military_number', 'hidden', 1);
+
+          // Set ID fields based on card type and show the relevant one
+          if (customer.custom_card_type === "National ID") {
+            frm.set_value("buyer_national_id", customer.custom_national_id);
+            frm.set_df_property('buyer_national_id', 'hidden', 0);
+          } else if (customer.custom_card_type === "Passport") {
+            frm.set_value("buyer_passport_number", customer.custom_passport_number);
+            frm.set_df_property('buyer_passport_number', 'hidden', 0);
+          } else if (customer.custom_card_type === "Military Card") {
+            frm.set_value("buyer_military_number", customer.custom_military_number);
+            frm.set_df_property('buyer_military_number', 'hidden', 0);
+          }
+
+          // Ensure fields are refreshed
+          frm.refresh_fields(['buyer_national_id', 'buyer_passport_number', 'buyer_military_number']);
 
         } else if (frm.doc.category_of_buyer == "Company" || frm.doc.category_of_buyer == "Interbank") {
           // Set company fields
@@ -928,23 +1055,17 @@ frappe.ui.form.on("Teller Purchase", {
   //   }
   // },
 
-  egy_account: (frm) => {
+  egy: function(frm) {
     if (frm.doc.egy) {
       frappe.call({
-        method:
-          "teller.teller_customization.doctype.teller_purchase.teller_purchase.account_to_balance",
+        method: "teller.teller_customization.doctype.teller_purchase.teller_purchase.account_to_balance",
         args: {
-          paid_to: frm.doc.egy_account,
-          // company: frm.doc.company,
+          paid_to: frm.doc.egy,
         },
         callback: function (r) {
           if (r.message) {
-            console.log("the egy balance", r.message);
-            let egy_balance = r.message;
-
-            frm.set_value("egy_balance", egy_balance);
-          } else {
-            console.log("not found");
+            frm.set_value('egy_balance', r.message);
+            frm.refresh_field('egy_balance');
           }
         },
       });
@@ -1214,12 +1335,13 @@ function calculate_amounts(frm, cdt, cdn) {
             frappe.model.set_value(cdt, cdn, 'balance_after', new_balance);
         }
         
-        // Update parent's total
-    let total = 0;
-    frm.doc.purchase_transactions.forEach((item) => {
+        // Update parent's total by summing all egy_amounts
+        let total = 0;
+        frm.doc.purchase_transactions.forEach((item) => {
             total += flt(item.egy_amount);
         });
         frm.set_value('total', total);
+        frm.refresh_field('total');
     }
 }
 
@@ -1569,40 +1691,35 @@ function validateRegistrationDateExpiration(frm, end) {
 
 // Helper function to show identification fields
 function showIdentificationFields(frm) {
-  const fields = ['buyer_national_id', 'buyer_passport_number', 'buyer_military_number'];
-  
-  fields.forEach(field => {
-    // Make field visible
-    frm.set_df_property(field, 'hidden', 0);
-    // Make field read-only only if document is submitted
-    frm.set_df_property(field, 'read_only', frm.doc.docstatus === 1);
-    // Ensure field is rendered
-    if (frm.fields_dict[field]) {
-      frm.fields_dict[field].refresh();
-    }
-  });
-  
-  // Force a refresh of the form
-  frm.refresh_fields(fields);
-  
-  // Add a delayed refresh to ensure visibility
-  setTimeout(() => {
-    fields.forEach(field => {
-      frm.set_df_property(field, 'hidden', 0);
-      if (frm.fields_dict[field]) {
-        frm.fields_dict[field].refresh();
-      }
-    });
-    frm.refresh_fields(fields);
-  }, 500);
+  // Only show fields if we have a buyer and card type
+  if (!frm.doc.buyer || !frm.doc.buyer_card_type) {
+    frm.set_df_property('buyer_national_id', 'hidden', 1);
+    frm.set_df_property('buyer_passport_number', 'hidden', 1);
+    frm.set_df_property('buyer_military_number', 'hidden', 1);
+    return;
+  }
+
+  // Show only the relevant field based on card type
+  if (frm.doc.buyer_card_type === "National ID") {
+    frm.set_df_property('buyer_national_id', 'hidden', 0);
+    frm.set_df_property('buyer_passport_number', 'hidden', 1);
+    frm.set_df_property('buyer_military_number', 'hidden', 1);
+  } else if (frm.doc.buyer_card_type === "Passport") {
+    frm.set_df_property('buyer_national_id', 'hidden', 1);
+    frm.set_df_property('buyer_passport_number', 'hidden', 0);
+    frm.set_df_property('buyer_military_number', 'hidden', 1);
+  } else if (frm.doc.buyer_card_type === "Military Card") {
+    frm.set_df_property('buyer_national_id', 'hidden', 1);
+    frm.set_df_property('buyer_passport_number', 'hidden', 1);
+    frm.set_df_property('buyer_military_number', 'hidden', 0);
+  }
 }
 
 function makeIdentificationFieldsReadOnly(frm) {
   const fields = ['buyer_national_id', 'buyer_passport_number', 'buyer_military_number'];
   
   fields.forEach(field => {
-    frm.set_df_property(field, 'hidden', 0);
-    // Make field read-only only if document is submitted
+    // Only set read-only property, don't change visibility
     frm.set_df_property(field, 'read_only', frm.doc.docstatus === 1);
     if (frm.fields_dict[field]) {
       frm.fields_dict[field].refresh();
@@ -1635,4 +1752,29 @@ function clearFieldsBasedOnCategory(frm) {
   }
   
   frm.refresh_fields();
+}
+
+function make_return(frm) {
+  frappe.confirm(
+    'Are you sure you want to convert this document to a return? This will reverse all GL entries.',
+    () => {
+      frm.call({
+        method: "teller.teller_customization.doctype.teller_purchase.teller_purchase.make_purchase_return",
+        args: {
+          doc: frm.doc
+        },
+        freeze: true,
+        freeze_message: __("Converting to Return..."),
+        callback: (r) => {
+          if (r.message) {
+            frappe.show_alert({
+              message: __("Document converted to return successfully"),
+              indicator: 'green'
+            });
+            frm.reload_doc();
+          }
+        }
+      });
+    }
+  );
 }

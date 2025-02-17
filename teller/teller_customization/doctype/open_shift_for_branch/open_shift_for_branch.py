@@ -18,16 +18,32 @@ def get_permission_query_conditions(user=None):
     if not employee:
         return "1=0"
         
+    # Get user's permitted treasuries
+    permitted_treasuries = frappe.get_all('User Permission',
+        filters={
+            'user': user,
+            'allow': 'Teller Treasury'
+        },
+        pluck='for_value'
+    )
+    
+    treasury_condition = ""
+    if permitted_treasuries:
+        treasury_list = "', '".join(permitted_treasuries)
+        treasury_condition = f"OR `tabOpen Shift for Branch`.treasury_permission IN ('{treasury_list}')"
+        
     # Allow users to see:
     # 1. Shifts where they are the current_user
     # 2. Shifts for employees they supervise (if they are a supervisor)
+    # 3. Shifts for treasuries they have permission to
     return f"""
         (`tabOpen Shift for Branch`.current_user = '{employee}'
         OR EXISTS (
             SELECT 1 FROM `tabEmployee` e
             WHERE e.reports_to = '{employee}'
             AND e.name = `tabOpen Shift for Branch`.current_user
-        ))
+        )
+        {treasury_condition})
     """
 
 def has_permission(doc, ptype="read", user=None):
@@ -43,12 +59,25 @@ def has_permission(doc, ptype="read", user=None):
     if not employee:
         return False
         
+    # Check if user has permission for the treasury
+    if doc.treasury_permission:
+        has_treasury_permission = frappe.db.exists('User Permission', {
+            'user': user,
+            'allow': 'Teller Treasury',
+            'for_value': doc.treasury_permission
+        })
+        if has_treasury_permission:
+            return True
+        
     # Allow access if:
     # 1. User is the current_user of the shift
     # 2. User is the supervisor of the current_user
     return (
-        doc.current_user == employee
-        or frappe.db.get_value('Employee', doc.current_user, 'reports_to') == employee
+        doc.current_user == employee or
+        frappe.db.exists('Employee', {
+            'reports_to': employee,
+            'name': doc.current_user
+        })
     )
 
 @frappe.whitelist()

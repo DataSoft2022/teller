@@ -38,9 +38,6 @@ frappe.ui.form.on("Close Shift For Branch", {
             frm.set_value('start_date', r.message.start_date);
             frm.set_value('shift_employee', r.message.current_user);
             frm.set_value('branch', r.message.branch);
-            
-            // Trigger validation which will fetch invoices
-            frm.save();
           }
         }
       });
@@ -75,6 +72,8 @@ frappe.ui.form.on("Close Shift For Branch", {
       }
 
       console.log("Current open shift:", frm.doc.open_shift);
+      let purchasesComplete = false;
+      let salesComplete = false;
 
       // Call both methods directly
       frappe.call({
@@ -111,6 +110,10 @@ frappe.ui.form.on("Close Shift For Branch", {
               frm.set_value("total_purchase", `EGP ${format_currency(total_purchases)}`);
             } else {
               console.log("No purchase transactions found");
+            }
+            purchasesComplete = true;
+            if (salesComplete) {
+              updateCurrencySummary();
             }
           }
         },
@@ -162,6 +165,10 @@ frappe.ui.form.on("Close Shift For Branch", {
                 }
               });
             }
+            salesComplete = true;
+            if (purchasesComplete) {
+              updateCurrencySummary();
+            }
           }
         },
         error: function(r) {
@@ -174,6 +181,31 @@ frappe.ui.form.on("Close Shift For Branch", {
           });
         }
       });
+
+      function updateCurrencySummary() {
+        // Call the calculate_currency_summary method directly
+        frappe.call({
+          method: "teller.teller_customization.doctype.close_shift_for_branch.close_shift_for_branch.calculate_currency_summary",
+          args: {
+            doc: frm.doc
+          },
+          callback: function(r) {
+            if (!r.exc) {
+              frm.clear_table("currency_summary");
+              if (r.message) {
+                r.message.forEach(row => {
+                  frm.add_child("currency_summary", row);
+                });
+                frm.refresh_field("currency_summary");
+                frappe.show_alert({
+                  message: __("Currency summary updated"),
+                  indicator: 'green'
+                });
+              }
+            }
+          }
+        });
+      }
     });
   },
   refresh: function(frm) {

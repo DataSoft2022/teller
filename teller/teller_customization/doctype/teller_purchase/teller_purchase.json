@@ -121,7 +121,8 @@
    "fieldtype": "Data",
    "label": "Treasury Code",
    "read_only": 1,
-   "allow_on_submit": 1
+   "read_only_depends_on": "eval:doc.docstatus==1",
+   "allow_on_submit": 0
   },
   {
    "fieldname": "movement_number",
@@ -138,7 +139,7 @@
    "fieldtype": "Data",
    "label": "Receipt Number",
    "read_only": 1,
-   "allow_on_submit": 1
+   "allow_on_submit": 0
   },
   {
    "fetch_from": "branch_no.custom_branch_no",
@@ -171,7 +172,9 @@
    "fieldtype": "Link",
    "label": "Shift",
    "options": "Open Shift for Branch",
-   "read_only": 1
+   "read_only": 1,
+   "read_only_depends_on": "eval:doc.docstatus==1",
+   "allow_on_submit": 0
   },
   {
    "fieldname": "teller",
@@ -197,7 +200,8 @@
    "fieldtype": "Link",
    "label": "EGY",
    "options": "Account",
-   "read_only": 1
+   "read_only": 1,
+   "allow_on_submit": 0
   },
   {
    "fieldname": "branch_no",
@@ -603,12 +607,17 @@
   },
   {
    "fieldname": "section_break_icjb",
-   "fieldtype": "Section Break"
+   "fieldtype": "Section Break",
+   "label": "Balance Information",
+   "collapsible": 0
   },
   {
    "fieldname": "egy_balance",
    "fieldtype": "Currency",
-   "label": "EGY Balance"
+   "label": "EGY Balance",
+   "read_only": 1,
+   "bold": 1,
+   "precision": "2"
   },
   {
    "default": "0",
@@ -706,24 +715,28 @@
    "report": 1,
    "role": "System Manager",
    "share": 1,
+   "write": 1,
    "submit": 1,
-   "write": 1
+   "cancel": 1,
+   "amend": 1
   },
   {
    "create": 1,
    "delete": 0,
    "email": 1,
-   "export": 0,
+   "export": 1,
    "print": 1,
    "read": 1,
    "report": 1,
    "role": "Teller",
-   "share": 0,
+   "share": 1,
+   "write": 1,
    "submit": 1,
-   "write": 1
+   "cancel": 1
   }
  ],
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "track_changes": 1
 }

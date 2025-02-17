@@ -23,7 +23,8 @@
    "label": "Account",
    "options": "Account",
    "in_list_view": 1,
-   "reqd": 1
+   "reqd": 1,
+   "read_only": 1
   },
   {
    "fieldname": "currency",
@@ -31,7 +32,8 @@
    "label": "Currency",
    "options": "Currency",
    "in_list_view": 1,
-   "reqd": 1
+   "reqd": 1,
+   "read_only": 1
   },
   {
    "fieldname": "currency_code",
@@ -45,42 +47,48 @@
    "fieldtype": "Float",
    "label": "Opening Balance",
    "in_list_view": 1,
-   "precision": "2"
+   "precision": "2",
+   "read_only": 1
   },
   {
    "fieldname": "transferred_amount",
    "fieldtype": "Float",
    "label": "Transferred Amount",
    "in_list_view": 1,
-   "precision": "2"
+   "precision": "2",
+   "read_only": 1
   },
   {
    "fieldname": "sold_amount",
    "fieldtype": "Float",
    "label": "Sold Amount",
    "in_list_view": 1,
-   "precision": "2"
+   "precision": "2",
+   "read_only": 1
   },
   {
    "fieldname": "bought_amount",
    "fieldtype": "Float",
    "label": "Bought Amount",
    "in_list_view": 1,
-   "precision": "2"
+   "precision": "2",
+   "read_only": 1
   },
   {
    "fieldname": "final_balance",
    "fieldtype": "Float",
    "label": "Final Balance",
    "in_list_view": 1,
-   "precision": "2"
+   "precision": "2",
+   "read_only": 1
   },
   {
    "fieldname": "actual_amount",
    "fieldtype": "Float",
    "label": "Actual Amount",
    "in_list_view": 1,
-   "precision": "2"
+   "precision": "2",
+   "bold": 1
   }
  ],
  "index_web_pages_for_search": 1,

@@ -1026,6 +1026,15 @@ class TellerInvoice(Document):
             if frappe.session.user == "Administrator" or "System Manager" in frappe.get_roles():
                 allowed_fields.extend(['workflow_state', 'status'])
             
+            # Allow total-related fields when creating a return
+            if self.flags.get('ignore_validate_update_after_submit') and self.is_returned:
+                allowed_fields.extend([
+                    'total',
+                    'total_amount',
+                    'total_egy',
+                    'egy_amount'
+                ])
+            
             # Check if any non-allowed fields were changed
             for field in changed_fields:
                 if field not in allowed_fields:

@@ -144,8 +144,7 @@ class TellerPurchase(Document):
                 printing_roll.last_printed_number = self.next_receipt_number
                 printing_roll.save()
             
-            # Commit the transaction
-            frappe.db.commit()
+            # Don't commit here - let Frappe handle the transaction
             
         except Exception as e:
             frappe.db.rollback()
@@ -561,6 +560,13 @@ class TellerPurchase(Document):
             self.treasury_code = treasury.name
             self.shift = shift.name
             
+            # Set EGY account from user
+            egy_account = frappe.db.get_value('User', frappe.session.user, 'egy_account')
+            if egy_account:
+                self.egy = egy_account
+            else:
+                frappe.throw(_("EGY Account not set for user {0}. Please set it in User settings.").format(frappe.session.user))
+            
         except Exception as e:
             frappe.log_error(
                 message=f"Error setting treasury details: {str(e)}\nTraceback: {frappe.get_traceback()}",
@@ -803,7 +809,12 @@ class TellerPurchase(Document):
                 if field not in allowed_fields:
                     # Special handling for egy_balance
                     if field == 'egy_balance':
-                        self.db_set('egy_balance', self.get_doc_before_save().egy_balance)
+                        self.db_set('egy_balance', self.get_doc_before_save().egy_balance, update_modified=False)
+                    # Special handling for treasury_code and shift
+                    elif field in ['treasury_code', 'shift']:
+                        doc_before_save = self.get_doc_before_save()
+                        if doc_before_save:
+                            self.db_set(field, doc_before_save.get(field))
                     else:
                         # Special handling for child table changes
                         if field == 'purchase_transactions' and self.is_returned:
@@ -872,7 +883,6 @@ def account_to_balance(paid_to):
     try:
         balance = get_balance_on(
             account=paid_to,
-            # company=company,
         )
         return balance
     except Exception as e:
@@ -1251,8 +1261,8 @@ def search_buyer_by_id(search_id):
 def get_treasury_accounts(doctype, txt, searchfield, start, page_len, filters):
     """Get accounts linked to the specified treasury"""
     try:
-        # Get the treasury code from filters
         treasury_code = filters.get('treasury_code')
+        
         if not treasury_code:
             return []
             
@@ -1262,27 +1272,28 @@ def get_treasury_accounts(doctype, txt, searchfield, start, page_len, filters):
         # 2. Are not group accounts
         # 3. Have a currency other than EGP
         # 4. Are of type Cash or Bank
+        # 5. Match the search text in account code or name
         return frappe.db.sql("""
-            SELECT name, account_name, account_currency
-            FROM `tabAccount`
+            SELECT name, account_name, account_currency, custom_currency_code
+            FROM `tabAccount` 
             WHERE custom_teller_treasury = %s
             AND is_group = 0
             AND account_currency != 'EGP'
             AND account_type in ('Cash', 'Bank')
-            AND (name LIKE %s OR account_name LIKE %s)
-            ORDER BY name
+            AND (name LIKE %s OR account_name LIKE %s OR custom_currency_code LIKE %s)
+            ORDER BY custom_currency_code, account_name
             LIMIT %s, %s
         """, (
             treasury_code,
             f"%{txt}%",
             f"%{txt}%",
+            f"%{txt}%",
             start,
             page_len
         ))
-            
     except Exception as e:
         frappe.log_error(
-            message=f"Error fetching treasury accounts: {str(e)}\nTraceback: {frappe.get_traceback()}",
-            title="Account Query Error"
+            message=f"Error getting treasury accounts: {str(e)}\nTraceback: {frappe.get_traceback()}",
+            title="Treasury Accounts Error"
         )
         return []

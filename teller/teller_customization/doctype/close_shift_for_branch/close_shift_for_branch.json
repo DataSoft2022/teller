@@ -30,7 +30,7 @@
   "column_break_lsit",
   "column_break_ibdu",
   "total_sales",
-  "currency_summay_total_section",
+  "currency_summary_total_section",
   "currency_summary",
   "amended_from"
  ],
@@ -77,8 +77,9 @@
    "fieldname": "end_date",
    "fieldtype": "Datetime",
    "label": "End Date",
-   "reqd": 1,
+   "read_only": 1,
    "bold": 1,
+   "description": "Will be set automatically when document is submitted",
    "in_list_view": 1
   },
   {
@@ -200,9 +201,9 @@
    "in_list_view": 1
   },
   {
-   "fieldname": "currency_summay_total_section",
+   "fieldname": "currency_summary_total_section",
    "fieldtype": "Section Break",
-   "label": "Currency Summay Total",
+   "label": "Currency Summary Total",
    "in_list_view": 1
   },
   {
