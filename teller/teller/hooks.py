@@ -1,0 +1,269 @@
+app_name = "teller"
+app_title = "Teller"
+app_publisher = "Mohamed AbdElsabour"
+app_description = "teller app"
+app_email = "test@test.com"
+app_license = "mit"
+required_apps = ["frappe"]
+# fixtures=["Custom Field"]
+
+# Includes in <head>
+# -------------------
+
+# include js, css files in header of desk.html
+# app_include_css = "/assets/teller/css/teller.css"
+# app_include_js = "/assets/teller/js/teller.js"
+
+# include js, css files in header of web template
+# web_include_css = "/assets/teller/css/teller.css"
+# web_include_js = "/assets/teller/js/teller.js"
+
+# include custom scss in every website theme (without file extension ".scss")
+# website_theme_scss = "teller/public/scss/website"
+
+# include js, css files in header of web form
+# webform_include_js = {"doctype": "public/js/doctype.js"}
+# webform_include_css = {"doctype": "public/css/doctype.css"}
+
+# include js in page
+# page_js = {"page" : "public/js/file.js"}
+
+# include js in doctype views
+# doctype_js = {"doctype" : "public/js/doctype.js"}
+# doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
+# doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
+# doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
+
+# Svg Icons
+# ------------------
+# include app icons in desk
+# app_include_icons = "teller/public/icons.svg"
+
+# Home Pages
+# ----------
+
+# application home page (will override Website Settings)
+home_page = "login"
+
+# website user home page (by Role)
+# role_home_page = {
+# 	"Role": "home_page"
+# }
+
+# Generators
+# ----------
+
+# automatically create page for each record of this doctype
+# website_generators = ["Web Page"]
+
+# Jinja
+# ----------
+
+# add methods and filters to jinja environment
+# jinja = {
+# 	"methods": "teller.utils.jinja_methods",
+# 	"filters": "teller.utils.jinja_filters"
+# }
+
+# Installation
+# ------------
+
+# before_install = "teller.install.before_install"
+# after_install = "teller.install.after_install"
+
+# Uninstallation
+# ------------
+
+# before_uninstall = "teller.uninstall.before_uninstall"
+# after_uninstall = "teller.uninstall.after_uninstall"
+
+# Integration Setup
+# -----------------
+# To set up dependencies/integrations with other apps
+# Name of the app being installed is passed as an argument
+
+# before_app_install = "teller.utils.before_app_install"
+# after_app_install = "teller.utils.after_app_install"
+
+# Integration Cleanup
+# -------------------
+# To clean up dependencies/integrations with other apps
+# Name of the app being uninstalled is passed as an argument
+
+# before_app_uninstall = "teller.utils.before_app_uninstall"
+# after_app_uninstall = "teller.utils.after_app_uninstall"
+
+# Desk Notifications
+# ------------------
+# See frappe.core.notifications.get_notification_config
+
+# notification_config = "teller.notifications.get_notification_config"
+
+# Permissions
+# -----------
+# Permissions evaluated in scripted ways
+
+permission_query_conditions = {
+    "Open Shift for Branch": "teller.teller_customization.doctype.open_shift_for_branch.open_shift_for_branch.get_permission_query_conditions",
+    "Teller Invoice": "teller.teller_customization.doctype.teller_invoice.teller_invoice.get_permission_query_conditions",
+    "Account": "teller.teller_customization.doctype.account.account_permission.get_permission_query_conditions"
+}
+
+# Permissions for all doctypes
+has_permission = {
+    "Open Shift for Branch": "teller.teller_customization.doctype.open_shift_for_branch.open_shift_for_branch.has_permission",
+    "Teller Invoice": "teller.teller_customization.doctype.teller_invoice.teller_invoice.has_permission",
+    "Account": "teller.teller_customization.doctype.account.account_permission.has_permission"
+}
+
+# DocType Class
+# ---------------
+# Override standard doctype classes
+
+override_doctype_class = {
+    "Currency Exchange": "teller.teller_customization.currency_override.CurrencyName",
+    # "Customer": "teller.controllers.override.CustomCustomer"
+}
+
+# Document Events
+# ---------------
+# Hook on document methods and events
+
+doc_events = {
+    "Currency Exchange": {
+        "after_insert": "teller.teller.page.currency_screen.currency_screen.after_insert",
+        "on_update": "teller.teller.page.currency_screen.currency_screen.on_update"
+    },
+    "Customer": {
+        "autoname": "teller.teller_customization.customer.customer.autoname"
+    },
+    "Account": {
+        "on_update": "teller.teller_customization.doctype.account.account_handler.on_update"
+    },
+}
+
+# Scheduled Tasks
+# ---------------
+
+scheduler_events = {
+    # "daily": [
+    # "teller.controllers.validate_customer.validate"
+    # ],
+  "cron":{
+    "* * * * *":[ 
+    "teller.validate_time.cron_validate_interbank_time",
+    "teller.validate_time.cron_validate_queue_time",
+    "teller.controllers.validate_customer.validate_registration_date"
+  ],
+
+  }
+# 	"all": [
+# 		"teller.tasks.all"
+# 	],
+# 	"daily": [
+# 		"teller.tasks.daily"
+# 	],
+# 	"hourly": [
+# 		"teller.tasks.hourly"
+# 	],
+# 	"weekly": [
+# 		"teller.tasks.weekly"
+# 	],
+# 	"monthly": [
+# 		"teller.tasks.monthly"
+# 	],
+}
+
+# Testing
+# -------
+
+# before_tests = "teller.install.before_tests"
+
+# Overriding Methods
+# ------------------------------
+#
+# override_whitelisted_methods = {
+# 	"frappe.desk.doctype.event.event.get_events": "teller.event.get_events"
+# }
+#
+# each overriding function accepts a `data` argument;
+# generated from the base implementation of the doctype dashboard,
+# along with any modifications made in other Frappe apps
+# override_doctype_dashboards = {
+# 	"Task": "teller.task.get_dashboard_data"
+# }
+
+# exempt linked doctypes from being automatically cancelled
+#
+# auto_cancel_exempted_doctypes = ["Auto Repeat"]
+
+# Ignore links to specified DocTypes when deleting documents
+# -----------------------------------------------------------
+
+# ignore_links_on_delete = ["Communication", "ToDo"]
+
+# Request Events
+# ----------------
+# before_request = ["teller.utils.before_request"]
+# after_request = ["teller.utils.after_request"]
+
+# Job Events
+# ----------
+# before_job = ["teller.utils.before_job"]
+# after_job = ["teller.utils.after_job"]
+
+# User Data Protection
+# --------------------
+
+# user_data_fields = [
+# 	{
+# 		"doctype": "{doctype_1}",
+# 		"filter_by": "{filter_by}",
+# 		"redact_fields": ["{field_1}", "{field_2}"],
+# 		"partial": 1,
+# 	},
+# 	{
+# 		"doctype": "{doctype_2}",
+# 		"filter_by": "{filter_by}",
+# 		"partial": 1,
+# 	},
+# 	{
+# 		"doctype": "{doctype_3}",
+# 		"strict": False,
+# 	},
+# 	{
+# 		"doctype": "{doctype_4}"
+# 	}
+# ]
+
+# Authentication and authorization
+# --------------------------------
+
+# auth_hooks = [
+# 	"teller.auth.validate"
+# ]
+
+# Automatically update python controller files with type annotations for this app.
+# export_python_type_annotations = True
+
+# default_log_clearing_doctypes = {
+# 	"Logging DocType Name": 30  # days to retain logs
+# }
+
+doctype_js = {
+    "Account": "public/js/account.js",
+    "Customer": "public/js/customer.js"
+}
+
+# Fixtures
+# ----------
+fixtures = [
+    {
+        "doctype": "Custom Field",
+        "filters": [
+            ["name", "in", [
+                "Account-custom_teller_treasury"
+            ]]
+        ]
+    }
+]

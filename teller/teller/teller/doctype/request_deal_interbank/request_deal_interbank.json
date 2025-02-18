@@ -1,0 +1,116 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2024-11-17 14:26:40.945961",
+ "default_view": "List",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_ypop",
+  "date",
+  "time",
+  "user",
+  "branch",
+  "customer",
+  "deals",
+  "description",
+  "request_interbank_refrence",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_ypop",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "label": "Date"
+  },
+  {
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "label": "user",
+   "options": "User"
+  },
+  {
+   "fieldname": "branch",
+   "fieldtype": "Link",
+   "label": "Branch",
+   "options": "Branch"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Long Text",
+   "label": " description"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Request Deal interbank",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "request_interbank_refrence",
+   "fieldtype": "Link",
+   "label": "Request interbank Refrence",
+   "options": "Request interbank"
+  },
+  {
+   "fieldname": "deals",
+   "fieldtype": "Table",
+   "label": "Deal items",
+   "options": "Deal Details"
+  },
+  {
+   "fieldname": "time",
+   "fieldtype": "Time",
+   "label": "Time"
+  },
+  {
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "label": "Customer",
+   "options": "Customer"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [
+  {
+   "link_doctype": "Request interbank",
+   "link_fieldname": "request_deal_interbank_refrence"
+  },
+  {
+   "link_doctype": "InterBank",
+   "link_fieldname": "request_interbank_reference"
+  }
+ ],
+ "modified": "2024-11-22 18:03:59.259379",
+ "modified_by": "Administrator",
+ "module": "Teller",
+ "name": "Request Deal interbank",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

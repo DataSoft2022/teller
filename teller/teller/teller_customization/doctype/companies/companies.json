@@ -1,0 +1,91 @@
+{
+ "actions": [],
+ "autoname": "field:commercial_no",
+ "creation": "2024-07-09 09:18:06.451750",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "company_name",
+  "commercial_no",
+  "start_registration_date",
+  "end_registration_date",
+  "column_break_bjma",
+  "company_activity",
+  "company_number",
+  "company_address",
+  "legal_form"
+ ],
+ "fields": [
+  {
+   "fieldname": "company_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Company Name"
+  },
+  {
+   "fieldname": "start_registration_date",
+   "fieldtype": "Date",
+   "label": "Start Registration Date"
+  },
+  {
+   "fieldname": "end_registration_date",
+   "fieldtype": "Date",
+   "label": "End Registration Date "
+  },
+  {
+   "fieldname": "column_break_bjma",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "company_activity",
+   "fieldtype": "Data",
+   "label": "Company Activity"
+  },
+  {
+   "fieldname": "company_number",
+   "fieldtype": "Data",
+   "label": "Company Number"
+  },
+  {
+   "fieldname": "company_address",
+   "fieldtype": "Data",
+   "label": "Company Address"
+  },
+  {
+   "fieldname": "commercial_no",
+   "fieldtype": "Data",
+   "label": "Commercial No",
+   "unique": 1
+  },
+  {
+   "fieldname": "legal_form",
+   "fieldtype": "Data",
+   "label": "Legal Form"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2024-07-09 14:33:56.290468",
+ "modified_by": "Administrator",
+ "module": "Teller Customization",
+ "name": "Companies",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

@@ -1,0 +1,84 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "format:{branch}-{teller_name}-{####}",
+ "creation": "2025-02-02 15:20:48.960182",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "teller_name",
+  "branch",
+  "teller_number",
+  "teller_type"
+ ],
+ "fields": [
+  {
+   "fieldname": "teller_name",
+   "fieldtype": "Data",
+   "label": "Teller Name",
+   "unique": 1,
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "branch",
+   "fieldtype": "Link",
+   "label": "Branch",
+   "options": "Branch",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "teller_number",
+   "fieldtype": "Data",
+   "label": "Teller Number",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "teller_type",
+   "fieldtype": "Select",
+   "label": "Teller Type",
+   "options": "\nManager\nTeller",
+   "reqd": 1,
+   "in_list_view": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-02-02 16:57:58.575127",
+ "modified_by": "Administrator",
+ "module": "Teller Customization",
+ "name": "Teller Treasury",
+ "owner": "Administrator",
+ "permissions": [
+   {
+    "create": 1,
+    "delete": 1,
+    "email": 1,
+    "export": 1,
+    "print": 1,
+    "read": 1,
+    "report": 1,
+    "role": "System Manager",
+    "share": 1,
+    "write": 1
+   },
+   {
+    "create": 0,
+    "delete": 0,
+    "email": 1,
+    "export": 1,
+    "print": 1,
+    "read": 1,
+    "report": 1,
+    "role": "Teller",
+    "share": 0,
+    "write": 0
+   }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}

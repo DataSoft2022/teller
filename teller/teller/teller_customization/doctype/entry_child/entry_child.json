@@ -1,0 +1,100 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2024-03-27 13:06:55.222848",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "code",
+  "currency_code",
+  "paid_from",
+  "usd_amount",
+  "rate",
+  "received_amount",
+  "total_amount",
+  "balance",
+  "booking_interbank"
+ ],
+ "fields": [
+  {
+   "allow_in_quick_entry": 1,
+   "fieldname": "paid_from",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_standard_filter": 1,
+   "label": "Teller",
+   "options": "Account",
+   "reqd": 1
+  },
+  {
+   "fieldname": "rate",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Rate"
+  },
+  {
+   "fieldname": "received_amount",
+   "fieldtype": "Currency",
+   "hidden": 1,
+   "in_list_view": 1,
+   "label": "Received Amount",
+   "read_only": 1
+  },
+  {
+   "fieldname": "usd_amount",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "QTY",
+   "reqd": 1
+  },
+  {
+   "fieldname": "total_amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Total Amount",
+   "read_only": 1
+  },
+  {
+   "fieldname": "balance",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Balance"
+  },
+  {
+   "fieldname": "code",
+   "fieldtype": "Data",
+   "label": "Code"
+  },
+  {
+   "fetch_from": "currency.currency_name",
+   "fieldname": "currency_code",
+   "fieldtype": "Link",
+   "label": "Currency ",
+   "options": "Currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "booking_interbank",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_standard_filter": 1,
+   "label": "Booking Interbank",
+   "options": "Booking Interbank"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-01-29 16:31:54.375738",
+ "modified_by": "Administrator",
+ "module": "Teller Customization",
+ "name": "Entry Child",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

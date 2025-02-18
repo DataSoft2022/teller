@@ -1,0 +1,99 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2024-05-12 12:16:35.715284",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "invoice",
+  "posting_date",
+  "client",
+  "receipt_no",
+  "movement_no",
+  "currency_code",
+  "total",
+  "total_amount",
+  "total_egy"
+ ],
+ "fields": [
+  {
+   "fieldname": "invoice",
+   "fieldtype": "Link",
+   "label": "Invoice",
+   "options": "Teller Invoice",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "posting_date",
+   "fieldtype": "Date",
+   "label": "Posting Date",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "client",
+   "fieldtype": "Link",
+   "label": "Client",
+   "options": "Customer",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "receipt_no",
+   "fieldtype": "Data",
+   "label": "Receipt Number",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "movement_no",
+   "fieldtype": "Data",
+   "label": "Movement Number",
+   "read_only": 1
+  },
+  {
+   "fieldname": "currency_code",
+   "fieldtype": "Link",
+   "label": "Currency",
+   "options": "Currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total",
+   "fieldtype": "Currency",
+   "label": "Total",
+   "options": "currency_code",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "total_amount",
+   "fieldtype": "Currency",
+   "label": "Total Amount",
+   "options": "currency_code",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "total_egy",
+   "fieldtype": "Currency",
+   "label": "Total (EGY)",
+   "options": "Company:company:default_currency",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2024-07-07 15:36:37.526441",
+ "modified_by": "Administrator",
+ "module": "Teller Customization",
+ "name": "Shift Sales Child",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
