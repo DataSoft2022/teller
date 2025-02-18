@@ -2,44 +2,100 @@
  "actions": [],
  "allow_rename": 1,
  "autoname": "Open Shift Branch_.####",
- "creation": "2025-02-02 09:38:38.149199",
- "default_view": "List",
+ "creation": "2025-02-02 15:20:48.960182",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "section_break_otww",
-  "start_date",
-  "printing_roll",
-  "end_date",
-  "serial",
-  "column_break_wnku",
-  "shift_status",
-  "amended_from",
-  "teller_treasury",
+  "section_break_shift",
   "current_user",
   "employee_name",
-  "create_close_shift"
+  "branch",
+  "treasury_permission",
+  "column_break_details",
+  "start_date",
+  "end_date",
+  "shift_status",
+  "section_break_roll",
+  "printing_roll"
  ],
  "fields": [
   {
-   "fieldname": "amended_from",
+   "fieldname": "section_break_shift",
+   "fieldtype": "Section Break",
+   "label": "Shift Details"
+  },
+  {
+   "fieldname": "current_user",
    "fieldtype": "Link",
-   "label": "Amended From",
-   "no_copy": 1,
-   "options": "Open Shift for Branch",
-   "print_hide": 1,
+   "label": "Employee",
+   "options": "Employee",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "bold": 1
+  },
+  {
+   "fetch_from": "current_user.employee_name",
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "label": "Employee Name",
    "read_only": 1,
-   "search_index": 1
+   "bold": 1
   },
   {
-   "fieldname": "section_break_otww",
-   "fieldtype": "Section Break"
+   "fetch_from": "current_user.branch",
+   "fieldname": "branch",
+   "fieldtype": "Link",
+   "label": "Branch",
+   "options": "Branch",
+   "read_only": 1,
+   "reqd": 1,
+   "in_list_view": 1
   },
   {
+   "fieldname": "treasury_permission",
+   "fieldtype": "Link",
+   "label": "Teller's Treasury",
+   "options": "Teller Treasury",
+   "read_only": 1,
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "column_break_details",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Now",
    "fieldname": "start_date",
    "fieldtype": "Datetime",
+   "in_list_view": 1,
    "label": "Start Date",
    "reqd": 1
+  },
+  {
+   "fieldname": "end_date",
+   "fieldtype": "Datetime",
+   "label": "End Date",
+   "read_only": 1,
+   "depends_on": "eval:doc.shift_status=='Closed'",
+   "in_list_view": 1
+  },
+  {
+   "default": "Active",
+   "fieldname": "shift_status",
+   "fieldtype": "Select",
+   "label": "Shift Status",
+   "options": "Active\nClosed",
+   "read_only": 1,
+   "in_standard_filter": 1,
+   "in_list_view": 1,
+   "bold": 1
+  },
+  {
+   "fieldname": "section_break_roll",
+   "fieldtype": "Section Break",
+   "label": "Printing Details"
   },
   {
    "fieldname": "printing_roll",
@@ -48,104 +104,49 @@
    "options": "Printing Roll",
    "reqd": 1,
    "description": "Select the active printing roll for receipt numbers"
-  },
-  {
-   "fieldname": "end_date",
-   "fieldtype": "Datetime",
-   "label": "End Date",
-   "read_only": 1,
-   "hidden": 1
-  },
-  {
-   "fieldname": "column_break_wnku",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "serial",
-   "fieldtype": "Data",
-   "label": "Serial",
-   "read_only": 1,
-   "hidden": 1
-  },
-  {
-   "fieldname": "current_user",
-   "fieldtype": "Link",
-   "label": "Current Employee",
-   "options": "Employee",
-   "reqd": 1,
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "read_only_on_submit": 1
-  },
-  {
-   "fieldname": "employee_name",
-   "fieldtype": "Data",
-   "label": "Employee Name",
-   "fetch_from": "current_user.employee_name",
-   "read_only": 1,
-   "in_list_view": 1
-  },
-  {
-   "fieldname": "teller_treasury",
-   "fieldtype": "Link",
-   "label": "Teller Treasury",
-   "options": "Teller Treasury",
-   "reqd": 1
-  },
-  {
-   "allow_on_submit": 1,
-   "fieldname": "shift_status",
-   "fieldtype": "Select",
-   "ignore_user_permissions": 1,
-   "in_list_view": 1,
-   "in_preview": 1,
-   "in_standard_filter": 1,
-   "label": "Shift Status",
-   "options": "\nActive\nClosed",
-   "translatable": 1,
-   "read_only": 1,
-   "default": "Active"
-  },
-  {
-   "fieldname": "create_close_shift",
-   "fieldtype": "Button",
-   "label": "Create Close Shift",
-   "hidden": 0,
-   "depends_on": "eval:doc.shift_status=='Active' && doc.docstatus==1"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-02-02 13:23:12.681533",
+ "modified": "2025-02-14 16:57:58.575127",
  "modified_by": "Administrator",
  "module": "Teller Customization",
  "name": "Open Shift for Branch",
  "naming_rule": "Expression (old style)",
  "owner": "Administrator",
  "permissions": [
-  {
-   "role": "System Manager",
-   "read": 1,
-   "write": 1,
-   "create": 1,
-   "delete": 1,
-   "submit": 1,
-   "cancel": 1,
-   "amend": 1
-  },
-  {
-   "role": "Teller",
-   "read": 1,
-   "write": 1,
-   "create": 1,
-   "submit": 1,
-   "cancel": 1,
-   "report": 1,
-   "select": 1
-  }
+   {
+    "create": 1,
+    "delete": 1,
+    "email": 1,
+    "export": 1,
+    "print": 1,
+    "read": 1,
+    "report": 1,
+    "role": "System Manager",
+    "share": 1,
+    "write": 1,
+    "submit": 1,
+    "cancel": 1,
+    "amend": 1
+   },
+   {
+    "create": 1,
+    "delete": 0,
+    "email": 1,
+    "export": 1,
+    "print": 1,
+    "read": 1,
+    "report": 1,
+    "role": "Teller",
+    "share": 1,
+    "write": 1,
+    "submit": 1,
+    "cancel": 1
+   }
  ],
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "track_changes": 1
 }

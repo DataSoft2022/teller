@@ -21,6 +21,11 @@ frappe.ui.form.on("Close Shift For Branch", {
         frm.set_value("open_shift", r.message);
       },
     });
+
+    // Make open_shift field read-only after submission
+    if (frm.doc.docstatus === 1) {
+      frm.set_df_property('open_shift', 'read_only', 1);
+    }
   },
   open_shift: function(frm) {
     if (frm.doc.open_shift) {
@@ -38,9 +43,6 @@ frappe.ui.form.on("Close Shift For Branch", {
             frm.set_value('start_date', r.message.start_date);
             frm.set_value('shift_employee', r.message.current_user);
             frm.set_value('branch', r.message.branch);
-            
-            // Trigger validation which will fetch invoices
-            frm.save();
           }
         }
       });
@@ -63,108 +65,159 @@ frappe.ui.form.on("Close Shift For Branch", {
   },
   get_all_invoices(frm) {
     if (!frm.doc.open_shift) {
-      frappe.throw("Select Open Shift")
+      frappe.throw(__("Please select an Open Shift first"));
+      return;
     }
-    frappe.call({
-      method: "teller.teller_customization.doctype.close_shift.close_shift.get_sales_invoice",
-      args: {
-        current_open_shift: frm.doc.open_shift,
-      },
-    }).then((r) => {
-      let total = 0;
 
-      if (r.message) {
-        frm.clear_table("sales_invoice");
-        console.log("Sales Invoices:", r.message);
-        let invoices = r.message;
-        
-        invoices.forEach((invoice) => {
-          frm.add_child("sales_invoice", {
-            invoice: invoice.name,
-            posting_date: invoice.posting_date,
-            client: invoice.client,
-            receipt_no: invoice.receipt_number,
-            movement_no: invoice.movement_number,
-            total: invoice.total,
-            total_amount: invoice.total_amount,
-            total_egy: invoice.total_egy
-          });
-          total += flt(invoice.total);
-        });
-        frm.refresh_field("sales_invoice");
-        frm.set_value("total_sales", total);
-      } else {
-        frappe.msgprint("No invoices exist");
+    // Check if the shift is already closed
+    frappe.db.get_value("Open Shift for Branch", frm.doc.open_shift, "shift_status", (r) => {
+      if (r && r.shift_status !== "Active") {
+        frappe.throw(__("This shift is already closed. Cannot fetch invoices."));
+        return;
       }
-    });
-    let total = 0;
-    // console.log("from purchase");
-    frappe.call({
-      method:
-        "teller.teller_customization.doctype.close_shift_for_branch.close_shift_for_branch.get_purchase_invoices",
-      args: {
-        current_open_shift: frm.doc.open_shift,
-      },
-      callback: (r) => {
-        if (r.message) {
-          console.log("p invoice",r.message);
-          frm.clear_table("purchase_close_table");
-          let log = console.log;
 
-          const invocies = r.message;
+      console.log("Current open shift:", frm.doc.open_shift);
+      let purchasesComplete = false;
+      let salesComplete = false;
 
-          invocies.forEach((invoice) => {
-            frm.add_child("purchase_close_table", {
-              reference: invoice["name"],
-              invoice_total: invoice["total"],
-              client: invoice["buyer"],
-              receipt_number: invoice["receipt_number"],
-              // exceed: invoice["exceed"],
-            });
-            total += invoice["total"];
+      // Call both methods directly
+      frappe.call({
+        method: "teller.teller_customization.doctype.close_shift_for_branch.close_shift_for_branch.get_purchase_invoices",
+        args: {
+          current_open_shift: frm.doc.open_shift
+        },
+        callback: function(r) {
+          if (!r.exc) {  // Only process if no exception
+            console.log("Purchase response:", r);
+            if (r.message) {
+              console.log("Purchase transactions:", r.message);
+              frm.clear_table("purchase_close_table");
+              let total_purchases = 0;
+
+              r.message.forEach(trans => {
+                console.log("Processing purchase transaction:", trans);
+                frm.add_child("purchase_close_table", {
+                  reference: trans.name,
+                  posting_date: trans.posting_date,
+                  client: trans.buyer,
+                  receipt_number: trans.purchase_receipt_number,
+                  movement_no: trans.movement_number,
+                  currency_code: trans.currency_name,  // Use currency_name instead of currency_code
+                  total: trans.quantity,
+                  total_amount: trans.quantity,
+                  total_egy: trans.egy_amount
+                });
+                total_purchases += flt(trans.egy_amount);
+              });
+
+              console.log("Total purchases:", total_purchases);
+              frm.refresh_field("purchase_close_table");
+              frm.set_value("total_purchase", `EGP ${format_currency(total_purchases)}`);
+            } else {
+              console.log("No purchase transactions found");
+            }
+            purchasesComplete = true;
+            if (salesComplete) {
+              updateCurrencySummary();
+            }
+          }
+        },
+        error: function(r) {
+          // Handle any errors gracefully
+          console.error("Error fetching purchase transactions:", r);
+          frappe.msgprint({
+            title: __("Error"),
+            indicator: "red",
+            message: __("Failed to fetch purchase transactions. Please try again.")
           });
-          frm.set_value("total_purchase", total);
-        } else {
-          frappe.msgprint("no invoices exists");
         }
-        // const invocie_names = [];
-        // console.log(r.message);
-        // let egy_total = 0;
-        // let child_total = 0;
+      });
 
-        // for (let invocie of invocies) {
-        //   invocie_names.push(invocie["name"]);
-        //   let exists = frm.doc.purchase_close_table.some((d) => {
-        //     return d.reference === invocie.name;
-        //   });
-        //   if (!exists) {
-        //     for (let child of invocie["transactions"]) {
-        //       frm.add_child("purchase_close_table", {
-        //         reference: invocie["name"],
-        //         currency_amount: child["usd_amount"],
-        //         currency: child["currency"],
-        //         egyptian_price: child["total_amount"],
-        //         rate: child["rate"],
-        //       });
-        //       child_total += child["total_amount"];
-        //     }
-        //   }
+      frappe.call({
+        method: "teller.teller_customization.doctype.close_shift_for_branch.close_shift_for_branch.get_sales_invoice",
+        args: {
+          current_open_shift: frm.doc.open_shift
+        },
+        callback: function(r) {
+          if (!r.exc) {  // Only process if no exception
+            if (r.message) {
+              frm.clear_table("sales_invoice");
+              let total_sales = 0;
 
-        //   frm.refresh_field("purchase_close_table");
-        // }
+              r.message.forEach(invoice => {
+                if (!invoice.is_returned) {
+                  invoice.teller_invoice_details.forEach(detail => {
+                    // Get currency name from the currency code
+                    frappe.db.get_value("Currency", {"custom_currency_code": detail.currency_code}, "name", (result) => {
+                      if (result && result.name) {
+                        frm.add_child("sales_invoice", {
+                          invoice: invoice.name,
+                          posting_date: invoice.posting_date,
+                          client: invoice.client,
+                          receipt_no: invoice.receipt_number,
+                          movement_no: invoice.movement_number,
+                          currency_code: result.name,  // Use the actual currency name
+                          total: detail.quantity,
+                          total_amount: detail.quantity,
+                          total_egy: detail.egy_amount
+                        });
+                        total_sales += flt(detail.egy_amount);
+                        frm.refresh_field("sales_invoice");
+                        frm.set_value("total_sales", `EGP ${format_currency(total_sales)}`);
+                      }
+                    });
+                  });
+                }
+              });
+            }
+            salesComplete = true;
+            if (purchasesComplete) {
+              updateCurrencySummary();
+            }
+          }
+        },
+        error: function(r) {
+          // Handle any errors gracefully
+          console.error("Error fetching sales transactions:", r);
+          frappe.msgprint({
+            title: __("Error"),
+            indicator: "red",
+            message: __("Failed to fetch sales transactions. Please try again.")
+          });
+        }
+      });
 
-        // egy_total += child_total;
-
-        // log(egy_total);
-        // frm.set_value("total_purchase", egy_total);
-        // frm.refresh_field("total_purchase");
-
-        // log("names are", invocie_names);
-      },
+      function updateCurrencySummary() {
+        // Call the calculate_currency_summary method directly
+        frappe.call({
+          method: "teller.teller_customization.doctype.close_shift_for_branch.close_shift_for_branch.calculate_currency_summary",
+          args: {
+            doc: frm.doc
+          },
+          callback: function(r) {
+            if (!r.exc) {
+              frm.clear_table("currency_summary");
+              if (r.message) {
+                r.message.forEach(row => {
+                  frm.add_child("currency_summary", row);
+                });
+                frm.refresh_field("currency_summary");
+                frappe.show_alert({
+                  message: __("Currency summary updated"),
+                  indicator: 'green'
+                });
+              }
+            }
+          }
+        });
+      }
     });
   },
   refresh: function(frm) {
-    // Add refresh handlers
+    // Make open_shift field read-only after submission
+    if (frm.doc.docstatus === 1) {
+      frm.set_df_property('open_shift', 'read_only', 1);
+    }
   },
   validate: function(frm) {
     // Additional validation if needed

@@ -25,6 +25,7 @@ from erpnext.accounts.utils import (
     get_balance_on,
     get_outstanding_invoices,
     get_party_types_from_account_type,
+    get_fiscal_year,
 )
 from frappe import _, utils
 from erpnext.accounts.general_ledger import (
@@ -39,136 +40,349 @@ import frappe.utils
 
 
 class TellerPurchase(Document):
-    def before_submit(self):
-        self.set_move_number()
-        self.get_printing_roll()
+    def before_insert(self):
+        """Set initial values and validate user permissions"""
+        try:
+            # Set teller from current user
+            if not self.teller:
+                self.teller = frappe.session.user
+                
+            # Get branch and shift info
+            self.set_branch_and_shift()
+            
+            # Set treasury details
+            self.set_treasury_details()
+            
+            # Set movement number
+            self.set_move_number()
+            
+        except Exception as e:
+            frappe.log_error(
+                message=f"Error in before_insert: {str(e)}\nTraceback: {frappe.get_traceback()}",
+                title="Insert Error"
+            )
+            frappe.throw(_("Error during document creation: {0}").format(str(e)))
 
     def validate(self):
-        if self.category_of_buyer == "Egyptian" or self.category_of_buyer == "Foreigner":
-            if not self.buyer_name:
-                frappe.throw("Please enter buyer name")
-            if not self.buyer_card_type:
-                frappe.throw("Please enter card type")
-            if self.buyer_card_type == "National ID" and not self.buyer_national_id:
-                frappe.throw("Please enter national ID")
-            if self.buyer_card_type == "Passport" and not self.buyer_passport_number:
-                frappe.throw("Please enter passport number")
-            if self.buyer_card_type == "Military Card" and not self.buyer_military_number:
-                frappe.throw("Please enter military number")
-        elif self.category_of_buyer == "Company":
-            if not self.buyer_company_name:
-                frappe.throw("Please enter company name")
-            if not self.buyer_company_commercial_no:
-                frappe.throw("Please enter company commercial number")
-            if not self.buyer_company_start_date:
-                frappe.throw("Please enter company start registration date")
-            if not self.buyer_company_end_date:
-                frappe.throw("Please enter company end registration date")
-            if not self.buyer_company_address:
-                frappe.throw("Please enter company address")
-            if not self.buyer_company_legal_form:
-                frappe.throw("Please enter company legal form")
-            if not self.buyer_company_activity:
-                frappe.throw("Please enter company activity")
+        """Validate document"""
+        try:
+            # First validate user permissions for accounts
+            self.has_account_permissions()
+            
+            # Log start with key info
+            frappe.log_error(
+                message=f"Starting validate for purchase with treasury={self.treasury_code}",
+                title="Teller Purchase Validate"
+            )
+            
+            # Buyer validation
+            if not self.buyer:
+                frappe.throw(_("Buyer is required"))
+                
+            # Validate buyer exists and is active
+            customer = frappe.db.get_value("Customer", self.buyer, 
+                ["disabled", "custom_is_exceed"], as_dict=1)
+                
+            if not customer:
+                frappe.throw(_("Selected buyer {0} does not exist").format(self.buyer))
+                
+            if customer.disabled:
+                frappe.throw(_("Selected buyer {0} is disabled").format(self.buyer))
+                
+            if customer.custom_is_exceed and not self.exceed:
+                frappe.throw(_("Buyer {0} has exceeded their limit. Please check the 'Exceed' checkbox to proceed.").format(self.buyer))
+            
+            # Basic validations
+            if not self.treasury_code:
+                frappe.throw(_("Treasury code is required"))
+            
+            if not self.purchase_transactions:
+                frappe.throw(_("At least one currency transaction is required"))
+            
+            if len(self.purchase_transactions) > 3:
+                frappe.throw(_("Cannot process more than three currencies"))
+            
+            # Validate shift and transactions
+            self.validate_active_shift()
+            self.validate_currency_transactions()
+            self.calculate_totals()
+            
+            # Generate receipt number for new documents only
+            if self.is_new() and not self.purchase_receipt_number:
+                self.generate_receipt_number()
+            
+        except Exception as e:
+            frappe.log_error(
+                message=f"Validation error: {str(e)}\nTraceback: {frappe.get_traceback()}",
+                title="Teller Purchase Validation Error"
+            )
+            frappe.throw(_("Validation error: {0}").format(str(e)))
 
     def before_save(self):
-        self.set_customer_invoices()
-        if self.category_of_buyer == "Egyptian" or self.category_of_buyer == "Foreigner":
-            self.update_buyer_history()
-        elif self.category_of_buyer == "Company":
-            self.update_company_history()
+        """Handle operations before saving"""
+        try:
+            # Only set treasury details for new documents
+            if self.is_new():
+                self.set_treasury_details()
+            
+            # Only set branch details for new or draft documents
+            if not self.branch_name and self.branch_no and self.docstatus == 0:
+                self.branch_name = frappe.db.get_value("Branch", self.branch_no, "custom_branch_no")
+            
+        except Exception as e:
+            frappe.log_error(
+                message=f"Error in before_save: {str(e)}\nTraceback: {frappe.get_traceback()}",
+                title="Save Error"
+            )
+            frappe.throw(_("Error before saving: {0}").format(str(e)))
 
     def on_submit(self):
-        self.update_egy_balance()
+        """Create GL entries when document is submitted"""
+        try:
+            # Create GL entries
+            self.make_gl_entries()
+            
+            # Update printing roll with new number only after successful GL entries
+            if hasattr(self, 'next_receipt_number'):
+                printing_roll = frappe.get_doc("Printing Roll", self.current_roll)
+                printing_roll.last_printed_number = self.next_receipt_number
+                printing_roll.save()
+            
+            # Don't commit here - let Frappe handle the transaction
+            
+        except Exception as e:
+            frappe.db.rollback()
+            frappe.log_error(
+                message=f"Error in on_submit: {str(e)}\nTraceback: {frappe.get_traceback()}",
+                title="Submit Error"
+            )
+            frappe.throw(_("Error during submission: {0}").format(str(e)))
 
-        for row in self.get("transactions"):
-            if row.paid_from and self.egy and row.usd_amount:
-            # if row.paid_from and self.egy and row.usd_amount and row.received_amount:
-                account_from = get_doc(
-                    {
-                        "doctype": "GL Entry",
-                        "posting_date": nowdate(),
-                        "account": row.paid_from,
-                        "debit": row.total_amount,
-                        "credit": 0,
-                        "credit_in_account_currency": 0,
-                        "debit_in_account_currency": row.usd_amount,
-                        "remarks": f"Amount {row.currency_code} {row.usd_amount} transferred from {self.egy} to {row.paid_from}",
-                        "voucher_type": "Teller Purchase",
-                        "voucher_no": self.name,
-                        "against": self.egy,
-                        "account_currency": row.currency_code,
-                        # "cost_center": row.cost_center,
-                        # "project": row.project,
-                        "credit_in_transaction_currency": row.total_amount,
-                    }
-                )
-                account_from.insert(ignore_permissions=True).submit()
+    def set_customer_invoices(self):
+        """Set customer invoice history"""
+        try:
+            frappe.log_error(
+                message=f"Setting Customer Invoices:\nBuyer: {self.buyer}",
+                title="Teller Purchase Debug"
+            )
+            
+            duration = self.get_duration()
+            if not duration:
+                frappe.msgprint(_("Please setup Duration in Teller Settings"))
+                return
+            
+            duration = int(duration)
+            today = nowdate()
+            post_duration = add_days(today, -duration)
+            
+            # Get relevant invoices
+            invoices = frappe.get_all(
+                "Teller Purchase",
+                fields=["name", "buyer", "total", "closing_date"],
+                filters={
+                    "docstatus": 1,
+                    "buyer": self.buyer,
+                    "closing_date": ["between", [post_duration, today]],
+                }
+            )
+            
+            frappe.log_error(
+                message=f"Found Invoices: {invoices}",
+                title="Teller Purchase Debug"
+            )
+            
+            # Clear existing history
+            self.set("purchase_history", [])
+            
+            # Add invoices to history
+            for invoice in invoices:
+                try:
+                    self.append(
+                        "purchase_history",
+                        {
+                            "invoice": invoice.name,
+                            "amount": invoice.total,
+                            "posting_date": invoice.closing_date,
+                        }
+                    )
+                except Exception as e:
+                    frappe.log_error(
+                        message=f"Error appending invoice {invoice.name}: {str(e)}",
+                        title="Teller Purchase Error"
+                    )
+                
+        except Exception as e:
+            frappe.log_error(
+                message=f"Error in set_customer_invoices: {str(e)}\nTraceback: {frappe.get_traceback()}",
+                title="Teller Purchase Error"
+            )
+            frappe.throw(_("Error setting customer history: {0}").format(str(e)))
 
-                account_to = get_doc(
-                    {
-                        "doctype": "GL Entry",
-                        "posting_date": nowdate(),
-                        "account": self.egy,
-                        "debit": 0,
-                        "credit": row.total_amount,
-                        "debit_in_account_currency": 0,
-                        "credit_in_account_currency": row.total_amount,
-                        "remarks": f"Amount {row.currency_code} {row.usd_amount} transferred from {self.egy} to {row.paid_from}",
-                        "voucher_type": "Teller Purchase",
-                        "voucher_no": self.name,
-                        "against": row.paid_from,
-                        # "cost_center": row.cost_center,
-                        # "project": row.project,
-                        "debit_in_transaction_currency": 0,
-                        "credit_in_transaction_currency": row.total_amount,
-                    }
-                )
-                account_to.insert(ignore_permissions=True).submit()
-                if account_from and account_to:
+    def validate_currency_transactions(self):
+        """Validate currency transactions"""
+        try:
+            for row in self.purchase_transactions:
+                # Validate required fields
+                if not row.account:
+                    frappe.throw(_("Account is required for all transactions"))
+                    
+                if not row.quantity:
+                    frappe.throw(_("Quantity is required for all transactions"))
+                    
+                if not row.exchange_rate:
+                    frappe.throw(_("Exchange rate is required for all transactions"))
+                
+                # Get account details
+                account = frappe.get_doc("Account", row.account)
+                
+                # Validate account currency
+                if account.account_currency == "EGP":
+                    frappe.throw(_("Cannot use EGP account for currency transactions"))
+                
+                # Calculate EGY amount (quantity * exchange_rate)
+                row.egy_amount = flt(row.get('quantity', 0)) * flt(row.get('exchange_rate', 0))
+                
+        except Exception as e:
+            frappe.log_error(
+                message=f"Validation error: {str(e)}\nTraceback: {frappe.get_traceback()}",
+                title="Teller Purchase Validation Error"
+            )
+            raise
 
+    def calculate_totals(self):
+        """Calculate total amounts"""
+        try:
+            self.total = 0
+            
+            for row in self.purchase_transactions:
+                if row.egy_amount:
+                    self.total += flt(row.egy_amount)
+                
+        except Exception as e:
+            frappe.log_error(
+                message=f"Error calculating totals: {str(e)}\n{frappe.get_traceback()}",
+                title="Total Calculation Error"
+            )
+            frappe.throw(_("Error calculating totals: {0}").format(str(e)))
+
+    def make_gl_entries(self, cancel=False):
+        """Create GL Entries for currency transactions"""
+        try:
+            # Validate EGY account exists
+            if not self.egy:
+                frappe.throw(_("EGY Account is required for GL entries"))
+            
+            # Get company from defaults
+            company = self.company
+            if not company:
+                company = frappe.defaults.get_user_default("company") or \
+                         frappe.get_cached_value('Global Defaults', None, 'default_company')
+            
+            if not company:
+                frappe.throw(_("Please set default company in Global Defaults"))
+            
+            posting_date = getattr(self, 'posting_date', None) or getattr(self, 'date', None) or nowdate()
+            fiscal_year = get_fiscal_year(posting_date, company=company)[0]
+            
+            for row in self.purchase_transactions:
+                if not row.egy_amount:
+                    continue
+                if not row.account:
+                    frappe.throw(_("You must enter all required fields in row {0}").format(row.idx))
+                
+                # Get account currencies
+                account = frappe.get_doc("Account", row.account)
+                egy_account = frappe.get_doc("Account", self.egy)
+                
+                # For purchase transactions:
+                # 1. Debit EGY account (paying EGY)
+                debit_entry = frappe.get_doc({
+                    "doctype": "GL Entry",
+                    "posting_date": posting_date,
+                    "account": self.egy,
+                    "debit": flt(row.egy_amount) if not cancel else 0,
+                    "credit": 0 if not cancel else flt(row.egy_amount),
+                    "account_currency": egy_account.account_currency,
+                    "debit_in_account_currency": flt(row.egy_amount) if not cancel else 0,
+                    "credit_in_account_currency": 0 if not cancel else flt(row.egy_amount),
+                    "against": row.account,
+                    "against_voucher_type": self.doctype,
+                    "against_voucher": self.name,
+                    "voucher_type": self.doctype,
+                    "voucher_no": self.name,
+                    "company": company,
+                    "fiscal_year": fiscal_year,
+                    "is_opening": "No",
+                    "remarks": f"Currency purchase: Paid {row.egy_amount} EGY for {row.quantity} {row.currency_code}"
+                })
+                debit_entry.insert(ignore_permissions=True).submit()
+
+                # 2. Credit currency account (giving foreign currency)
+                credit_entry = frappe.get_doc({
+                    "doctype": "GL Entry",
+                    "posting_date": posting_date,
+                    "account": row.account,
+                    "debit": 0 if not cancel else flt(row.egy_amount),
+                    "credit": flt(row.egy_amount) if not cancel else 0,
+                    "account_currency": account.account_currency,
+                    "debit_in_account_currency": 0 if not cancel else flt(row.quantity),
+                    "credit_in_account_currency": flt(row.quantity) if not cancel else 0,
+                    "against": self.egy,
+                    "against_voucher_type": self.doctype,
+                    "against_voucher": self.name,
+                    "voucher_type": self.doctype,
+                    "voucher_no": self.name,
+                    "company": company,
+                    "fiscal_year": fiscal_year,
+                    "is_opening": "No",
+                    "remarks": f"Currency purchase: Received {row.quantity} {row.currency_code} for {row.egy_amount} EGY"
+                })
+                credit_entry.insert(ignore_permissions=True).submit()
+
+                if debit_entry and credit_entry:
                     frappe.msgprint(
-                        _("Teller Invoice created successfully with  Total {0}").format(
+                        _("Teller Purchase created successfully with Total {0}").format(
                             self.total
                         )
                     )
-                else:
-                    frappe.msgprint(
-                        _("Failed to create GL Entry for row {0}").format(row.idx)
-                    )
-
-            else:
-                frappe.throw(
-                    _("You must enter all required fFields in row {0}").format(row.idx)
-                )
+                
+        except Exception as e:
+            frappe.log_error(
+                message=f"Error creating GL entries: {str(e)}\nTraceback: {frappe.get_traceback()}",
+                title="GL Entry Error"
+            )
+            frappe.throw(_("Error creating GL entries: {0}").format(str(e)))
 
     def on_cancel(self):
-        self.ignore_linked_doctypes = (
-            "GL Entry",
-            "Stock Ledger Entry",
-            "Payment Ledger Entry",
-            "Repost Payment Ledger",
-            "Repost Payment Ledger Items",
-            "Repost Accounting Ledger",
-            "Repost Accounting Ledger Items",
-            "Unreconcile Payment",
-            "Unreconcile Payment Entries",
-        )
-
+        """Handle document cancellation"""
         try:
-            # Reverse GL Entries
+            self.ignore_linked_doctypes = (
+                "GL Entry",
+                "Stock Ledger Entry",
+                "Payment Ledger Entry",
+                "Repost Payment Ledger",
+                "Repost Payment Ledger Items",
+                "Repost Accounting Ledger",
+                "Repost Accounting Ledger Items",
+                "Unreconcile Payment",
+                "Unreconcile Payment Entries",
+            )
 
+            # Reverse GL Entries
             make_reverse_gl_entries(voucher_type=self.doctype, voucher_no=self.name)
 
             # Optionally, add custom logic or user notifications
             frappe.msgprint(_("Teller Purchase document canceled successfully."))
-            print("Teller Purchase document canceled successfully.")
 
         except Exception as e:
+            frappe.log_error(
+                message=f"Error during cancellation: {str(e)}\nTraceback: {frappe.get_traceback()}",
+                title="Cancel Error"
+            )
             frappe.throw(_("An error occurred during cancellation: {0}").format(str(e)))
 
     def set_move_number(self):
-        # Fetch the last submitted Teller Invoice
+        # Fetch the last submitted Teller Purchase
         last_invoice = frappe.db.get("Teller Purchase", {"docstatus": 1})
 
         # Check if the last_invoice exists and has the expected field
@@ -194,121 +408,6 @@ class TellerPurchase(Document):
         # Commit the changes to the database
         frappe.db.commit()
 
-    def get_printing_roll(self):
-        active_roll = frappe.db.get_all(
-            "Printing Roll",
-            filters={"active": 1},
-            fields=[
-                "name",
-                "last_printed_number",
-                "starting_letters",
-                "start_count",
-                "end_count",
-                "show_number",
-                "add_zeros",
-            ],
-            order_by="creation desc",
-            limit=1,
-        )
-        if not active_roll:
-            frappe.throw(_("No active  printing roll available please create one"))
-
-        roll_name = active_roll[0]["name"]
-        last_number = active_roll[0]["last_printed_number"]
-        start_letter = active_roll[0]["starting_letters"]
-        start_count = active_roll[0]["start_count"]
-        end_count = active_roll[0]["end_count"]
-        show_number = active_roll[0]["show_number"]
-
-        # show_number_int = int(count_show_number)  #
-        last_number_str = str(last_number)
-        last_number_str_len = len(last_number_str)
-        # diff_cells = show_number_int - last_number_str_len
-        zeros_number = active_roll[0]["add_zeros"]
-        sales_invoice_count = frappe.db.count(
-            "Teller Invoice", filters={"docstatus": 1}
-        )
-        sales_purchase_count = frappe.db.count(
-            "Teller Purchase", filters={"docstatus": 1}
-        )
-
-        if (
-            # sales_invoice_count == 0
-            # and sales_purchase_count == 0
-            last_number
-            == 0
-        ):
-            last_number = start_count
-
-        elif start_count < end_count and last_number < end_count:
-            last_number += 1
-
-        else:
-            frappe.throw(
-                f"printing Roll With name {roll_name} Is completly Full,Please create a new active roll"
-            )
-
-        # last_number_str = str(last_number).zfill(diff_cells + len(str(last_number)))
-        last_number_str = str(last_number).zfill(zeros_number)
-        receipt_number = f"{start_letter}-{self.branch_no}-{last_number_str}"
-        # handle receipt number without dash
-
-        receipt_number2 = f"{start_letter}{self.branch_no}{last_number_str}"
-        self.receipt_number = receipt_number
-        self.receipt_number2 = receipt_number2
-        self.current_roll = start_count
-
-        # show_number = len(last_number_str)
-        # set the new number to the current printing roll
-
-        # frappe.db.set_value(
-        #     "Printing Roll", roll_name, "last_printed_number", last_number
-        # )
-        roll_doc = frappe.get_doc("Printing Roll",roll_name)
-        roll_doc.db_set("last_printed_number",last_number)
-        # update the current printing roll with length of last_printed_number
-
-        frappe.db.set_value(
-            "Printing Roll", roll_name, "show_number", last_number_str_len
-        )
-        frappe.db.commit()
-        # frappe.msgprint(f"show number is {last_number_str_len} ")
-
-    # get customer invoices if is exceed the limit
-
-    def set_customer_invoices(self):
-        duration = self.get_duration()
-        duration = int(duration)
-        if duration:
-            today = nowdate()
-            post_duration = add_days(today, -duration)
-            invoices = frappe.db.get_list(
-                "Teller Purchase",
-                fields=["name", "buyer", "total", "closing_date"],
-                filters={
-                    "docstatus": 1,
-                    "buyer": self.buyer,
-                    "closing_date": ["between", [post_duration, today]],
-                },
-            )
-            if not invoices:
-                pass
-                # frappe.msgprint("No invoices")
-            else:
-                # Clear existing customer history to avoid duplicates
-                self.set("customer_history", [])
-                for invoice in invoices:
-                    self.append(
-                        "customer_history",
-                        {
-                            "invoice": invoice["name"],
-                            "amount": invoice["total"],
-                            "posting_date": invoice["closing_date"],
-                        },
-                    )
-        else:
-            frappe.msgprint("Please Setup Duration in Teller Settings")
-
     # get duration from teller settings
     @staticmethod
     def get_duration():
@@ -317,6 +416,63 @@ class TellerPurchase(Document):
             "purchase_duration",
         )
         return duration
+
+    def after_insert(self):
+        # Add user permission when a new purchase is created
+        if self.teller and self.treasury_code:
+            try:
+                # Create user permission for the treasury code instead of the specific purchase
+                existing_permission = frappe.db.exists(
+                    "User Permission",
+                    {
+                        "user": self.teller,
+                        "allow": "Teller Treasury",
+                        "for_value": self.treasury_code
+                    }
+                )
+                
+                if not existing_permission:
+                    frappe.get_doc({
+                        "doctype": "User Permission",
+                        "user": self.teller,
+                        "allow": "Teller Treasury",
+                        "for_value": self.treasury_code,
+                        "apply_to_all_doctypes": 1
+                    }).insert(ignore_permissions=True)
+            except Exception as e:
+                frappe.log_error(f"Error adding user permission: {str(e)}")
+
+    def on_trash(self):
+        # We don't need to remove the treasury permission when deleting a purchase
+        pass
+
+    def before_submit(self):
+        """Handle document submission"""
+        try:
+            # Set movement number
+            self.set_move_number()
+            
+            # Only generate receipt number if it doesn't exist
+            if not self.purchase_receipt_number:
+                # Get and validate printing roll
+                if not self.current_roll:
+                    frappe.throw(_("Please select a printing roll"))
+                    
+                # Get next receipt number using centralized function
+                result = frappe.call('teller.teller_customization.doctype.teller_invoice.teller_invoice.get_next_receipt_number',
+                    printing_roll_name=self.current_roll
+                )
+                
+                # Set receipt number
+                self.purchase_receipt_number = result["receipt_number"]
+                self.next_receipt_number = result["next_number"]
+            
+        except Exception as e:
+            frappe.log_error(
+                message=f"Error in before_submit: {str(e)}\nTraceback: {frappe.get_traceback()}",
+                title="Submit Error"
+            )
+            raise  # Let the caller handle the exception
 
     def update_buyer_history(self):
         history = {
@@ -348,7 +504,7 @@ class TellerPurchase(Document):
             "buyer_company_address": self.buyer_company_address,
             "buyer_company_legal_form": self.buyer_company_legal_form,
             "buyer_company_activity": self.buyer_company_activity,
-            "is_expired": self.is_expired,
+            "is_expired1": self.is_expired1,
             "interbank": self.interbank
         }
         self.append("purchase_history", history)
@@ -358,6 +514,342 @@ class TellerPurchase(Document):
             account = frappe.get_doc("Account", self.egy_account)
             account.account_balance = self.egy_balance
             account.save()
+
+    def set_treasury_details(self):
+        """Set treasury details from employee's active shift"""
+        try:
+            # Only proceed if this is a new document
+            if not self.is_new() or self.docstatus == 1:
+                return
+            
+            # Get the employee linked to the current user
+            employee = frappe.db.get_value('Employee', {'user_id': frappe.session.user}, 'name')
+            if not employee:
+                frappe.throw(_("No employee found for user {0}. Please link an Employee record to this user.").format(frappe.session.user))
+            
+            # Get active shift for current employee
+            active_shift = frappe.get_all(
+                "Open Shift for Branch",
+                filters={
+                    "current_user": employee,
+                    "shift_status": "Active",
+                    "docstatus": 1
+                },
+                fields=["name", "current_user", "treasury_permission"],
+                order_by="creation desc",
+                limit=1
+            )
+            
+            if not active_shift:
+                frappe.throw(_("No active shift found. Please ask your supervisor to open a shift for you."))
+                
+            shift = active_shift[0]
+            
+            # Get Teller Treasury details
+            treasury = frappe.get_doc("Teller Treasury", shift.treasury_permission)
+            if not treasury:
+                frappe.throw(_("Teller Treasury not found"))
+                
+            # Set treasury code only if not already set
+            if not self.treasury_code:
+                self.treasury_code = treasury.name
+            if not self.shift:
+                self.shift = shift.name
+            if not self.teller:
+                self.teller = frappe.session.user
+            
+            # Set EGY account from user if not already set
+            if not self.egy:
+                egy_account = frappe.db.get_value('User', frappe.session.user, 'egy_account')
+                if egy_account:
+                    self.egy = egy_account
+                else:
+                    frappe.throw(_("EGY Account not set for user {0}. Please set it in User settings.").format(frappe.session.user))
+            
+        except Exception as e:
+            frappe.log_error(
+                message=f"Error setting treasury details: {str(e)}\nTraceback: {frappe.get_traceback()}",
+                title="Treasury Setup Error"
+            )
+            frappe.throw(_("Error setting treasury details: {0}").format(str(e)))
+
+    def set_branch_and_shift(self):
+        """Set branch and shift details from employee's active shift"""
+        try:
+            # Get the employee linked to the current user
+            employee = frappe.db.get_value('Employee', {'user_id': frappe.session.user}, 'name')
+            if not employee:
+                frappe.throw(_("No employee found for user {0}. Please link an Employee record to this user.").format(frappe.session.user))
+            
+            # Get active shift for current employee
+            active_shift = frappe.get_all(
+                "Open Shift for Branch",
+                filters={
+                    "current_user": employee,
+                    "shift_status": "Active",
+                    "docstatus": 1
+                },
+                fields=["name", "treasury_permission", "printing_roll"],
+                order_by="creation desc",
+                limit=1
+            )
+            
+            if not active_shift:
+                frappe.throw(_("No active shift found. Please ask your supervisor to open a shift for you."))
+                
+            shift = active_shift[0]
+            
+            # Set shift and teller info
+            self.shift = shift.name
+            self.teller = frappe.session.user
+            
+            # Get Teller Treasury details
+            treasury = frappe.get_doc("Teller Treasury", shift.treasury_permission)
+            if not treasury:
+                frappe.throw(_("Teller Treasury not found"))
+                
+            # Set treasury code and branch details
+            self.treasury_code = treasury.name
+            if treasury.branch:
+                self.branch_no = treasury.branch
+                self.branch_name = frappe.db.get_value("Branch", treasury.branch, "custom_branch_no")
+            
+            # Handle printing roll
+            if shift.printing_roll:
+                printing_roll = frappe.get_doc("Printing Roll", shift.printing_roll)
+                if not printing_roll.active:
+                    frappe.throw(_("Selected printing roll is not active"))
+                    
+                if printing_roll.last_printed_number >= printing_roll.end_count:
+                    frappe.throw(_("Printing roll has reached its end count. Please configure a new roll."))
+                    
+                # Set current_roll as string instead of list
+                self.current_roll = printing_roll.name
+            
+        except Exception as e:
+            frappe.log_error(
+                message=f"Error setting branch and shift: {str(e)}\nTraceback: {frappe.get_traceback()}",
+                title="Branch and Shift Error"
+            )
+            raise
+
+    def has_account_permissions(self):
+        """Check if user has permissions for all accounts in the document"""
+        try:
+            user = frappe.session.user
+            
+            # Get the employee linked to the current user
+            employee = frappe.db.get_value('Employee', {'user_id': user}, 'name')
+            if not employee:
+                frappe.throw(_("No employee found for user {0}").format(user))
+            
+            # Get active shift for current employee
+            active_shift = frappe.db.get_value(
+                "Open Shift for Branch",
+                {
+                    "current_user": employee,
+                    "shift_status": "Active",
+                    "docstatus": 1
+                },
+                ["name", "treasury_permission"],
+                as_dict=1
+            )
+            
+            if not active_shift:
+                frappe.throw(_("No active shift found"))
+            
+            # Get user's permitted treasury
+            treasury_permission = frappe.db.get_value('User Permission', 
+                {'user': user, 'allow': 'Teller Treasury'}, 
+                'for_value'
+            )
+            
+            if not treasury_permission:
+                frappe.throw(_("No treasury permission found for user"))
+            
+            if treasury_permission != active_shift.get('treasury_permission'):
+                frappe.throw(_("Treasury permission mismatch with active shift"))
+            
+            # Check permissions for each account in purchase transactions
+            for row in self.get("purchase_transactions", []):
+                if row.account:
+                    account = frappe.get_doc("Account", row.account)
+                    if account.custom_teller_treasury != treasury_permission:
+                        frappe.throw(_("Account {0} is not linked to your treasury").format(row.account))
+            
+            # Check EGY account permission if set
+            if self.egy:
+                # First check if it's the user's egy_account
+                user_egy_account = frappe.db.get_value("User", user, "egy_account")
+                if self.egy != user_egy_account:
+                    # Only check treasury permission if it's not the user's egy_account
+                    egy_account = frappe.get_doc("Account", self.egy)
+                    if egy_account.custom_teller_treasury != treasury_permission:
+                        frappe.throw(_("EGY Account {0} is not linked to your treasury").format(self.egy))
+            
+            return True
+            
+        except Exception as e:
+            frappe.log_error(
+                message=f"Error checking account permissions: {str(e)}\nTraceback: {frappe.get_traceback()}",
+                title="Account Permission Error"
+            )
+            raise
+
+    def validate_active_shift(self):
+        """Validate user has active shift"""
+        try:
+            # Get the employee linked to the current user
+            employee = frappe.db.get_value('Employee', {'user_id': frappe.session.user}, 'name')
+            if not employee:
+                frappe.throw(_("No employee record found for current user"))
+            
+            # Get active shift for current employee
+            active_shift = frappe.db.get_value(
+                "Open Shift for Branch",
+                {
+                    "current_user": employee,
+                    "shift_status": "Active",
+                    "docstatus": 1
+                },
+                ["name", "treasury_permission"],
+                as_dict=1
+            )
+            
+            if not active_shift:
+                frappe.throw(_("No active shift found. Please open a shift first."))
+            
+            if active_shift.get('treasury_permission') != self.treasury_code:
+                frappe.throw(_("Treasury code mismatch with active shift"))
+            
+        except Exception as e:
+            frappe.log_error(
+                message=f"Error validating active shift: {str(e)}\nTraceback: {frappe.get_traceback()}",
+                title="Shift Validation Error"
+            )
+            raise
+
+    def get_modified_fields(self):
+        """Get list of fields that were modified"""
+        modified_fields = []
+        doc_before_save = self.get_doc_before_save()
+        if not doc_before_save:
+            return modified_fields
+            
+        # System fields that should be ignored in modification check
+        ignored_fields = {
+            'modified', 'modified_by', 'creation', 'owner', 
+            'idx', 'naming_series', 'docstatus', 'name',
+            'amended_from', 'amendment_date', '_user_tags', 
+            '_comments', '_assign', '_liked_by', '__islocal',
+            '__unsaved', '__run_link_triggers', '__onload'
+        }
+        
+        for key in self.as_dict():
+            if (key not in ignored_fields and 
+                doc_before_save.get(key) != self.get(key)):
+                modified_fields.append(key)
+            
+        return modified_fields
+
+    def validate_update_after_submit(self):
+        """Custom validation for updates after submission"""
+        if self.docstatus == 1:
+            # Get the list of changed fields
+            changed_fields = self.get_modified_fields()
+            
+            if not changed_fields:
+                return
+                
+            # First, always allow is_returned to be set
+            if len(changed_fields) == 1 and changed_fields[0] == 'is_returned':
+                return
+                
+            # Then, if is_returned is True, allow other return-related changes
+            if self.is_returned and self.flags.ignore_validate_update_after_submit:
+                allowed_fields = [
+                    'is_returned',
+                    'total',
+                    'purchase_transactions'  # Allow child table updates for return
+                ]
+                
+                for field in changed_fields:
+                    if field not in allowed_fields:
+                        frappe.throw(
+                            _("Not allowed to change {0} after submission").format(field),
+                            title=_("Cannot Modify")
+                        )
+                return
+                
+            # For all other cases, no fields should be editable after submission
+            frappe.throw(
+                _("No modifications allowed after submission except when creating a return"),
+                title=_("Cannot Modify")
+            )
+
+    def on_update_after_submit(self):
+        """Handle updates after submit"""
+        try:
+            # Prevent egy_balance from being changed directly
+            doc_before_save = self.get_doc_before_save()
+            if doc_before_save and self.egy_balance != doc_before_save.egy_balance:
+                self.db_set('egy_balance', doc_before_save.egy_balance)
+            
+            # Ensure branch details are preserved
+            if not self.branch_name and self.branch_no:
+                branch_name = frappe.db.get_value("Branch", self.branch_no, "custom_branch_no")
+                if branch_name:
+                    self.db_set('branch_name', branch_name)
+                
+        except Exception as e:
+            frappe.log_error(
+                message=f"Error in on_update_after_submit: {str(e)}\nTraceback: {frappe.get_traceback()}",
+                title="Update Error"
+            )
+            frappe.throw(_("Error during update: {0}").format(str(e)))
+
+    def generate_receipt_number(self):
+        """Generate receipt number only for new documents"""
+        try:
+            if self.purchase_receipt_number:
+                return  # Already has a receipt number
+            
+            # Get the employee linked to the current user
+            employee = frappe.db.get_value('Employee', {'user_id': frappe.session.user}, 'name')
+            if not employee:
+                frappe.throw(_("No employee found for user {0}").format(frappe.session.user))
+            
+            # Get active shift
+            active_shift = frappe.db.get_value(
+                "Open Shift for Branch",
+                {
+                    "current_user": employee,
+                    "shift_status": "Active",
+                    "docstatus": 1
+                },
+                ["name", "printing_roll"],
+                as_dict=1
+            )
+            
+            if not active_shift or not active_shift.get('printing_roll'):
+                frappe.throw(_("No active shift with printing roll found"))
+            
+            # Get next receipt number using centralized function
+            result = frappe.call('teller.teller_customization.doctype.teller_invoice.teller_invoice.get_next_receipt_number',
+                printing_roll_name=active_shift.get('printing_roll')
+            )
+            
+            # Set receipt number and current roll
+            self.purchase_receipt_number = result["receipt_number"]
+            self.current_roll = active_shift.get('printing_roll')
+            self.next_receipt_number = result["next_number"]
+            
+        except Exception as e:
+            frappe.log_error(
+                message=f"Error generating receipt number: {str(e)}\nTraceback: {frappe.get_traceback()}",
+                title="Receipt Number Error"
+            )
+            raise  # Let the caller handle the exception
 
 
 # get currency and currency rate from each account
@@ -396,7 +888,6 @@ def account_to_balance(paid_to):
     try:
         balance = get_balance_on(
             account=paid_to,
-            # company=company,
         )
         return balance
     except Exception as e:
@@ -472,8 +963,16 @@ def filters_commissars_by_company(doctype, txt, searchfield, start, page_len, fi
 
 
 @frappe.whitelist(allow_guest=True)
-def get_customer_total_amount(client_name, duration):
+def get_customer_total_amount(client_name=None, duration=None, buyer_name=None):
     try:
+        # Handle both client_name and buyer_name parameters
+        name = buyer_name or client_name
+        if not name:
+            frappe.throw(_("Please provide either client_name or buyer_name"))
+            
+        if not duration:
+            frappe.throw(_("Duration is required"))
+
         # Convert duration to an integer
         duration = int(duration)
 
@@ -490,8 +989,8 @@ def get_customer_total_amount(client_name, duration):
         GROUP BY ti.buyer
         """
 
-        # Execute the query with the client_name and date range as parameters
-        data = frappe.db.sql(query, (client_name, start_date, end_date), as_dict=True)
+        # Execute the query with the name and date range as parameters
+        data = frappe.db.sql(query, (name, start_date, end_date), as_dict=True)
 
         # Check if data exists and retrieve the total
         res = data[0]["Total"] if data else 0
@@ -529,64 +1028,58 @@ def get_list_currency_code(session_user, code):
 
 @frappe.whitelist()
 def make_purchase_return(doc):
-    doc_data = json.loads(doc)
-    source_name = doc_data.get("name")  
-    source_total =  doc_data.get("total")  
-    def update_item(source_doc, target_doc, source_parent):
-        target_doc.code = source_doc.code
-        target_doc.currency_code = source_doc.currency_code
-        target_doc.paid_from = source_doc.paid_from
-        target_doc.usd_amount = -source_doc.usd_amount
-        target_doc.rate = source_doc.rate
-        target_doc.total_amount = -source_doc.total_amount
-    # Prepare the mapping dictionary
-    # Ensure the source document has a docstatus of 1 ()
-    # Map the item details
-    # Postprocess the items (if needed)
-    # Create a new document by mapping the fields from the source document
-    table_maps = {
-        "Teller Purchase": {
-            "doctype": "Teller Purchase",
-            "field_map": {
-                "is_returned ": 1,  
+    """
+    Convert a submitted Teller Purchase to a return by:
+    1. Reversing the quantities and amounts
+    2. Creating reverse GL entries
+    3. Keeping the same document with updated flags
+    """
+    try:
+        doc_data = json.loads(doc)
+        doc_name = doc_data.get("name")
+        
+        # Get the original document
+        teller_purchase = frappe.get_doc("Teller Purchase", doc_name)
+        
+        if teller_purchase.is_returned:
+            frappe.throw(_("This document is already a return"))
+            
+        if teller_purchase.docstatus != 1:
+            frappe.throw(_("Only submitted documents can be returned"))
+            
+        # First set the is_returned flag and save
+        teller_purchase.flags.ignore_validate_update_after_submit = True
+        teller_purchase.is_returned = 1
+        teller_purchase.save()
+        
+        # Now make the other changes
+        for item in teller_purchase.purchase_transactions:
+            item.quantity = -1 * flt(item.quantity)
+            item.amount = -1 * flt(item.amount)
+            item.egy_amount = -1 * flt(item.egy_amount)
+            
+        teller_purchase.total = -1 * flt(teller_purchase.total)
+        teller_purchase.save()
+        
+        # Reverse GL Entries
+        from erpnext.accounts.general_ledger import make_reverse_gl_entries
+        make_reverse_gl_entries(voucher_type=teller_purchase.doctype, voucher_no=teller_purchase.name)
+        
+        frappe.db.commit()
+        
+        return {
+            "message": "Document converted to return successfully",
+            "teller_purchase": teller_purchase.name
+        }
+        
+    except Exception as e:
+        frappe.db.rollback()
+        frappe.log_error(
+            message=f"Error in make_purchase_return: {str(e)}\nTraceback: {frappe.get_traceback()}",
+            title="Return Creation Error"
+        )
+        frappe.throw(_("Error converting document to return: {0}").format(str(e)))
 
-            },
-            "validation": {
-                "docstatus": ["=", 1],  
-            },
-        },
-        "Teller Purchase Child": {
-            "doctype": "Teller Purchase Child",  
-            "field_map": {
-                "code": "code",
-                "currency_code": "currency_code",
-                "paid_from": "paid_from",
-                "usd_amount":"usd_amount",
-                "rate":"rate",
-                "total_amount":"total_amount"
-            },
-            "postprocess": update_item,  
-        },
-    }
-
-  
-    target_doc = get_mapped_doc(
-        "Teller Purchase",  # Source doctype
-        source_name,  # Source document name
-        table_maps,  # Field mappings and postprocess functions
-    )
-    target_doc.is_returned =1
-
-    target_doc.total = -1*(float(source_total))
-    target_doc.insert()
-
-    return {
-        "message": "Sales Return Created",
-        "new_teller_purchase": target_doc.name,  
-        "new_teller_invoice_url": get_url_to_form("Teller Purchase", target_doc.name),
-        "type": type(source_total)
-
-    }
 @frappe.whitelist()
 def make_purchase_return2(source_name, target_doc=None):
 	from erpnext.controllers.sales_and_purchase_return import make_return_doc
@@ -668,3 +1161,145 @@ def has_permission(doc, ptype="read", user=None):
     except Exception as e:
         frappe.log_error(f"Error checking permissions: {str(e)}\n{frappe.get_traceback()}")
         return False
+
+@frappe.whitelist()
+def search_buyer_by_id(search_id):
+    """
+    Search for a customer by various identifiers:
+    - National ID for Egyptian customers
+    - Commercial Number for Companies
+    - Passport Number for Foreigners
+    - Military Number for Military personnel
+    Returns customer details if found
+    """
+    if not search_id:
+        return None
+        
+    # Clean the search input
+    search_id = search_id.strip()
+    
+    # Define fields to fetch
+    fields = [
+        "name", "customer_name", "custom_type", "custom_is_exceed",
+        "custom_phone", "custom_mobile_number", "custom_work_for",
+        "custom_address", "custom_national_id", "custom_passport_number",
+        "custom_military_number", "custom_nationality", "custom_issue_date",
+        "custom_expired", "custom_place_of_birth", "custom_date_of_birth",
+        "custom_job_title", "custom_card_type", "custom_commercial_no",
+        "custom_start_registration_date", "custom_end_registration_date",
+        "custom_legal_form", "custom_company_activity", "custom_is_expired",
+        "custom_interbank"
+    ]
+    
+    # Try to find by National ID (Egyptian)
+    customer = frappe.db.get_value('Customer',
+        {'custom_national_id': search_id, 'custom_type': 'Egyptian'},
+        fields, as_dict=1
+    )
+    
+    # Try to find by Commercial Number (Company)
+    if not customer:
+        customer = frappe.db.get_value('Customer',
+            {'custom_commercial_no': search_id, 'custom_type': 'Company'},
+            fields, as_dict=1
+        )
+    
+    # Try to find by Passport Number (Foreigner)
+    if not customer:
+        customer = frappe.db.get_value('Customer',
+            {'custom_passport_number': search_id, 'custom_type': 'Foreigner'},
+            fields, as_dict=1
+        )
+    
+    # Try to find by Military Number
+    if not customer:
+        customer = frappe.db.get_value('Customer',
+            {'custom_military_number': search_id},
+            fields, as_dict=1
+        )
+    
+    if not customer:
+        return None
+        
+    # Prepare response based on customer type
+    response = {
+        "buyer": customer.name,
+        "buyer_name": customer.customer_name,
+        "category_of_buyer": customer.custom_type,
+        "exceed": customer.custom_is_exceed,
+        "buyer_phone": customer.custom_phone,
+        "buyer_mobile_number": customer.custom_mobile_number,
+        "buyer_work_for": customer.custom_work_for,
+        "buyer_address": customer.custom_address,
+        # Always include all ID fields, they will be populated based on the match
+        "buyer_national_id": customer.custom_national_id,
+        "buyer_passport_number": customer.custom_passport_number,
+        "buyer_military_number": customer.custom_military_number
+    }
+    
+    # Add type-specific fields
+    if customer.custom_type in ["Egyptian", "Foreigner"]:
+        response.update({
+            "buyer_card_type": customer.custom_card_type,
+            "buyer_nationality": customer.custom_nationality,
+            "buyer_issue_date": customer.custom_issue_date,
+            "buyer_expired": customer.custom_expired,
+            "buyer_place_of_birth": customer.custom_place_of_birth,
+            "buyer_date_of_birth": customer.custom_date_of_birth,
+            "buyer_job_title": customer.custom_job_title
+        })
+    elif customer.custom_type == "Company":
+        response.update({
+            "buyer_company_name": customer.customer_name,
+            "buyer_company_commercial_no": customer.custom_commercial_no,
+            "buyer_company_start_date": customer.custom_start_registration_date,
+            "buyer_company_end_date": customer.custom_end_registration_date,
+            "buyer_company_address": customer.custom_address,
+            "buyer_company_legal_form": customer.custom_legal_form,
+            "buyer_company_activity": customer.custom_company_activity,
+            "is_expired1": customer.custom_is_expired,
+            "interbank": customer.custom_interbank
+        })
+    
+    return response
+
+@frappe.whitelist()
+def get_treasury_accounts(doctype, txt, searchfield, start, page_len, filters):
+    """Get accounts linked to the specified treasury"""
+    try:
+        treasury_code = filters.get('treasury_code')
+        
+        if not treasury_code:
+            return []
+            
+        # Build the query to get accounts linked to the treasury
+        # Only get accounts that:
+        # 1. Are linked to the treasury via custom_teller_treasury
+        # 2. Are not group accounts
+        # 3. Have a currency other than EGP
+        # 4. Are of type Cash or Bank
+        # 5. Match the search text in account code or name
+        return frappe.db.sql("""
+            SELECT name, account_name, account_currency, custom_currency_code
+            FROM `tabAccount` 
+            WHERE custom_teller_treasury = %s
+            AND is_group = 0
+            AND account_currency != 'EGP'
+            AND account_type in ('Cash', 'Bank')
+            AND (name LIKE %s OR account_name LIKE %s OR custom_currency_code LIKE %s)
+            ORDER BY custom_currency_code, account_name
+            LIMIT %s, %s
+        """, (
+            treasury_code,
+            f"%{txt}%",
+            f"%{txt}%",
+            f"%{txt}%",
+            start,
+            page_len
+        ))
+    except Exception as e:
+        frappe.log_error(
+            message=f"Error getting treasury accounts: {str(e)}\nTraceback: {frappe.get_traceback()}",
+            title="Treasury Accounts Error"
+        )
+        return []

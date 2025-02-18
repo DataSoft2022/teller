@@ -392,7 +392,7 @@
    "type": "Link"
   }
  ],
- "modified": "2025-02-09 14:56:12.294319",
+ "modified": "2025-02-18 17:07:13.024991",
  "modified_by": "andrew@datasofteg.com",
  "module": "Teller",
  "name": "Interbank Workspace",
@@ -409,7 +409,7 @@
    "role": "Interbank HQ"
   }
  ],
- "sequence_id": 12.0,
+ "sequence_id": 26.0,
  "shortcuts": [
   {
    "color": "Red",

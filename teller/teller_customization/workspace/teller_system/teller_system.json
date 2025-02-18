@@ -432,7 +432,7 @@
    "type": "Link"
   }
  ],
- "modified": "2025-02-09 14:56:16.959547",
+ "modified": "2025-02-18 17:07:28.458540",
  "modified_by": "andrew@datasofteg.com",
  "module": "Teller Customization",
  "name": "Teller System",
@@ -442,7 +442,7 @@
  "public": 1,
  "quick_lists": [],
  "roles": [],
- "sequence_id": 37.0,
+ "sequence_id": 44.0,
  "shortcuts": [
   {
    "color": "Grey",

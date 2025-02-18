@@ -7,14 +7,14 @@
  "engine": "InnoDB",
  "field_order": [
   "reference",
-  "receipt_number",
+  "posting_date",
   "client",
-  "invoice_total",
-  "currency_amount",
-  "currency",
-  "rate",
-  "egyptian_price",
-  "exceed"
+  "receipt_number",
+  "movement_no",
+  "currency_code",
+  "total",
+  "total_amount",
+  "total_egy"
  ],
  "fields": [
   {
@@ -22,57 +22,66 @@
    "fieldtype": "Link",
    "label": "Reference",
    "options": "Teller Purchase",
-   "read_only": 1
+   "read_only": 1,
+   "in_list_view": 1
   },
   {
-   "fieldname": "currency_amount",
-   "fieldtype": "Currency",
-   "label": "currency Amount",
-   "read_only": 1
-  },
-  {
-   "fieldname": "currency",
-   "fieldtype": "Link",
-   "label": "Currency",
-   "options": "Currency",
-   "read_only": 1
-  },
-  {
-   "fieldname": "rate",
-   "fieldtype": "Float",
-   "label": "Rate",
-   "read_only": 1
-  },
-  {
-   "fieldname": "egyptian_price",
-   "fieldtype": "Currency",
-   "label": "Egyptian Price",
-   "read_only": 1
-  },
-  {
-   "fieldname": "receipt_number",
-   "fieldtype": "Data",
-   "label": "Receipt Number",
-   "read_only": 1
+   "fieldname": "posting_date",
+   "fieldtype": "Date",
+   "label": "Posting Date",
+   "read_only": 1,
+   "in_list_view": 1
   },
   {
    "fieldname": "client",
    "fieldtype": "Link",
    "label": "Client",
    "options": "Customer",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "receipt_number",
+   "fieldtype": "Data",
+   "label": "Receipt Number",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "movement_no",
+   "fieldtype": "Data",
+   "label": "Movement Number",
    "read_only": 1
   },
   {
-   "fieldname": "invoice_total",
-   "fieldtype": "Float",
-   "label": "Invoice Total",
+   "fieldname": "currency_code",
+   "fieldtype": "Link",
+   "label": "Currency",
+   "options": "Currency",
    "read_only": 1
   },
   {
-   "default": "0",
-   "fieldname": "exceed",
-   "fieldtype": "Check",
-   "label": "Exceed"
+   "fieldname": "total",
+   "fieldtype": "Currency",
+   "label": "Total",
+   "options": "currency_code",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "total_amount",
+   "fieldtype": "Currency",
+   "label": "Total Amount",
+   "options": "currency_code",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "total_egy",
+   "fieldtype": "Currency",
+   "label": "Total (EGY)",
+   "options": "Company:company:default_currency",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,

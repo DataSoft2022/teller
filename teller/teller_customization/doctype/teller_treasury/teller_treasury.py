@@ -4,7 +4,6 @@
 import frappe
 from frappe import _  # Import _ from frappe directly, not from frappe.utils
 from frappe.model.document import Document
-from frappe.permissions import add_user_permission
 
 class TellerTreasury(Document):
 	def validate(self):
@@ -40,65 +39,6 @@ class TellerTreasury(Document):
 			frappe.log_error(f"Error validating accounts: {str(e)}\n{frappe.get_traceback()}")
 			frappe.throw(_("Error validating accounts: {0}").format(str(e)))
 		
-	def after_insert(self):
-		"""Set up initial permissions for this treasury"""
-		self.setup_account_permissions()
-		
-	def setup_account_permissions(self):
-		"""Setup account permissions for this treasury"""
-		# Get all currency accounts for this branch
-		branch_accounts = frappe.get_all("Account",
-			filters={
-				"parent_account": ["like", f"%{self.branch}%"],
-				"is_group": 0,
-				"account_type": ["in", ["Bank", "Cash"]]
-			},
-			fields=["name"]
-		)
-		
-		# Set treasury on accounts
-		for account in branch_accounts:
-			frappe.db.set_value("Account", account.name, "custom_teller_treasury", self.name)
-		
-		# Update permissions for any active shifts
-		self.update_active_shift_permissions()
-		
-		frappe.db.commit()
-		
-	def update_active_shift_permissions(self):
-		"""Update permissions for all active shifts using this treasury"""
-		# Get all active shifts for this treasury
-		active_shifts = frappe.get_all("Open Shift for Branch",
-			filters={
-				"teller_treasury": self.name,
-				"shift_status": "Active",
-				"docstatus": 1
-			},
-			fields=["name", "current_user"]
-		)
-		
-		# For each active shift, update account permissions
-		for shift in active_shifts:
-			user = frappe.get_value("Employee", shift.current_user, "user_id")
-			if not user:
-				continue
-				
-			# Get all accounts for this treasury
-			accounts = frappe.get_all("Account",
-				filters={
-					"custom_teller_treasury": self.name,
-					"account_type": ["in", ["Bank", "Cash"]]
-				},
-				pluck="name"
-			)
-			
-			# Add permissions for each account
-			for account in accounts:
-				try:
-					add_user_permission("Account", account, user)
-				except Exception as e:
-					frappe.log_error(f"Error adding permission for account {account} to user {user}: {str(e)}")
-				
 	def on_trash(self):
 		"""Clean up when treasury is deleted"""
 		# Remove treasury reference from accounts

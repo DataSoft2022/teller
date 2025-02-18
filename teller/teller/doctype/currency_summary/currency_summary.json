@@ -6,20 +6,89 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "account",
   "currency",
-  "total"
+  "currency_code",
+  "opening_balance",
+  "transferred_amount",
+  "sold_amount",
+  "bought_amount",
+  "final_balance",
+  "actual_amount"
  ],
  "fields": [
+  {
+   "fieldname": "account",
+   "fieldtype": "Link",
+   "label": "Account",
+   "options": "Account",
+   "in_list_view": 1,
+   "reqd": 1,
+   "read_only": 1
+  },
   {
    "fieldname": "currency",
    "fieldtype": "Link",
    "label": "Currency",
-   "options": "Currency"
+   "options": "Currency",
+   "in_list_view": 1,
+   "reqd": 1,
+   "read_only": 1
   },
   {
-   "fieldname": "total",
+   "fieldname": "currency_code",
+   "fieldtype": "Data",
+   "label": "Currency Code",
+   "in_list_view": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "opening_balance",
    "fieldtype": "Float",
-   "label": "Total"
+   "label": "Opening Balance",
+   "in_list_view": 1,
+   "precision": "2",
+   "read_only": 1
+  },
+  {
+   "fieldname": "transferred_amount",
+   "fieldtype": "Float",
+   "label": "Transferred Amount",
+   "in_list_view": 1,
+   "precision": "2",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sold_amount",
+   "fieldtype": "Float",
+   "label": "Sold Amount",
+   "in_list_view": 1,
+   "precision": "2",
+   "read_only": 1
+  },
+  {
+   "fieldname": "bought_amount",
+   "fieldtype": "Float",
+   "label": "Bought Amount",
+   "in_list_view": 1,
+   "precision": "2",
+   "read_only": 1
+  },
+  {
+   "fieldname": "final_balance",
+   "fieldtype": "Float",
+   "label": "Final Balance",
+   "in_list_view": 1,
+   "precision": "2",
+   "read_only": 1
+  },
+  {
+   "fieldname": "actual_amount",
+   "fieldtype": "Float",
+   "label": "Actual Amount",
+   "in_list_view": 1,
+   "precision": "2",
+   "bold": 1
   }
  ],
  "index_web_pages_for_search": 1,

@@ -33,6 +33,8 @@
   "test_button",
   "column_break_nlal",
   "client",
+  "client_search_id",
+  "search_client",
   "is_returned",
   "teller_invoice",
   "individual_section",
@@ -145,6 +147,17 @@
    "fieldtype": "Link",
    "label": "Search Client",
    "options": "Customer"
+  },
+  {
+   "fieldname": "client_search_id",
+   "fieldtype": "Data",
+   "label": "Search by ID/Number",
+   "description": "Enter National ID, Commercial Number, or Passport Number"
+  },
+  {
+   "fieldname": "search_client",
+   "fieldtype": "Button",
+   "label": "Search Client"
   },
   {
    "collapsible": 1,
@@ -346,7 +359,8 @@
    "fieldname": "egy_balance",
    "fieldtype": "Currency",
    "label": "EGY Balance",
-   "read_only": 1
+   "read_only": 1,
+   "allow_on_submit": 1
   },
   {
    "fetch_from": "branch_no.custom_cost_center",
@@ -405,14 +419,13 @@
    "read_only": 1
   },
   {
+   "depends_on": "eval:doc.shift || doc.docstatus || doc.__islocal===0",
    "fieldname": "treasury_code",
    "fieldtype": "Data",
-   "label": "Treasury Code",
-   "read_only": 1,
-   "hidden": 0,
-   "depends_on": "eval:doc.shift || doc.docstatus || doc.__islocal===0",
    "in_list_view": 1,
-   "in_standard_filter": 1
+   "in_standard_filter": 1,
+   "label": "Treasury Code",
+   "read_only": 1
   },
   {
    "depends_on": "eval:doc.client_type=='Interbank' || doc.client_type==\"\u0627\u0646\u062a\u0631\u0628\u0646\u0643\"",
@@ -430,7 +443,9 @@
    "hidden": 1,
    "label": "EGY",
    "options": "Account",
-   "read_only": 1
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "reqd": 1
   },
   {
    "fieldname": "branch_no",
@@ -447,12 +462,12 @@
    "read_only": 1
   },
   {
+   "description": "The printing roll used for this invoice's receipt number",
    "fieldname": "current_roll",
    "fieldtype": "Link",
    "label": "Current Printing Roll",
    "options": "Printing Roll",
-   "read_only": 1,
-   "description": "The printing roll used for this invoice's receipt number"
+   "read_only": 1
   },
   {
    "default": "National ID",
@@ -506,6 +521,7 @@
    "fieldname": "customer_name",
    "fieldtype": "Data",
    "label": "Customer Name",
+   "fetch_from": "client.customer_name",
    "mandatory_depends_on": "eval:(doc.client_type === \"Egyptian\" || doc.client_type === \"Foreigner\")"
   },
   {
@@ -581,11 +597,11 @@
    "label": "Add Commissar"
   },
   {
+   "description": "Select a contact for this customer",
    "fieldname": "contact",
    "fieldtype": "Link",
    "label": "Contact",
-   "options": "Contact",
-   "description": "Select a contact for this customer"
+   "options": "Contact"
   },
   {
    "default": "0",
@@ -614,11 +630,10 @@
   },
   {
    "collapsible": 1,
+   "collapsible_depends_on": "eval:1",
    "fieldname": "section_break_ugcr",
    "fieldtype": "Section Break",
-   "label": "Invoice Info",
-   "collapsible_depends_on": "eval:1",
-   "collapsed": 0
+   "label": "Invoice Info"
   },
   {
    "fieldname": "commissar",
@@ -763,67 +778,13 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-02-02 14:16:13.770294",
+ "modified": "2025-02-12 10:17:52.778385",
  "modified_by": "Administrator",
  "module": "Teller Customization",
  "name": "Teller Invoice",
  "naming_rule": "Expression (old style)",
  "owner": "Administrator",
- "permissions": [
-  {
-   "role": "System Manager",
-   "read": 1,
-   "write": 1,
-   "create": 1,
-   "delete": 1,
-   "submit": 1,
-   "cancel": 1,
-   "amend": 1,
-   "print": 1,
-   "email": 1,
-   "report": 1,
-   "share": 1
-  },
-  {
-   "role": "Teller",
-   "read": 1,
-   "write": 1,
-   "create": 1,
-   "delete": 1,
-   "submit": 1,
-   "cancel": 1,
-   "amend": 1,
-   "print": 1,
-   "email": 1,
-   "report": 1
-  },
-  {
-   "role": "Sales User",
-   "read": 1,
-   "write": 1,
-   "create": 1,
-   "submit": 1,
-   "cancel": 1,
-   "amend": 1,
-   "report": 1,
-   "export": 1,
-   "share": 1,
-   "permlevel": 0
-  },
-  {
-   "role": "Accounts User",
-   "read": 1,
-   "write": 1,
-   "create": 1,
-   "submit": 1,
-   "cancel": 1,
-   "amend": 1,
-   "report": 1,
-   "export": 1,
-   "share": 1,
-   "permlevel": 0
-  }
- ],
+ "permissions": [],
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],
