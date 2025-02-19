@@ -1,0 +1,62 @@
+{
+ "charts": [],
+ "content": "[{\"id\":\"qkkSH5fjK0\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Teller</span>\",\"col\":12}},{\"id\":\"g_Bv-PewCl\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"teller invoice\",\"col\":6}},{\"id\":\"iSi3Gn_64D\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"\u0641\u0627\u062a\u0648\u0631\u0629 \u0634\u0631\u0627\u0621\",\"col\":6}},{\"id\":\"GtvYfeTNQ4\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"\u0645\u0644\u062e\u0635 \u062d\u0631\u0643\u0629 \u0627\u0644\u062e\u0632\u064a\u0646\u0629\",\"col\":6}},{\"id\":\"3B13EIXvF3\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"currency screen\",\"col\":6}},{\"id\":\"JcjU3ijNuU\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"\u0627\u0631\u0635\u062f\u0629 \u0627\u0644\u0641\u0631\u0648\u0639\",\"col\":6}},{\"id\":\"sk8gQOk0kl\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"\u062a\u0642\u0631\u064a\u0631 \u0627\u0633\u062a\u0627\u0630 \u0627\u0644\u062e\u0632\u064a\u0646\u0629\",\"col\":6}},{\"id\":\"5mGHIe5OaL\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"transfer\",\"col\":6}}]",
+ "creation": "2025-02-18 15:44:47.941927",
+ "custom_blocks": [
+  {
+   "custom_block_name": "transfer",
+   "label": "transfer"
+  },
+  {
+   "custom_block_name": "currency screen",
+   "label": "currency screen"
+  },
+  {
+   "custom_block_name": "\u0645\u0644\u062e\u0635 \u062d\u0631\u0643\u0629 \u0627\u0644\u062e\u0632\u064a\u0646\u0629",
+   "label": "\u0645\u0644\u062e\u0635 \u062d\u0631\u0643\u0629 \u0627\u0644\u062e\u0632\u064a\u0646\u0629"
+  },
+  {
+   "custom_block_name": "\u0641\u0627\u062a\u0648\u0631\u0629 \u0634\u0631\u0627\u0621",
+   "label": "\u0641\u0627\u062a\u0648\u0631\u0629 \u0634\u0631\u0627\u0621"
+  },
+  {
+   "custom_block_name": "teller invoice",
+   "label": "teller invoice"
+  },
+  {
+   "custom_block_name": "\u0627\u0631\u0635\u062f\u0629 \u0627\u0644\u0641\u0631\u0648\u0639",
+   "label": "\u0627\u0631\u0635\u062f\u0629 \u0627\u0644\u0641\u0631\u0648\u0639"
+  },
+  {
+   "custom_block_name": "\u062a\u0642\u0631\u064a\u0631 \u0627\u0633\u062a\u0627\u0630 \u0627\u0644\u062e\u0632\u064a\u0646\u0629",
+   "label": "\u062a\u0642\u0631\u064a\u0631 \u0627\u0633\u062a\u0627\u0630 \u0627\u0644\u062e\u0632\u064a\u0646\u0629"
+  }
+ ],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "for_user": "",
+ "hide_custom": 0,
+ "icon": "projects",
+ "idx": 0,
+ "indicator_color": "green",
+ "is_hidden": 0,
+ "label": "Teller",
+ "links": [],
+ "modified": "2025-02-19 09:50:54.790411",
+ "modified_by": "andrew@datasofteg.com",
+ "module": "Teller",
+ "name": "Teller",
+ "number_cards": [],
+ "owner": "andrew@datasofteg.com",
+ "parent_page": "",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [
+  {
+   "role": "Teller"
+  }
+ ],
+ "sequence_id": 1.0,
+ "shortcuts": [],
+ "title": "Teller"
+}
