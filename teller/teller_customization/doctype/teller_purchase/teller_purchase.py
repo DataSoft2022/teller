@@ -92,6 +92,10 @@ class TellerPurchase(Document):
             if customer.custom_is_exceed and not self.exceed:
                 frappe.throw(_("Buyer {0} has exceeded their limit. Please check the 'Exceed' checkbox to proceed.").format(self.buyer))
             
+            # Validate mobile number is provided when exceed is checked
+            if self.exceed and not self.buyer_mobile_number:
+                frappe.throw(_("Mobile number is mandatory when exceeding the limit"))
+            
             # Basic validations
             if not self.treasury_code:
                 frappe.throw(_("Treasury code is required"))

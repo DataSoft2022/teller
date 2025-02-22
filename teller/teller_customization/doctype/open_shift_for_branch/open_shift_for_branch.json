@@ -103,7 +103,8 @@
    "label": "Printing Roll",
    "options": "Printing Roll",
    "reqd": 1,
-   "description": "Select the active printing roll for receipt numbers"
+   "read_only": 1,
+   "description": "Active printing roll for this branch (auto-fetched)"
   }
  ],
  "index_web_pages_for_search": 1,
@@ -130,20 +131,6 @@
     "submit": 1,
     "cancel": 1,
     "amend": 1
-   },
-   {
-    "create": 1,
-    "delete": 0,
-    "email": 1,
-    "export": 1,
-    "print": 1,
-    "read": 1,
-    "report": 1,
-    "role": "Teller",
-    "share": 1,
-    "write": 1,
-    "submit": 1,
-    "cancel": 1
    }
  ],
  "sort_field": "modified",

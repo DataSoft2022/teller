@@ -18,33 +18,8 @@ def get_permission_query_conditions(user=None):
     if not employee:
         return "1=0"
         
-    # Get user's permitted treasuries
-    permitted_treasuries = frappe.get_all('User Permission',
-        filters={
-            'user': user,
-            'allow': 'Teller Treasury'
-        },
-        pluck='for_value'
-    )
-    
-    treasury_condition = ""
-    if permitted_treasuries:
-        treasury_list = "', '".join(permitted_treasuries)
-        treasury_condition = f"OR `tabOpen Shift for Branch`.treasury_permission IN ('{treasury_list}')"
-        
-    # Allow users to see:
-    # 1. Shifts where they are the current_user
-    # 2. Shifts for employees they supervise (if they are a supervisor)
-    # 3. Shifts for treasuries they have permission to
-    return f"""
-        (`tabOpen Shift for Branch`.current_user = '{employee}'
-        OR EXISTS (
-            SELECT 1 FROM `tabEmployee` e
-            WHERE e.reports_to = '{employee}'
-            AND e.name = `tabOpen Shift for Branch`.current_user
-        )
-        {treasury_condition})
-    """
+    # Allow users to see only their own shifts
+    return f"`tabOpen Shift for Branch`.current_user = '{employee}'"
 
 def has_permission(doc, ptype="read", user=None):
     """Permission handler for Open Shift for Branch"""
@@ -59,26 +34,8 @@ def has_permission(doc, ptype="read", user=None):
     if not employee:
         return False
         
-    # Check if user has permission for the treasury
-    if doc.treasury_permission:
-        has_treasury_permission = frappe.db.exists('User Permission', {
-            'user': user,
-            'allow': 'Teller Treasury',
-            'for_value': doc.treasury_permission
-        })
-        if has_treasury_permission:
-            return True
-        
-    # Allow access if:
-    # 1. User is the current_user of the shift
-    # 2. User is the supervisor of the current_user
-    return (
-        doc.current_user == employee or
-        frappe.db.exists('Employee', {
-            'reports_to': employee,
-            'name': doc.current_user
-        })
-    )
+    # Allow access only to own shifts
+    return doc.current_user == employee
 
 @frappe.whitelist()
 def get_available_employees(doctype, txt, searchfield, start, page_len, filters):
@@ -102,6 +59,7 @@ class OpenShiftforBranch(Document):
     def validate(self):
         self.validate_active_shift()
         self.validate_treasury()
+        self.set_printing_roll()
         
     def validate_active_shift(self):
         """Check if employee already has an active shift"""
@@ -138,6 +96,25 @@ class OpenShiftforBranch(Document):
             frappe.throw(_("Selected employee's user has no treasury permission"))
             
         self.treasury_permission = treasury
+        
+    def set_printing_roll(self):
+        """Set the active printing roll for this branch"""
+        if not self.branch:
+            return
+            
+        # Get active printing roll for this branch
+        active_roll = frappe.db.get_value("Printing Roll",
+            {
+                "branch": self.branch,
+                "active": 1
+            },
+            "name"
+        )
+        
+        if not active_roll:
+            frappe.throw(_("No active printing roll found for branch {0}. Please configure one first.").format(self.branch))
+            
+        self.printing_roll = active_roll
 
 @frappe.whitelist()
 def make_close_shift(source_name, target_doc=None):

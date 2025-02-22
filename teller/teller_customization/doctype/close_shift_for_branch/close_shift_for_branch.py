@@ -380,6 +380,16 @@ class CloseShiftForBranch(Document):
 					AND tpc.account = %s
 				""", (self.open_shift, currency_code, account), as_dict=1)[0].total or 0
 				
+				# Calculate transferred amount during shift period
+				transferred_amount = frappe.db.sql("""
+					SELECT COALESCE(SUM(amount), 0) as total
+					FROM `tabTreasury Transfer`
+					WHERE docstatus = 1
+					AND creation BETWEEN %s AND %s
+					AND (from_account = %s OR to_account = %s)
+				""", (shift.start_date, shift.end_date or frappe.utils.now(), 
+					  account, account), as_dict=1)[0].total or 0
+				
 				# Calculate final balance
 				final_balance = flt(opening_balance) - flt(sold_amount) + flt(bought_amount)
 				
@@ -391,6 +401,7 @@ class CloseShiftForBranch(Document):
 					"opening_balance": opening_balance,
 					"sold_amount": sold_amount,
 					"bought_amount": bought_amount,
+					"transferred_amount": transferred_amount,
 					"final_balance": final_balance,
 					"actual_amount": 0  # This will be filled manually by the user
 				})

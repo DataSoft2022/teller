@@ -29,6 +29,7 @@
   "customer_history",
   "section_break_onwq",
   "client_type",
+  "central_bank_number",
   "special_price",
   "test_button",
   "column_break_nlal",
@@ -141,6 +142,12 @@
    "label": "Client Type",
    "options": "\nEgyptian\nCompany\nForeigner\nInterbank",
    "reqd": 1
+  },
+  {
+   "fieldname": "central_bank_number",
+   "fieldtype": "Data",
+   "label": "Central Bank Number",
+   "read_only": 1
   },
   {
    "fieldname": "client",

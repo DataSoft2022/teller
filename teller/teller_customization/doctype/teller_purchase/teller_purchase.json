@@ -28,6 +28,7 @@
   "purchase_history",
   "section_break_onwq",
   "category_of_buyer",
+  "central_bank_number",
   "special_price",
   "column_break_nlal",
   "buyer",
@@ -245,6 +246,12 @@
    "label": "Category of Buyer",
    "options": "\nEgyptian\nCompany\nForeigner\nInterbank",
    "reqd": 1
+  },
+  {
+   "fieldname": "central_bank_number",
+   "fieldtype": "Data",
+   "label": "Central Bank Number",
+   "read_only": 1
   },
   {
    "depends_on": "eval:doc.category_of_buyer==\"Interbank\"",
@@ -720,20 +727,6 @@
    "submit": 1,
    "cancel": 1,
    "amend": 1
-  },
-  {
-   "create": 1,
-   "delete": 0,
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "Teller",
-   "share": 1,
-   "write": 1,
-   "submit": 1,
-   "cancel": 1
   }
  ],
  "sort_field": "modified",

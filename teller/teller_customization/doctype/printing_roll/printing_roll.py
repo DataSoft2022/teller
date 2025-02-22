@@ -7,6 +7,53 @@ from frappe.utils import nowdate
 
 
 class PrintingRoll(Document):
+    def validate(self):
+        self.validate_sequence_uniqueness()
+        self.validate_active_status()
+        
+    def validate_sequence_uniqueness(self):
+        """Ensure the sequence range is unique across all printing rolls"""
+        sequence = f"{self.starting_letters or ''}{self.start_count}"
+        
+        # Check if any other roll has overlapping sequence
+        existing = frappe.db.sql("""
+            SELECT name 
+            FROM `tabPrinting Roll`
+            WHERE name != %s
+            AND starting_letters = %s
+            AND (
+                (start_count <= %s AND end_count >= %s)  -- New start within existing range
+                OR (start_count <= %s AND end_count >= %s)  -- New end within existing range
+                OR (start_count >= %s AND end_count <= %s)  -- Existing range within new range
+            )
+        """, (
+            self.name or "New",
+            self.starting_letters or "",
+            self.start_count,
+            self.start_count,
+            self.end_count,
+            self.end_count,
+            self.start_count,
+            self.end_count
+        ))
+        
+        if existing:
+            frappe.throw(f"Sequence {sequence} overlaps with existing printing roll {existing[0][0]}")
+            
+    def validate_active_status(self):
+        """Ensure only one roll per branch can be active"""
+        if self.active:
+            active_roll = frappe.db.get_value("Printing Roll",
+                {
+                    "branch": self.branch,
+                    "active": 1,
+                    "name": ("!=", self.name or "New")
+                },
+                "name"
+            )
+            
+            if active_roll:
+                frappe.throw(f"Another printing roll {active_roll} is already active for branch {self.branch}")
 
     def before_save(self):
         # Validate end count is greater than start count

@@ -1,0 +1,114 @@
+{
+ "actions": [],
+ "creation": "2024-03-14 10:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "transaction_type",
+  "reference_doctype",
+  "reference_name",
+  "posting_date",
+  "column_break_1",
+  "currency_code",
+  "client_type",
+  "central_bank_number",
+  "section_break_1",
+  "quantity",
+  "amount"
+ ],
+ "fields": [
+  {
+   "fieldname": "transaction_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Transaction Type",
+   "options": "Purchase\nSale",
+   "reqd": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "reference_doctype",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Reference DocType",
+   "options": "DocType",
+   "reqd": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "reference_name",
+   "fieldtype": "Dynamic Link",
+   "in_list_view": 1,
+   "label": "Reference Name",
+   "options": "reference_doctype",
+   "reqd": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "posting_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Posting Date",
+   "reqd": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "currency_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Currency Code",
+   "reqd": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "client_type",
+   "fieldtype": "Data",
+   "label": "Client Type",
+   "reqd": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "central_bank_number",
+   "fieldtype": "Data",
+   "label": "Central Bank Number",
+   "reqd": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "section_break_1",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "quantity",
+   "fieldtype": "Float",
+   "label": "Quantity",
+   "precision": "4",
+   "reqd": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Float",
+   "label": "Amount (EGY)",
+   "precision": "4",
+   "reqd": 1,
+   "no_copy": 1
+  }
+ ],
+ "istable": 1,
+ "modified": "2024-03-14 10:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Teller Customization",
+ "name": "Central Bank Export Detail",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 0,
+ "in_preview": 0
+} 

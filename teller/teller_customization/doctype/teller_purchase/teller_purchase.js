@@ -92,6 +92,15 @@ frappe.ui.form.on("Teller Purchase", {
     frm.set_df_property('buyer_national_id', 'hidden', 1);
     frm.set_df_property('buyer_passport_number', 'hidden', 1);
     frm.set_df_property('buyer_military_number', 'hidden', 1);
+
+    // Get and set the central bank number based on category
+    frappe.db.get_single_value('Teller Setting', frm.doc.category_of_buyer === 'Egyptian' ? 'purchase_egyptian_number' :
+      frm.doc.category_of_buyer === 'Foreigner' ? 'purchase_foreigner_number' :
+      frm.doc.category_of_buyer === 'Company' ? 'purchase_company_number' :
+      frm.doc.category_of_buyer === 'Interbank' ? 'purchase_interbank_number' : null)
+    .then(value => {
+      frm.set_value('central_bank_number', value);
+    });
   },
 
   search_buyer: function(frm) {
@@ -400,7 +409,7 @@ frappe.ui.form.on("Teller Purchase", {
   },
 
   refresh(frm) {
-    // Handle submit button visibility
+    // Handle form state based on docstatus
     if (frm.doc.docstatus === 0) {
       // For new documents or unsaved changes
       if (frm.is_new() || frm.doc.__unsaved) {
@@ -409,13 +418,10 @@ frappe.ui.form.on("Teller Purchase", {
         // For saved but unsubmitted documents
         frm.page.set_primary_action(__('Submit'), () => frm.savesubmit());
       }
-    }
-
-    // Add return button for submitted documents
-    if (frm.doc.docstatus === 1 && !frm.doc.is_returned) {
-      frm.add_custom_button(__('Return'), function() {
-        make_return(frm);
-      }, __('Create'));
+    } else {
+      // Clear primary action and disable form for submitted/cancelled documents
+      frm.page.clear_primary_action();
+      frm.disable_form();
     }
 
     // Make treasury_code and shift read-only after submission
@@ -453,13 +459,6 @@ frappe.ui.form.on("Teller Purchase", {
     
     // Add custom buttons for submitted documents
     if (frm.doc.docstatus === 1) {
-      // Add print button if needed
-      if (frm.doc.purchase_receipt_number) {
-        frm.add_custom_button(__('Print Receipt'), function() {
-          frappe.show_alert('Printing functionality to be implemented');
-        });
-      }
-
       // Add ledger button
       frm.add_custom_button(
         __("Ledger"),
@@ -477,7 +476,7 @@ frappe.ui.form.on("Teller Purchase", {
         "fa fa-table"
       );
 
-      // Add return button if document is not already returned
+      // Add standalone return button if document is not already returned
       if (!frm.doc.is_returned) {
         frm.add_custom_button(__('Return'), function() {
           // Show confirmation dialog
@@ -515,22 +514,7 @@ frappe.ui.form.on("Teller Purchase", {
       }
     }
 
-    // Show general ledger button
-    if (frm.doc.docstatus > 0) {
-      frm.add_custom_button(__("Ledger"), function() {
-        frappe.route_options = {
-          voucher_no: frm.doc.name,
-          from_date: frm.doc.date,
-          to_date: moment(frm.doc.modified).format("YYYY-MM-DD"),
-          company: frm.doc.company,
-          group_by: "",
-          show_cancelled_entries: frm.doc.docstatus === 2
-        };
-        frappe.set_route("query-report", "General Ledger");
-      }, "fa fa-table");
-    }
-
-    // filter buyers based on category
+    // Set query filters for buyer
     frm.set_query("buyer", function (doc) {
       return {
         filters: {

@@ -32,7 +32,18 @@
   "section_break_lixz",
   "allow_interbank_notification",
   "notification_percentage",
-  "close_interbank"
+  "close_interbank",
+  "central_bank_section",
+  "company_central_bank_number",
+  "purchase_egyptian_number",
+  "purchase_foreigner_number",
+  "purchase_company_number",
+  "purchase_interbank_number",
+  "column_break_central",
+  "sales_egyptian_number",
+  "sales_foreigner_number",
+  "sales_company_number",
+  "sales_interbank_number"
  ],
  "fields": [
   {
@@ -184,6 +195,60 @@
    "fieldname": "close_interbank",
    "fieldtype": "Int",
    "label": "Close Interbank"
+  },
+  {
+   "fieldname": "central_bank_section",
+   "fieldtype": "Section Break",
+   "label": "Central Bank Details"
+  },
+  {
+   "fieldname": "company_central_bank_number",
+   "fieldtype": "Data",
+   "label": "Company Number in the Central Bank"
+  },
+  {
+   "fieldname": "purchase_egyptian_number",
+   "fieldtype": "Data",
+   "label": "Purchase Number for Egyptians"
+  },
+  {
+   "fieldname": "purchase_foreigner_number",
+   "fieldtype": "Data",
+   "label": "Purchase Number for Foreigners"
+  },
+  {
+   "fieldname": "purchase_company_number",
+   "fieldtype": "Data",
+   "label": "Purchase Number for Companies"
+  },
+  {
+   "fieldname": "purchase_interbank_number",
+   "fieldtype": "Data",
+   "label": "Purchase Number for Interbank"
+  },
+  {
+   "fieldname": "column_break_central",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "sales_egyptian_number",
+   "fieldtype": "Data",
+   "label": "Sales Number for Egyptians"
+  },
+  {
+   "fieldname": "sales_foreigner_number",
+   "fieldtype": "Data",
+   "label": "Sales Number for Foreigners"
+  },
+  {
+   "fieldname": "sales_company_number",
+   "fieldtype": "Data",
+   "label": "Sales Number for Companies"
+  },
+  {
+   "fieldname": "sales_interbank_number",
+   "fieldtype": "Data",
+   "label": "Sales Number for Interbank"
   }
  ],
  "index_web_pages_for_search": 1,

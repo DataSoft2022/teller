@@ -15,13 +15,16 @@
   "last_printed_number",
   "show_number",
   "branch",
-  "active"
+  "active",
+  "section_break_help",
+  "help_html"
  ],
  "fields": [
   {
    "fieldname": "starting_letters",
    "fieldtype": "Data",
-   "label": "Starting letters"
+   "label": "Starting letters",
+   "description": "Enter the prefix letters for your receipt numbers (e.g., 'INV' for INV00001)"
   },
   {
    "fieldname": "column_break_elnm",
@@ -32,45 +35,66 @@
    "fieldtype": "Link",
    "label": "Branch",
    "options": "Branch",
-   "read_only": 1
+   "reqd": 1,
+   "description": "Select the branch this printing roll belongs to"
   },
   {
    "fieldname": "show_number",
    "fieldtype": "Data",
    "label": "Show Number",
-   "read_only": 1
+   "read_only": 1,
+   "description": "Shows the number of digits in the current receipt number"
   },
   {
    "fieldname": "description",
    "fieldtype": "Small Text",
-   "label": "Description"
+   "label": "Description",
+   "description": "Optional: Add any notes about this printing roll"
   },
   {
    "default": "0",
    "fieldname": "active",
    "fieldtype": "Check",
-   "label": "Active"
+   "label": "Active",
+   "description": "Check to make this the active roll for the branch. Only one roll can be active per branch."
   },
   {
    "fieldname": "last_printed_number",
    "fieldtype": "Int",
    "label": "Last Printed Number",
-   "read_only": 1
+   "read_only": 1,
+   "description": "System maintained: Shows the last used number in this roll"
   },
   {
    "fieldname": "start_count",
    "fieldtype": "Int",
-   "label": "Start Count"
+   "label": "Start Count",
+   "reqd": 1,
+   "description": "Enter the starting number for this roll (e.g., 1 for first receipt)"
   },
   {
    "fieldname": "end_count",
    "fieldtype": "Int",
-   "label": "End Count"
+   "label": "End Count",
+   "reqd": 1,
+   "description": "Enter the last number for this roll (e.g., 99999)"
   },
   {
    "fieldname": "add_zeros",
    "fieldtype": "Int",
-   "label": "Add Zeros"
+   "label": "Add Zeros",
+   "description": "Number of leading zeros to add (e.g., 5 for 00001)"
+  },
+  {
+   "fieldname": "section_break_help",
+   "fieldtype": "Section Break",
+   "label": "Help Guide"
+  },
+  {
+   "fieldname": "help_html",
+   "fieldtype": "HTML",
+   "label": "Help Guide",
+   "options": "<div class=\"alert alert-info\"><h4>How to Set Up a New Printing Roll</h4><ol><li><strong>Branch Selection:</strong><ul><li>First, select the branch this printing roll will be used for</li><li>Each branch can have multiple rolls, but only one can be active at a time</li></ul></li><li><strong>Receipt Number Format:</strong><ul><li>Starting Letters: Add a prefix (e.g., 'INV' for INV00001)</li><li>Add Zeros: Specify how many leading zeros (e.g., 5 for 00001)</li><li>Start Count: The first number in the sequence</li><li>End Count: The last number in the sequence</li></ul></li><li><strong>Activation:</strong><ul><li>Check 'Active' to make this the current roll for the branch</li><li>The system will automatically deactivate any other active roll for the same branch</li></ul></li><li><strong>Important Notes:</strong><ul><li>Each sequence must be unique across all rolls</li><li>End Count must be greater than Start Count</li><li>The roll will automatically be used in Teller Invoice and Purchase when an employee from the branch starts their shift</li></ul></li></ol><p><strong>Example Setup:</strong><br>Starting Letters: INV<br>Add Zeros: 5<br>Start Count: 1<br>End Count: 99999<br>Result: INV00001, INV00002, etc.</p></div>"
   }
  ],
  "index_web_pages_for_search": 1,

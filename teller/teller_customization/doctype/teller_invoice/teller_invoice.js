@@ -3,6 +3,15 @@
 
 frappe.ui.form.on("Teller Invoice", {
   client_type(frm) {
+    // Get and set the central bank number based on client type
+    frappe.db.get_single_value('Teller Setting', frm.doc.client_type === 'Egyptian' ? 'sales_egyptian_number' :
+      frm.doc.client_type === 'Foreigner' ? 'sales_foreigner_number' :
+      frm.doc.client_type === 'Company' ? 'sales_company_number' :
+      frm.doc.client_type === 'Interbank' ? 'sales_interbank_number' : null)
+    .then(value => {
+      frm.set_value('central_bank_number', value);
+    });
+
     if (frm.doc.client_type === "Interbank") {
       frappe.call({
         method: "frappe.client.get",
@@ -874,14 +883,21 @@ frappe.ui.form.on("Teller Invoice", {
     }
     
     // Clear all company fields
-    if(frm.doc.client_type !== "Company" && frm.doc.client_type !== "Interbank") {
-      const companyFields = [
-        'company_name', 'company_activity', 'company_commercial_no',
-        'company_num', 'end_registration_date', 'start_registration_date',
-        'comoany_address', 'is_expired1', 'interbank', 'company_legal_form'
-      ];
-      companyFields.forEach(field => frm.set_value(field, ''));
-    }
+    const companyFields = [
+      'company_name', 'company_activity', 'company_commercial_no',
+      'company_num', 'end_registration_date', 'start_registration_date',
+      'comoany_address', 'is_expired1', 'interbank', 'company_legal_form'
+    ];
+    companyFields.forEach(field => frm.set_value(field, ''));
+    
+    // Get and set the central bank number based on client type
+    frappe.db.get_single_value('Teller Setting', frm.doc.client_type === 'Egyptian' ? 'sales_egyptian_number' :
+      frm.doc.client_type === 'Foreigner' ? 'sales_foreigner_number' :
+      frm.doc.client_type === 'Company' ? 'sales_company_number' :
+      frm.doc.client_type === 'Interbank' ? 'sales_interbank_number' : null)
+    .then(value => {
+      frm.set_value('central_bank_number', value);
+    });
     
     frm.refresh_fields();
   },

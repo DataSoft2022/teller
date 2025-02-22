@@ -1390,16 +1390,6 @@ def make_sales_return(doc):
 def get_employee_shift_details():
     user = frappe.session.user
     
-    # Check if user has required roles
-    required_roles = ["Teller", "Sales User", "Accounts User"]
-    user_roles = frappe.get_roles(user)
-    missing_roles = [role for role in required_roles if role not in user_roles]
-    
-    if missing_roles:
-        frappe.throw(_(
-            "You don't have the required roles to create Teller Invoice. Missing roles: {0}"
-        ).format(", ".join(missing_roles)))
-    
     # First get the employee linked to the current user
     employee = frappe.db.get_value('Employee', {'user_id': user}, 'name')
     if not employee:
@@ -1454,13 +1444,6 @@ def open_shift_has_permission(doc, ptype, user):
 def get_account_permission_query_conditions(user=None):
     if not user:
         user = frappe.session.user
-        
-    required_roles = ["Teller", "Sales User", "Accounts User"]
-    user_roles = frappe.get_roles(user)
-    
-    # Check if user has required roles
-    if not any(role in required_roles for role in user_roles):
-        return "1=0"
         
     # Get the employee linked to the current user
     employee = frappe.db.get_value('Employee', {'user_id': user}, 'name')

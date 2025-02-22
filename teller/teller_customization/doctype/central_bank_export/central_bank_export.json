@@ -1,0 +1,93 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "CBE-.####",
+ "creation": "2024-03-14 10:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "status",
+  "column_break_1",
+  "export_date",
+  "attached_file",
+  "section_break_1",
+  "transactions",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "export_date",
+   "fieldtype": "Date",
+   "label": "Export Date",
+   "read_only": 1,
+   "hidden": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Pending",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Pending\nExported",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "section_break_1",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "transactions",
+   "fieldtype": "Table",
+   "label": "Transactions",
+   "options": "Central Bank Export Detail",
+   "reqd": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Central Bank Export",
+   "print_hide": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "attached_file",
+   "fieldtype": "Attach",
+   "label": "Attached File",
+   "read_only": 1,
+   "allow_on_submit": 1
+  }
+ ],
+ "is_submittable": 1,
+ "modified": "2024-03-14 10:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Teller Customization",
+ "name": "Central Bank Export",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC"
+} 
