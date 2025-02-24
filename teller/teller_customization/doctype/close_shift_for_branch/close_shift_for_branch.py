@@ -381,17 +381,31 @@ class CloseShiftForBranch(Document):
 				""", (self.open_shift, currency_code, account), as_dict=1)[0].total or 0
 				
 				# Calculate transferred amount during shift period
-				transferred_amount = frappe.db.sql("""
-					SELECT COALESCE(SUM(amount), 0) as total
-					FROM `tabTreasury Transfer`
-					WHERE docstatus = 1
-					AND creation BETWEEN %s AND %s
-					AND (from_account = %s OR to_account = %s)
-				""", (shift.start_date, shift.end_date or frappe.utils.now(), 
-					  account, account), as_dict=1)[0].total or 0
+				# First get outgoing transfers (credit entries)
+				outgoing_transfers = frappe.db.sql("""
+					SELECT COALESCE(SUM(credit_in_account_currency), 0) as total
+					FROM `tabGL Entry`
+					WHERE account = %s
+					AND posting_date BETWEEN %s AND %s
+					AND voucher_type = 'Treasury Transfer'
+					AND is_cancelled = 0
+				""", (account, shift.start_date, shift.end_date or frappe.utils.now()), as_dict=1)[0].total or 0
+
+				# Then get incoming transfers (debit entries)
+				incoming_transfers = frappe.db.sql("""
+					SELECT COALESCE(SUM(debit_in_account_currency), 0) as total
+					FROM `tabGL Entry`
+					WHERE account = %s
+					AND posting_date BETWEEN %s AND %s
+					AND voucher_type = 'Treasury Transfer'
+					AND is_cancelled = 0
+				""", (account, shift.start_date, shift.end_date or frappe.utils.now()), as_dict=1)[0].total or 0
+
+				# Net transfer amount (positive means net incoming, negative means net outgoing)
+				transferred_amount = incoming_transfers - outgoing_transfers
 				
 				# Calculate final balance
-				final_balance = flt(opening_balance) - flt(sold_amount) + flt(bought_amount)
+				final_balance = flt(opening_balance) - flt(sold_amount) + flt(bought_amount) + flt(transferred_amount)
 				
 				# Add to currency summary list
 				currency_summary.append({

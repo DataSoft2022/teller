@@ -35,7 +35,6 @@
   "column_break_nlal",
   "client",
   "client_search_id",
-  "search_client",
   "is_returned",
   "teller_invoice",
   "individual_section",
@@ -153,18 +152,14 @@
    "fieldname": "client",
    "fieldtype": "Link",
    "label": "Search Client",
-   "options": "Customer"
+   "options": "Customer",
+   "hidden": 1
   },
   {
    "fieldname": "client_search_id",
    "fieldtype": "Data",
    "label": "Search by ID/Number",
    "description": "Enter National ID, Commercial Number, or Passport Number"
-  },
-  {
-   "fieldname": "search_client",
-   "fieldtype": "Button",
-   "label": "Search Client"
   },
   {
    "collapsible": 1,
@@ -636,11 +631,11 @@
    "options": "Customer History"
   },
   {
-   "collapsible": 1,
-   "collapsible_depends_on": "eval:1",
    "fieldname": "section_break_ugcr",
    "fieldtype": "Section Break",
-   "label": "Invoice Info"
+   "label": "Invoice Info",
+   "collapsible": 0,
+   "hidden": 1
   },
   {
    "fieldname": "commissar",

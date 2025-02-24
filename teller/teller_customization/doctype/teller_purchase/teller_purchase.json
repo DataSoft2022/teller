@@ -33,7 +33,6 @@
   "column_break_nlal",
   "buyer",
   "buyer_search_id",
-  "search_buyer",
   "is_returned",
   "original_purchase",
   "individual_section",
@@ -109,8 +108,8 @@
    "fieldname": "section_break_ugcr",
    "fieldtype": "Section Break",
    "label": "Invoice Info",
-   "collapsible": 1,
-   "collapsible_depends_on": "eval:1"
+   "collapsible": 0,
+   "hidden": 1
   },
   {
    "fieldname": "reason_for_purchase",
@@ -268,18 +267,14 @@
    "fieldname": "buyer",
    "fieldtype": "Link",
    "label": "Search Buyer",
-   "options": "Customer"
+   "options": "Customer",
+   "hidden": 1
   },
   {
    "fieldname": "buyer_search_id",
    "fieldtype": "Data",
    "label": "Search by ID/Number",
    "description": "Enter National ID, Commercial Number, or Passport Number"
-  },
-  {
-   "fieldname": "search_buyer",
-   "fieldtype": "Button",
-   "label": "Search Buyer"
   },
   {
    "fieldname": "is_returned",

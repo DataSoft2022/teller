@@ -77,6 +77,120 @@ frappe.ui.form.on("Teller Purchase", {
     frm.refresh_fields(['buyer_national_id', 'buyer_passport_number', 'buyer_military_number']);
   },
 
+  buyer_search_id: function(frm) {
+    if (!frm.doc.category_of_buyer || !frm.doc.buyer_search_id) return;
+    
+    // Automatically search when ID is entered
+    frappe.call({
+      method: 'teller.teller_customization.doctype.teller_purchase.teller_purchase.search_buyer_by_id',
+      args: {
+        search_id: frm.doc.buyer_search_id
+      },
+      callback: function(r) {
+        if (r.message) {
+          const customer = r.message;
+          
+          // Set the buyer reference
+          frm.set_value('buyer', customer.buyer);
+          
+          // Set fields based on customer type
+          if (customer.category_of_buyer === 'Egyptian' || customer.category_of_buyer === 'Foreigner') {
+            // Set individual fields
+            frm.set_value('buyer_name', customer.buyer_name);
+            frm.set_value('buyer_card_type', customer.buyer_card_type);
+            
+            // Clear all ID fields first
+            frm.set_value('buyer_national_id', '');
+            frm.set_value('buyer_passport_number', '');
+            frm.set_value('buyer_military_number', '');
+            
+            // Set the appropriate ID field based on card type
+            if (customer.buyer_card_type === "National ID") {
+              frm.set_value('buyer_national_id', customer.buyer_national_id);
+            } else if (customer.buyer_card_type === "Passport") {
+              frm.set_value('buyer_passport_number', customer.buyer_passport_number);
+            } else if (customer.buyer_card_type === "Military Card") {
+              frm.set_value('buyer_military_number', customer.buyer_military_number);
+            }
+            
+            // Set other fields
+            frm.set_value('buyer_nationality', customer.buyer_nationality);
+            frm.set_value('buyer_mobile_number', customer.buyer_mobile_number);
+            frm.set_value('buyer_work_for', customer.buyer_work_for);
+            frm.set_value('buyer_phone', customer.buyer_phone);
+            frm.set_value('buyer_place_of_birth', customer.buyer_place_of_birth);
+            frm.set_value('buyer_date_of_birth', customer.buyer_date_of_birth);
+            frm.set_value('buyer_job_title', customer.buyer_job_title);
+            frm.set_value('buyer_address', customer.buyer_address);
+            frm.set_value('buyer_expired', customer.buyer_expired);
+          } else if (customer.category_of_buyer === 'Company' || customer.category_of_buyer === 'Interbank') {
+            // Set company fields
+            frm.set_value('buyer_company_name', customer.buyer_company_name);
+            frm.set_value('buyer_company_activity', customer.buyer_company_activity);
+            frm.set_value('buyer_company_commercial_no', customer.buyer_company_commercial_no);
+            frm.set_value('buyer_company_start_date', customer.buyer_company_start_date);
+            frm.set_value('buyer_company_end_date', customer.buyer_company_end_date);
+            frm.set_value('buyer_company_address', customer.buyer_company_address);
+            frm.set_value('is_expired1', customer.is_expired1);
+            frm.set_value('interbank', customer.interbank);
+            frm.set_value('buyer_company_legal_form', customer.buyer_company_legal_form);
+          }
+          
+          // Set exceed flag
+          frm.set_value('exceed', customer.exceed);
+          
+          // Refresh all fields
+          frm.refresh_fields();
+        } else {
+          // If no customer found, pre-fill the ID in the appropriate field based on category
+          if (frm.doc.category_of_buyer === 'Egyptian' || frm.doc.category_of_buyer === 'Foreigner') {
+            // Clear all ID fields first
+            frm.set_value('buyer_national_id', '');
+            frm.set_value('buyer_passport_number', '');
+            frm.set_value('buyer_military_number', '');
+            
+            // Set the appropriate ID field based on card type
+            if (frm.doc.buyer_card_type === "National ID") {
+              frm.set_value('buyer_national_id', frm.doc.buyer_search_id);
+            } else if (frm.doc.buyer_card_type === "Passport") {
+              frm.set_value('buyer_passport_number', frm.doc.buyer_search_id);
+            } else if (frm.doc.buyer_card_type === "Military Card") {
+              frm.set_value('buyer_military_number', frm.doc.buyer_search_id);
+            }
+            
+            // Clear other fields
+            frm.set_value('buyer_name', '');
+            frm.set_value('buyer_nationality', '');
+            frm.set_value('buyer_mobile_number', '');
+            frm.set_value('buyer_work_for', '');
+            frm.set_value('buyer_phone', '');
+            frm.set_value('buyer_place_of_birth', '');
+            frm.set_value('buyer_date_of_birth', '');
+            frm.set_value('buyer_job_title', '');
+            frm.set_value('buyer_address', '');
+            frm.set_value('buyer_expired', 0);
+            
+          } else if (frm.doc.category_of_buyer === 'Company' || frm.doc.category_of_buyer === 'Interbank') {
+            frm.set_value('buyer_company_commercial_no', frm.doc.buyer_search_id);
+            
+            // Clear other company fields
+            frm.set_value('buyer_company_name', '');
+            frm.set_value('buyer_company_activity', '');
+            frm.set_value('buyer_company_start_date', '');
+            frm.set_value('buyer_company_end_date', '');
+            frm.set_value('buyer_company_address', '');
+            frm.set_value('is_expired1', 0);
+            frm.set_value('interbank', 0);
+            frm.set_value('buyer_company_legal_form', '');
+          }
+          
+          // Refresh all fields
+          frm.refresh_fields();
+        }
+      }
+    });
+  },
+
   category_of_buyer: function(frm) {
     if (frm.doc.category_of_buyer == "Foreigner") {
       frm.set_value("buyer_card_type", "Passport");
@@ -84,23 +198,41 @@ frappe.ui.form.on("Teller Purchase", {
       frm.set_value("buyer_card_type", "National ID");
     }
     
-    // Clear fields but don't show ID fields yet
+    // Clear fields
     clearFieldsBasedOnCategory(frm);
-    makeIdentificationFieldsReadOnly(frm);
     
-    // Hide all ID fields when category changes
-    frm.set_df_property('buyer_national_id', 'hidden', 1);
-    frm.set_df_property('buyer_passport_number', 'hidden', 1);
-    frm.set_df_property('buyer_military_number', 'hidden', 1);
-
     // Get and set the central bank number based on category
-    frappe.db.get_single_value('Teller Setting', frm.doc.category_of_buyer === 'Egyptian' ? 'purchase_egyptian_number' :
-      frm.doc.category_of_buyer === 'Foreigner' ? 'purchase_foreigner_number' :
-      frm.doc.category_of_buyer === 'Company' ? 'purchase_company_number' :
-      frm.doc.category_of_buyer === 'Interbank' ? 'purchase_interbank_number' : null)
-    .then(value => {
-      frm.set_value('central_bank_number', value);
-    });
+    if (frm.doc.category_of_buyer) {
+      let field_name;
+      switch(frm.doc.category_of_buyer) {
+        case 'Egyptian':
+          field_name = 'purchase_egyptian_number';
+          break;
+        case 'Foreigner':
+          field_name = 'purchase_foreigner_number';
+          break;
+        case 'Company':
+          field_name = 'purchase_company_number';
+          break;
+        case 'Interbank':
+          field_name = 'purchase_interbank_number';
+          break;
+        default:
+          field_name = null;
+      }
+      
+      if (field_name) {
+        frappe.db.get_single_value('Teller Setting', field_name)
+          .then(value => {
+            frm.set_value('central_bank_number', value);
+          });
+      }
+    }
+
+    // If there's already a search ID, trigger the search
+    if (frm.doc.buyer_search_id) {
+      frm.trigger('buyer_search_id');
+    }
   },
 
   search_buyer: function(frm) {
@@ -374,11 +506,6 @@ frappe.ui.form.on("Teller Purchase", {
         }
       }, 100);
     }
-
-    // Make invoice info section collapsible and expanded by default
-    frm.toggle_display('section_break_ugcr', true);
-    frm.set_df_property('section_break_ugcr', 'collapsible', 1);
-    frm.set_df_property('section_break_ugcr', 'collapsed', 0);
 
     // filter buyers based on category
     frm.set_query("buyer", function (doc) {

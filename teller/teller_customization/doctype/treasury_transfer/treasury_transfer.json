@@ -7,16 +7,12 @@
  "field_order": [
   "section_break_nw2n",
   "from_treasury",
-  "currency_code",
-  "currency_display",
-  "from_account",
-  "from_account_balance",
   "column_break_vhib",
   "to_treasury",
-  "to_account",
-  "to_account_balance",
+  "section_break_currencies",
+  "currency_transfers",
   "section_break_amount",
-  "amount",
+  "total_amount",
   "amended_from"
  ],
  "fields": [
@@ -33,44 +29,6 @@
    "reqd": 1
   },
   {
-   "fieldname": "currency_code",
-   "fieldtype": "Data",
-   "label": "Currency Code",
-   "reqd": 1,
-   "description": "Enter the currency code (e.g., 18)",
-   "depends_on": "from_treasury"
-  },
-  {
-   "fieldname": "currency_display",
-   "fieldtype": "Data",
-   "label": "Currency",
-   "read_only": 1,
-   "description": "Currency of the selected account"
-  },
-  {
-   "fieldname": "from_account",
-   "fieldtype": "Link",
-   "label": "From Account",
-   "options": "Account",
-   "reqd": 1,
-   "read_only": 1
-  },
-  {
-   "fieldname": "from_account_balance",
-   "fieldtype": "Currency",
-   "label": "Available Balance",
-   "read_only": 1,
-   "description": "Current balance in source account",
-   "depends_on": "from_account",
-   "no_copy": 1,
-   "ignore_user_permissions": 1,
-   "allow_on_submit": 1,
-   "in_list_view": 0,
-   "in_standard_filter": 0,
-   "in_preview": 0,
-   "in_filter": 0
-  },
-  {
    "fieldname": "column_break_vhib",
    "fieldtype": "Column Break"
   },
@@ -82,38 +40,27 @@
    "reqd": 1
   },
   {
-   "fieldname": "to_account",
-   "fieldtype": "Link",
-   "label": "To Account",
-   "options": "Account",
-   "reqd": 1,
-   "read_only": 1
+   "fieldname": "section_break_currencies",
+   "fieldtype": "Section Break",
+   "label": "Currency Transfers"
   },
   {
-   "fieldname": "to_account_balance",
-   "fieldtype": "Currency",
-   "label": "Available Balance",
-   "read_only": 1,
-   "description": "Current balance in destination account",
-   "depends_on": "to_account",
-   "no_copy": 1,
-   "ignore_user_permissions": 1,
-   "allow_on_submit": 1,
-   "in_list_view": 0,
-   "in_standard_filter": 0,
-   "in_preview": 0,
-   "in_filter": 0
+   "fieldname": "currency_transfers",
+   "fieldtype": "Table",
+   "label": "Currency Transfers",
+   "options": "Treasury Transfer Detail",
+   "reqd": 1
   },
   {
    "fieldname": "section_break_amount",
    "fieldtype": "Section Break",
-   "label": "Amount"
+   "label": "Total"
   },
   {
-   "fieldname": "amount",
-   "fieldtype": "Float",
-   "label": "Amount",
-   "reqd": 1
+   "fieldname": "total_amount",
+   "fieldtype": "Currency",
+   "label": "Total Amount",
+   "read_only": 1
   },
   {
    "fieldname": "amended_from",

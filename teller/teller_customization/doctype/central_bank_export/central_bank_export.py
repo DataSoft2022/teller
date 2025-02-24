@@ -41,7 +41,7 @@ class CentralBankExport(Document):
         
         current_datetime = get_datetime(now())
         date_str = current_datetime.strftime('%Y%m%d')
-        time_str = current_datetime.strftime('%H%M%S')
+        time_str = current_datetime.strftime('%H')
         
         for row in self.transactions:
             # Format numbers with required precision, using absolute values
