@@ -38,10 +38,6 @@ def get_permission_query_conditions(user=None):
         if not user:
             user = frappe.session.user
             
-        # Allow full access for Administrator and System Manager
-        if user == "Administrator" or "System Manager" in frappe.get_roles(user):
-            return ""
-            
         # Get the employee linked to the current user
         employee = frappe.db.get_value('Employee', {'user_id': user}, 'name')
         if not employee:
@@ -70,10 +66,6 @@ def has_permission(doc, ptype="read", user=None):
     try:
         if not user:
             user = frappe.session.user
-            
-        # Allow full access for Administrator and System Manager
-        if user == "Administrator" or "System Manager" in frappe.get_roles(user):
-            return True
             
         # Get the employee linked to the current user
         employee = frappe.db.get_value('Employee', {'user_id': user}, 'name')

@@ -43,22 +43,19 @@
    "options": "Close Shift For Branch",
    "print_hide": 1,
    "read_only": 1,
-   "search_index": 1,
-   "in_list_view": 1
+   "search_index": 1
   },
   {
    "fieldname": "section_break_mowb",
    "fieldtype": "Section Break",
-   "label": "Shift Details",
-   "in_list_view": 1
+   "label": "Shift Details"
   },
   {
    "fieldname": "start_date",
    "fieldtype": "Datetime",
    "label": "Start Date",
    "read_only": 1,
-   "hidden": 1,
-   "in_list_view": 1
+   "hidden": 1
   },
   {
    "fieldname": "serial",
@@ -70,8 +67,7 @@
   },
   {
    "fieldname": "column_break_cdxp",
-   "fieldtype": "Column Break",
-   "in_list_view": 1
+   "fieldtype": "Column Break"
   },
   {
    "fieldname": "end_date",
@@ -79,16 +75,14 @@
    "label": "End Date",
    "read_only": 1,
    "bold": 1,
-   "description": "Will be set automatically when document is submitted",
-   "in_list_view": 1
+   "description": "Will be set automatically when document is submitted"
   },
   {
    "fieldname": "shift_employee",
    "fieldtype": "Link",
    "label": "Shift Employee",
    "options": "Employee",
-   "read_only": 1,
-   "in_list_view": 1
+   "read_only": 1
   },
   {
    "fieldname": "employee_name",
@@ -118,100 +112,84 @@
   },
   {
    "fieldname": "section_break_ganr",
-   "fieldtype": "Section Break",
-   "in_list_view": 1
+   "fieldtype": "Section Break"
   },
   {
    "fieldname": "get_all_invoices",
    "fieldtype": "Button",
-   "label": "Get All Invoices",
-   "in_list_view": 1
+   "label": "Get All Invoices"
   },
   {
    "fieldname": "section_break_xmut",
    "fieldtype": "Section Break",
-   "label": "Purchase Invoices",
-   "in_list_view": 1
+   "label": "Purchase Invoices"
   },
   {
    "fieldname": "purchase_close_table",
    "fieldtype": "Table",
    "label": "Purchase Close Table",
-   "options": "Purchase Close Table",
-   "in_list_view": 1
+   "options": "Purchase Close Table"
   },
   {
    "fieldname": "invoices_purchase_total_section",
    "fieldtype": "Section Break",
-   "label": "Purchase Invoices ",
-   "in_list_view": 1
+   "label": "Purchase Invoices "
   },
   {
    "fieldname": "column_break_vtfs",
-   "fieldtype": "Column Break",
-   "in_list_view": 1
+   "fieldtype": "Column Break"
   },
   {
    "fieldname": "column_break_pzqx",
-   "fieldtype": "Column Break",
-   "in_list_view": 1
+   "fieldtype": "Column Break"
   },
   {
    "fieldname": "total_purchase",
    "fieldtype": "Currency",
    "label": "Total Purchase",
-   "read_only": 1,
-   "in_list_view": 1
+   "read_only": 1
   },
   {
    "fieldname": "sales_invoices_section",
    "fieldtype": "Section Break",
-   "label": "Sales Invoices",
-   "in_list_view": 1
+   "label": "Sales Invoices"
   },
   {
    "fieldname": "sales_invoice",
    "fieldtype": "Table",
    "label": "Sales Invoice",
    "options": "Shift Sales Child",
-   "read_only": 1,
-   "in_list_view": 1
+   "read_only": 1
   },
   {
    "fieldname": "invoices_sales_total_section",
    "fieldtype": "Section Break",
-   "label": "Invoices Sales Total",
-   "in_list_view": 1
+   "label": "Invoices Sales Total"
   },
   {
    "fieldname": "column_break_lsit",
-   "fieldtype": "Column Break",
-   "in_list_view": 1
+   "fieldtype": "Column Break"
   },
   {
    "fieldname": "column_break_ibdu",
-   "fieldtype": "Column Break",
-   "in_list_view": 1
+   "fieldtype": "Column Break"
   },
   {
    "fieldname": "total_sales",
    "fieldtype": "Data",
    "label": "Total Sales",
-   "read_only": 1,
-   "in_list_view": 1
+   "read_only": 1
   },
   {
    "fieldname": "currency_summary_total_section",
    "fieldtype": "Section Break",
-   "label": "Currency Summary Total",
-   "in_list_view": 1
+   "label": "Currency Summary Total"
   },
   {
    "fieldname": "currency_summary",
    "fieldtype": "Table",
    "label": "Currency Summary",
-   "options": "Currency Summary",
-   "in_list_view": 1
+   "options": "Currency Summary"
   }
  ],
  "index_web_pages_for_search": 1,
