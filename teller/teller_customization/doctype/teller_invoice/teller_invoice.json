@@ -552,10 +552,9 @@
   },
   {
    "fieldname": "company_name",
-   "fieldtype": "Link",
+   "fieldtype": "Data",
    "label": "Company Name",
-   "mandatory_depends_on": "eval: (doc.client_type === \"Company\" || doc.client_type === \"Interbank\")",
-   "options": "Customer"
+   "mandatory_depends_on": "eval: (doc.client_type === \"Company\" || doc.client_type === \"Interbank\")"
   },
   {
    "depends_on": "eval: (doc.client_type === \"Company\" || doc.client_type === \"Interbank\")",

@@ -3,6 +3,35 @@
 
 frappe.ui.form.on("Teller Invoice", {
   client_type(frm) {
+    // First clear all individual fields
+    if(frm.doc.client_type !== "Egyptian" && frm.doc.client_type !== "Foreigner") {
+      const individualFields = [
+        'customer_name', 'national_id', 'gender', 'nationality',
+        'mobile_number', 'work_for', 'phone', 'place_of_birth',
+        'date_of_birth', 'job_title', 'address', 'passport_number',
+        'military_number'
+      ];
+      individualFields.forEach(field => frm.set_value(field, ''));
+    }
+    
+    // Clear all company fields
+    const companyFields = [
+      'company_name', 'company_activity', 'company_commercial_no',
+      'company_num', 'end_registration_date', 'start_registration_date',
+      'comoany_address', 'is_expired1', 'interbank', 'company_legal_form'
+    ];
+    companyFields.forEach(field => frm.set_value(field, ''));
+    
+    // Set appropriate card type based on client type
+    if (frm.doc.client_type === "Foreigner") {
+      frm.set_value("card_type", "Passport");
+    } else if (frm.doc.client_type === "Egyptian") {
+      frm.set_value("card_type", "National ID");
+    }
+
+    // Show/hide ID fields based on card type
+    showIdentificationFields(frm);
+    
     // Get and set the central bank number based on client type
     let settingField = '';
     if (frm.doc.client_type === 'Egyptian') {
@@ -27,35 +56,12 @@ frappe.ui.form.on("Teller Invoice", {
     } else {
       frm.set_value('central_bank_number', '');
     }
+    
+    frm.refresh_fields();
+  },
 
-    if (frm.doc.client_type === "Interbank") {
-      frappe.call({
-        method: "frappe.client.get",
-        args: {
-          doctype: "Customer",
-          name: "البنك الاهلي",
-        },
-        callback: function (response) {
-          console.log("response", response.message);
-          frm.set_value("company_name", response.message.name);
-          frm.set_value(
-            "comoany_address",
-            response.message.custom_comany_address1
-          );
-          frm.set_value(
-            "start_registration_date",
-            response.message.custom_start_registration_date
-          );
-          frm.set_value(
-            "end_registration_date",
-            response.message.custom_end_registration_date
-          );
-          frm.set_value("company_legal_form", response.message.custom_legal_form);
-          frm.set_value("company_num", response.message.custom_commercial_no);
-          frm.set_value("company_activity", response.message.custom_company_activity);
-        },
-      });
-    }
+  card_type: function(frm) {
+    showIdentificationFields(frm);
   },
 
   refresh(frm) {
@@ -882,165 +888,54 @@ frappe.ui.form.on("Teller Invoice", {
     }
   },
 
-  client_type: function(frm) {
-    // Clear all individual fields
-    if(frm.doc.client_type !== "Egyptian" && frm.doc.client_type !== "Foreigner") {
-      const individualFields = [
-        'customer_name', 'national_id', 'gender', 'nationality',
-        'mobile_number', 'work_for', 'phone', 'place_of_birth',
-        'date_of_birth', 'job_title', 'address'
-      ];
-      individualFields.forEach(field => frm.set_value(field, ''));
-    }
-    
-    // Clear all company fields
-    const companyFields = [
-      'company_name', 'company_activity', 'company_commercial_no',
-      'company_num', 'end_registration_date', 'start_registration_date',
-      'comoany_address', 'is_expired1', 'interbank', 'company_legal_form'
-    ];
-    companyFields.forEach(field => frm.set_value(field, ''));
-    
-    // Get and set the central bank number based on client type
-    let settingField = '';
-    if (frm.doc.client_type === 'Egyptian') {
-      settingField = 'sales_egyptian_number';
-    } else if (frm.doc.client_type === 'Foreigner') {
-      settingField = 'sales_foreigner_number';
-    } else if (frm.doc.client_type === 'Company') {
-      settingField = 'sales_company_number';
-    } else if (frm.doc.client_type === 'Interbank') {
-      settingField = 'sales_interbank_number';
-    }
-
-    if (settingField) {
-      frappe.db.get_single_value('Teller Setting', settingField)
-        .then(value => {
-          frm.set_value('central_bank_number', value);
-        })
-        .catch(err => {
-          console.log("Error fetching central bank number:", err);
-          frm.set_value('central_bank_number', '');
-        });
-    } else {
-      frm.set_value('central_bank_number', '');
-    }
-    
-    frm.refresh_fields();
-  },
-
   client_search_id: function(frm) {
     if (!frm.doc.client_type || !frm.doc.client_search_id) return;
     
-    // Automatically search when ID is entered
     frappe.call({
-      method: 'teller.teller_customization.doctype.teller_invoice.teller_invoice.search_client_by_id',
-      args: {
-        search_id: frm.doc.client_search_id
-      },
-      callback: function(r) {
-        if (r.message) {
-          const customer = r.message;
-          
-          // Set the client reference
-          frm.set_value('client', customer.name);
-          
-          // Set fields based on customer type
-          if (customer.custom_type === 'Egyptian' || customer.custom_type === 'Foreigner') {
-            // Set individual fields
-            frm.set_value('customer_name', customer.customer_name);
-            
-            // Set card type first
-            frm.set_value('card_type', customer.custom_card_type || 'National ID');
-            
-            // Clear all ID fields first
-            frm.set_value('national_id', '');
-            frm.set_value('passport_number', '');
-            frm.set_value('military_number', '');
-            
-            // Set the appropriate ID field based on card type
-            if (customer.custom_card_type === "National ID" || !customer.custom_card_type) {
-              frm.set_value('national_id', customer.custom_national_id);
-            } else if (customer.custom_card_type === "Passport") {
-              frm.set_value('passport_number', customer.custom_passport_number);
-            } else if (customer.custom_card_type === "Military Card") {
-              frm.set_value('military_number', customer.custom_military_number);
+        method: 'teller.teller_customization.doctype.teller_invoice.teller_invoice.search_client_by_id',
+        args: {
+            search_id: frm.doc.client_search_id
+        },
+        callback: function(r) {
+            if (r.message) {
+                const customer = r.message;
+                
+                // Set the client reference
+                frm.set_value('client', customer.name);
+                
+                // Get full customer details
+                frappe.db.get_doc('Customer', customer.name)
+                    .then(customer_doc => {
+                        if (customer_doc.custom_type === 'Company' || customer_doc.custom_type === 'Interbank') {
+                            // Set company fields
+                            frm.set_value('company_name', customer_doc.customer_name);
+                            frm.set_value('company_activity', customer_doc.custom_company_activity);
+                            frm.set_value('company_commercial_no', customer_doc.custom_commercial_no);
+                            frm.set_value('start_registration_date', customer_doc.custom_start_registration_date);
+                            frm.set_value('end_registration_date', customer_doc.custom_end_registration_date);
+                            frm.set_value('comoany_address', customer_doc.custom_comany_address1);
+                            frm.set_value('is_expired1', customer_doc.custom_is_expired);
+                            frm.set_value('interbank', customer_doc.custom_interbank);
+                            frm.set_value('company_legal_form', customer_doc.custom_legal_form);
+                        } else {
+                            // Set individual fields
+                            frm.set_value('card_type', customer_doc.custom_card_type);
+                            frm.set_value('customer_name', customer_doc.customer_name);
+                            
+                            // Set the appropriate ID based on card type
+                            if (customer_doc.custom_card_type === 'Passport') {
+                                frm.set_value('passport_number', customer_doc.custom_passport_number);
+                            } else if (customer_doc.custom_card_type === 'National ID') {
+                                frm.set_value('national_id', customer_doc.custom_national_id);
+                            } else if (customer_doc.custom_card_type === 'Military Card') {
+                                frm.set_value('military_number', customer_doc.custom_military_number);
+                            }
+                        }
+                        
+                        frm.refresh_fields();
+                    });
             }
-            
-            // Set other fields
-            frm.set_value('nationality', customer.custom_nationality);
-            frm.set_value('mobile_number', customer.custom_mobile);
-            frm.set_value('work_for', customer.custom_work_for);
-            frm.set_value('phone', customer.custom_phone);
-            frm.set_value('place_of_birth', customer.custom_place_of_birth);
-            frm.set_value('date_of_birth', customer.custom_date_of_birth);
-            frm.set_value('job_title', customer.custom_job_title);
-            frm.set_value('address', customer.custom_address);
-            frm.set_value('expired', customer.custom_expired);
-          } else if (customer.custom_type === 'Company' || customer.custom_type === 'Interbank') {
-            // Set company fields
-            frm.set_value('company_name', customer.customer_name);
-            frm.set_value('company_activity', customer.custom_company_activity);
-            frm.set_value('company_commercial_no', customer.custom_commercial_no);
-            frm.set_value('start_registration_date', customer.custom_start_registration_date);
-            frm.set_value('end_registration_date', customer.custom_end_registration_date);
-            frm.set_value('comoany_address', customer.custom_comany_address1);
-            frm.set_value('is_expired1', customer.custom_is_expired);
-            frm.set_value('interbank', customer.custom_interbank);
-            frm.set_value('company_legal_form', customer.custom_legal_form);
-          }
-          
-          // Set exceed flag
-          frm.set_value('exceed', customer.exceed);
-          
-          // Refresh all fields
-          frm.refresh_fields();
-        } else {
-          // If no customer found, pre-fill the ID in the appropriate field based on category
-          if (frm.doc.client_type === 'Egyptian' || frm.doc.client_type === 'Foreigner') {
-            // Clear all ID fields first
-            frm.set_value('national_id', '');
-            frm.set_value('passport_number', '');
-            frm.set_value('military_number', '');
-            
-            // Set the appropriate ID field based on card type
-            if (frm.doc.card_type === "National ID") {
-              frm.set_value('national_id', frm.doc.client_search_id);
-            } else if (frm.doc.card_type === "Passport") {
-              frm.set_value('passport_number', frm.doc.client_search_id);
-            } else if (frm.doc.card_type === "Military Card") {
-              frm.set_value('military_number', frm.doc.client_search_id);
-            }
-            
-            // Clear other fields
-            frm.set_value('customer_name', '');
-            frm.set_value('nationality', '');
-            frm.set_value('mobile_number', '');
-            frm.set_value('work_for', '');
-            frm.set_value('phone', '');
-            frm.set_value('place_of_birth', '');
-            frm.set_value('date_of_birth', '');
-            frm.set_value('address', '');
-            frm.set_value('expired', 0);
-            
-          } else if (frm.doc.client_type === 'Company' || frm.doc.client_type === 'Interbank') {
-            frm.set_value('company_commercial_no', frm.doc.client_search_id);
-            
-            // Clear other company fields
-            frm.set_value('company_name', '');
-            frm.set_value('company_activity', '');
-            frm.set_value('start_registration_date', '');
-            frm.set_value('end_registration_date', '');
-            frm.set_value('comoany_address', '');
-            frm.set_value('is_expired1', 0);
-            frm.set_value('interbank', 0);
-            frm.set_value('company_legal_form', '');
-          }
-          
-          // Refresh all fields
-          frm.refresh_fields();
         }
-      }
     });
   },
 
@@ -1836,3 +1731,33 @@ frappe.ui.form.on('Teller Invoice Details', {
         frm.refresh_field('total');
     }
 });
+
+// Add helper function to show/hide identification fields
+function showIdentificationFields(frm) {
+    // First hide all ID fields
+    frm.set_df_property('national_id', 'hidden', 1);
+    frm.set_df_property('passport_number', 'hidden', 1);
+    frm.set_df_property('military_number', 'hidden', 1);
+
+    // Remove required flag from all ID fields
+    frm.set_df_property('national_id', 'reqd', 0);
+    frm.set_df_property('passport_number', 'reqd', 0);
+    frm.set_df_property('military_number', 'reqd', 0);
+
+    // Only show and require fields if we have a client type and card type
+    if (frm.doc.client_type && frm.doc.card_type) {
+        if (frm.doc.card_type === "National ID") {
+            frm.set_df_property('national_id', 'hidden', 0);
+            frm.set_df_property('national_id', 'reqd', 1);
+        } else if (frm.doc.card_type === "Passport") {
+            frm.set_df_property('passport_number', 'hidden', 0);
+            frm.set_df_property('passport_number', 'reqd', 1);
+        } else if (frm.doc.card_type === "Military Card") {
+            frm.set_df_property('military_number', 'hidden', 0);
+            frm.set_df_property('military_number', 'reqd', 1);
+        }
+    }
+
+    // Refresh the fields to ensure visibility changes take effect
+    frm.refresh_fields(['national_id', 'passport_number', 'military_number']);
+}
