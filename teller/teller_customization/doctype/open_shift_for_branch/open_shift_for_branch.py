@@ -36,12 +36,15 @@ def has_permission(doc, ptype="read", user=None):
     if not employee:
         return False
         
-    # For create operations, only System Manager can create shifts
-    if ptype == "create":
-        return False
+    # Check if user has role-based permissions
+    if frappe.has_permission("Open Shift for Branch", ptype=ptype, user=user):
+        # For read operations, users can access their own shifts
+        if ptype == "read":
+            return doc.current_user == employee
+        # For create/write operations, check if user has explicit permissions
+        return True
         
-    # For other operations (read/write), users can only access their own shifts
-    return doc.current_user == employee
+    return False
 
 @frappe.whitelist()
 def get_available_employees(doctype, txt, searchfield, start, page_len, filters):
@@ -63,10 +66,6 @@ def get_available_employees(doctype, txt, searchfield, start, page_len, filters)
 
 class OpenShiftforBranch(Document):
     def validate(self):
-        # Only System Manager can create shifts
-        if not frappe.session.user == "Administrator" and not "System Manager" in frappe.get_roles(frappe.session.user):
-            frappe.throw(_("Only System Manager can create shifts"))
-            
         self.validate_active_shift()
         self.validate_treasury()
         self.set_printing_roll()
