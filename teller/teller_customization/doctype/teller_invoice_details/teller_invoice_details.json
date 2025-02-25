@@ -6,16 +6,17 @@
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
+ "hide_row_index": 1,
  "field_order": [
   "account_section",
   "currency_code",
-  "account",
   "currency",
+  "account",
   "column_break_1",
   "balance_after",
   "transaction_section",
-  "quantity",
   "exchange_rate",
+  "quantity",
   "column_break_2",
   "amount",
   "egy_amount"
@@ -36,21 +37,22 @@
    "description": "Enter the currency code to fetch account and exchange rate"
   },
   {
-   "fieldname": "account",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "label": "Account",
-   "options": "Account",
-   "reqd": 1,
-   "bold": 1
-  },
-  {
    "fieldname": "currency",
    "fieldtype": "Link",
    "label": "Currency",
    "options": "Currency",
    "read_only": 1,
+   "in_list_view": 1,
    "description": "Currency based on currency code"
+  },
+  {
+   "fieldname": "account",
+   "fieldtype": "Link",
+   "label": "Account",
+   "options": "Account",
+   "reqd": 1,
+   "bold": 1,
+   "in_list_view": 0
   },
   {
    "fieldname": "column_break_1",
@@ -70,15 +72,6 @@
    "label": "Transaction Details"
   },
   {
-   "fieldname": "quantity",
-   "fieldtype": "Float",
-   "in_list_view": 1,
-   "label": "Quantity",
-   "precision": "2",
-   "reqd": 1,
-   "bold": 1
-  },
-  {
    "fieldname": "exchange_rate",
    "fieldtype": "Float",
    "in_list_view": 1,
@@ -88,6 +81,15 @@
    "bold": 1,
    "read_only": 1,
    "description": "Exchange rate fetched based on currency code"
+  },
+  {
+   "fieldname": "quantity",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Quantity",
+   "precision": "2",
+   "reqd": 1,
+   "bold": 1
   },
   {
    "fieldname": "column_break_2",

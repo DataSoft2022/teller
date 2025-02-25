@@ -69,12 +69,13 @@ frappe.ui.form.on("Teller Invoice", {
       }, 100);
     }
 
-    // Ensure total field is always visible
-    frm.toggle_display('total', true);
-    frm.set_df_property('total', 'hidden', 0);
+    // Keep total field hidden
+    frm.toggle_display('total', false);
+    frm.set_df_property('total', 'hidden', 1);
     
-    // Make the total field read-only to prevent manual editing
-    frm.set_df_property('total', 'read_only', 1);
+    // Keep total_egy field hidden
+    frm.toggle_display('total_egy', false);
+    frm.set_df_property('total_egy', 'hidden', 1);
 
     // filter clients based on client type
     frm.set_query("client", function (doc) {

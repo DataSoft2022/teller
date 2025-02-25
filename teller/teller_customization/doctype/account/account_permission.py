@@ -50,16 +50,13 @@ def get_permission_query_conditions(user=None):
             conditions.append(account_condition)
         
         # If no conditions and no required roles, return no access
-        if not conditions and not any(role in frappe.get_roles(user) for role in ["Teller", "Sales User", "Accounts User"]):
+        if not conditions and not any(role in frappe.get_roles(user) for role in ["Sales User", "Accounts User"]):
             return "1=0"
-        
-        # Return combined conditions with OR
-        if conditions:
-            return "(" + " OR ".join(conditions) + ")"
-        return ""
+            
+        return " OR ".join(conditions) if conditions else "1=0"
         
     except Exception as e:
-        frappe.log_error(f"Error in get_permission_query_conditions: {str(e)}", "Account Permission Error")
+        frappe.log_error(f"Error in permission query: {str(e)}\n{frappe.get_traceback()}")
         return "1=0"
 
 def has_permission(doc, ptype="read", user=None):

@@ -608,8 +608,8 @@
   {
    "fieldname": "section_break_icjb",
    "fieldtype": "Section Break",
-   "label": "Balance Information",
-   "collapsible": 0
+   "hidden": 1,
+   "label": "Balance Information"
   },
   {
    "fieldname": "egy_balance",
@@ -659,6 +659,7 @@
    "collapsible": 1,
    "fieldname": "section_break_erkw",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "label": "Notes"
   },
   {

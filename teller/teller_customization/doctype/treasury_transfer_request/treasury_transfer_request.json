@@ -1,0 +1,161 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2024-02-24 10:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "transfer_section",
+  "branch_from",
+  "treasury_from",
+  "treasury_from_employee",
+  "column_break_1",
+  "branch_to",
+  "treasury_to",
+  "treasury_to_employee",
+  "section_break_transfers",
+  "currency_transfers",
+  "section_break_total",
+  "total_amount",
+  "section_break_status",
+  "status",
+  "master_approval",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "transfer_section",
+   "fieldtype": "Section Break",
+   "columns": 2
+  },
+  {
+   "fieldname": "branch_from",
+   "fieldtype": "Link",
+   "label": "From Branch",
+   "options": "Branch",
+   "reqd": 1
+  },
+  {
+   "fieldname": "treasury_from",
+   "fieldtype": "Link",
+   "label": "From Treasury",
+   "options": "Teller Treasury",
+   "reqd": 1
+  },
+  {
+   "fieldname": "treasury_from_employee",
+   "fieldtype": "Data",
+   "label": "Employee Treasury",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "branch_to",
+   "fieldtype": "Link",
+   "label": "To Branch",
+   "options": "Branch",
+   "reqd": 1
+  },
+  {
+   "fieldname": "treasury_to",
+   "fieldtype": "Link",
+   "label": "To Treasury",
+   "options": "Teller Treasury",
+   "reqd": 1
+  },
+  {
+   "fieldname": "treasury_to_employee",
+   "fieldtype": "Data",
+   "label": "Employee Treasury",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_transfers",
+   "fieldtype": "Section Break",
+   "label": "Currency Transfers"
+  },
+  {
+   "fieldname": "currency_transfers",
+   "fieldtype": "Table",
+   "label": "Currency Transfers",
+   "options": "Treasury Transfer Detail",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_break_total",
+   "fieldtype": "Section Break",
+   "label": "Total",
+   "hidden": 1
+  },
+  {
+   "fieldname": "total_amount",
+   "fieldtype": "Currency",
+   "label": "Total Amount",
+   "read_only": 1,
+   "hidden": 1
+  },
+  {
+   "fieldname": "section_break_status",
+   "fieldtype": "Section Break",
+   "label": "Status",
+   "hidden": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Draft\nPending Master Approval\nApproved\nRejected",
+   "default": "Draft",
+   "allow_on_submit": 1,
+   "hidden": 1
+  },
+  {
+   "fieldname": "master_approval",
+   "fieldtype": "Data",
+   "label": "Master Approval",
+   "read_only": 1,
+   "hidden": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Treasury Transfer Request",
+   "print_hide": 1,
+   "read_only": 1,
+   "hidden": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2024-02-24 10:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Teller Customization",
+ "name": "Treasury Transfer Request",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+} 

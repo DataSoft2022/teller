@@ -10,15 +10,16 @@ def get_permission_query_conditions(user=None):
     if not user:
         user = frappe.session.user
         
+    # Only System Manager and Administrator can create/view shifts
     if user == "Administrator" or "System Manager" in frappe.get_roles(user):
         return ""
         
-    # Get the employee linked to the current user
+    # Regular employees cannot create shifts - they can only view their own
     employee = frappe.db.get_value('Employee', {'user_id': user}, 'name')
     if not employee:
         return "1=0"
         
-    # Allow users to see only their own shifts
+    # Regular users can only view shifts assigned to them
     return f"`tabOpen Shift for Branch`.current_user = '{employee}'"
 
 def has_permission(doc, ptype="read", user=None):
@@ -26,6 +27,7 @@ def has_permission(doc, ptype="read", user=None):
     if not user:
         user = frappe.session.user
         
+    # System Manager and Administrator have full access
     if user == "Administrator" or "System Manager" in frappe.get_roles(user):
         return True
         
@@ -34,7 +36,11 @@ def has_permission(doc, ptype="read", user=None):
     if not employee:
         return False
         
-    # Allow access only to own shifts
+    # For create operations, only System Manager can create shifts
+    if ptype == "create":
+        return False
+        
+    # For other operations (read/write), users can only access their own shifts
     return doc.current_user == employee
 
 @frappe.whitelist()
@@ -57,6 +63,10 @@ def get_available_employees(doctype, txt, searchfield, start, page_len, filters)
 
 class OpenShiftforBranch(Document):
     def validate(self):
+        # Only System Manager can create shifts
+        if not frappe.session.user == "Administrator" and not "System Manager" in frappe.get_roles(frappe.session.user):
+            frappe.throw(_("Only System Manager can create shifts"))
+            
         self.validate_active_shift()
         self.validate_treasury()
         self.set_printing_roll()

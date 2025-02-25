@@ -42,7 +42,8 @@
    "fieldname": "from_account_balance",
    "fieldtype": "Currency",
    "label": "From Balance",
-   "read_only": 1
+   "read_only": 1,
+   "options": "currency_display"
   },
   {
    "fieldname": "column_break_1",
@@ -60,7 +61,8 @@
    "fieldname": "to_account_balance",
    "fieldtype": "Currency",
    "label": "To Balance",
-   "read_only": 1
+   "read_only": 1,
+   "options": "currency_display"
   },
   {
    "fieldname": "section_break_1",
@@ -71,7 +73,8 @@
    "fieldtype": "Currency",
    "in_list_view": 1,
    "label": "Amount",
-   "reqd": 1
+   "reqd": 1,
+   "options": "currency_display"
   }
  ],
  "istable": 1,

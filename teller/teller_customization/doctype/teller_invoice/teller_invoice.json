@@ -267,11 +267,13 @@
    "collapsible": 1,
    "fieldname": "section_break_hqmb",
    "fieldtype": "Section Break",
-   "label": "Notes"
+   "label": "Notes",
+   "hidden": 1
   },
   {
    "fieldname": "notes",
    "fieldtype": "Small Text",
+   "hidden": 1,
    "label": "Notes"
   },
   {
@@ -351,7 +353,8 @@
    "fieldname": "total",
    "fieldtype": "Float",
    "label": "Total Amount In EGY",
-   "read_only": 1
+   "read_only": 1,
+   "hidden": 1
   },
   {
    "fieldname": "column_break_nvqv",
@@ -362,7 +365,7 @@
    "fieldtype": "Currency",
    "label": "EGY Balance",
    "read_only": 1,
-   "allow_on_submit": 1
+   "hidden": 1
   },
   {
    "fetch_from": "branch_no.custom_cost_center",
@@ -727,15 +730,12 @@
    "label": "Company Num"
   },
   {
-   "allow_on_submit": 1,
-   "default": "0",
    "fieldname": "is_returned",
-   "fieldtype": "Check",
-   "in_list_view": 1,
-   "in_preview": 1,
-   "in_standard_filter": 1,
    "label": "Is Returned",
-   "read_only": 1
+   "fieldtype": "Check",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
   },
   {
    "depends_on": "eval:doc.is_returned ===1",
@@ -774,7 +774,8 @@
    "fieldname": "total_egy",
    "fieldtype": "Currency",
    "label": "Total (EGY)",
-   "read_only": 1
+   "read_only": 1,
+   "hidden": 1
   }
  ],
  "index_web_pages_for_search": 1,
