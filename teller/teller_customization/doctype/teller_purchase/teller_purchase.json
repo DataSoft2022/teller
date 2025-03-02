@@ -53,7 +53,6 @@
   "buyer_military_number",
   "buyer_place_of_birth",
   "buyer_date_of_birth",
-  "buyer_mobile_number",
   "foreigners_section",
   "buyer_gender_copy",
   "buyer_name_copy",
@@ -408,12 +407,6 @@
    "fieldname": "buyer_date_of_birth",
    "fieldtype": "Date",
    "label": "Date of Birth"
-  },
-  {
-   "depends_on": "eval:(doc.category_of_buyer==\"Egyptian\"||doc.category_of_buyer==\"Foreigner\")&&doc.exceed==1",
-   "fieldname": "buyer_mobile_number",
-   "fieldtype": "Data",
-   "label": "Mobile Number"
   },
   {
    "collapsible": 1,

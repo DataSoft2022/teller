@@ -114,17 +114,26 @@ def get_permission_query_conditions_for_account(user=None):
     if frappe.session.user == "Administrator" or "System Manager" in frappe.get_roles(user):
         return ""
         
-    # Get the EGY account assigned to the user
-    egy_account = frappe.db.get_value("User", user, "egy_account")
+    # Get the user's treasury permission
+    treasury_permission = frappe.db.get_value(
+        "User Permission",
+        {"user": user, "allow": "Teller Treasury"},
+        "for_value"
+    )
     
-    # Get accounts from currency codes assigned to user
-    currency_accounts = frappe.db.sql("""
-        SELECT account FROM `tabCurrency Code`
-        WHERE user = %s
-    """, user, as_dict=1)
+    if not treasury_permission:
+        return "1=0"
+        
+    # Get treasury's EGP account
+    treasury = frappe.get_doc("Teller Treasury", treasury_permission)
+    if not treasury:
+        return "1=0"
     
-    account_list = [egy_account] if egy_account else []
-    account_list.extend([d.account for d in currency_accounts if d.account])
+    account_list = [treasury.egy_account] if treasury.egy_account else []
+    account_list.extend(frappe.get_all("Account", 
+        filters={"custom_teller_treasury": treasury_permission},
+        pluck="name"
+    ))
     
     if not account_list:
         return "1=0"
@@ -139,9 +148,19 @@ def has_permission_for_account(doc, ptype, user):
     if user == "Administrator" or "System Manager" in frappe.get_roles(user):
         return True
         
-    # Check if account is user's EGY account
-    egy_account = frappe.db.get_value("User", user, "egy_account")
-    if egy_account and doc.name == egy_account:
+    # Get user's treasury permission
+    treasury_permission = frappe.db.get_value(
+        "User Permission",
+        {"user": user, "allow": "Teller Treasury"},
+        "for_value"
+    )
+    
+    if not treasury_permission:
+        return False
+        
+    # Get treasury's EGP account
+    treasury = frappe.get_doc("Teller Treasury", treasury_permission)
+    if treasury and doc.name == treasury.egy_account:
         return True
         
     # Check if account is in user's currency codes
@@ -187,6 +206,14 @@ class TellerInvoice(Document):
             if not active_shift:
                 frappe.throw(_("No active shift found"))
             
+            # Get treasury details
+            treasury = frappe.get_doc("Teller Treasury", active_shift.get('treasury_permission'))
+            if not treasury:
+                frappe.throw(_("No treasury found"))
+                
+            # Set EGP account from treasury
+            self.egy = treasury.egy_account
+            
             # Set basic fields
             self.treasury_code = active_shift.get('treasury_permission')
             self.shift = active_shift.get('name')
@@ -222,6 +249,42 @@ class TellerInvoice(Document):
     def validate(self):
         """Validate document"""
         try:
+            # Remove completely empty rows from teller_invoice_details
+            if self.teller_invoice_details:
+                rows_to_keep = []
+                for i, d in enumerate(self.teller_invoice_details):
+                    # Check if row has any meaningful data
+                    has_data = any([
+                        bool(d.currency_code and d.currency_code.strip()),
+                        bool(d.account and d.account.strip()),
+                        bool(d.quantity and float(d.quantity or 0) != 0),
+                        bool(d.exchange_rate and float(d.exchange_rate or 0) != 0)
+                    ])
+                    
+                    # If row has any data, validate all required fields
+                    if has_data:
+                        missing_fields = []
+                        if not d.currency_code:
+                            missing_fields.append("Currency Code")
+                        if not d.account:
+                            missing_fields.append("Account")
+                        if not d.exchange_rate:
+                            missing_fields.append("Exchange Rate")
+                        if not d.quantity:
+                            missing_fields.append("Quantity")
+                            
+                        if missing_fields:
+                            frappe.throw(_(
+                                "Row #{0}: Please fill in required fields: {1}"
+                            ).format(i + 1, ", ".join(missing_fields)))
+                            
+                        rows_to_keep.append(d)
+                    elif i < len(self.teller_invoice_details) - 1:
+                        # Keep non-empty rows that aren't the last row
+                        rows_to_keep.append(d)
+                
+                self.teller_invoice_details = rows_to_keep
+            
             # First validate user permissions for accounts
             self.has_account_permissions()
             
@@ -233,20 +296,31 @@ class TellerInvoice(Document):
             
             # Customer validation
             if not self.client:
-                frappe.throw(_("Customer is required"))
+                # Check if we have customer info to create a new customer
+                if (self.client_type in ["Egyptian", "Foreigner"] and 
+                    ((self.card_type == "National ID" and self.national_id) or
+                     (self.card_type == "Passport" and self.passport_number) or
+                     (self.card_type == "Military Card" and self.military_number))) or \
+                   (self.client_type in ["Company", "Interbank"] and self.company_name):
+                    # We have enough info to create a customer, so don't throw error
+                    pass
+                else:
+                    frappe.throw(_("Customer is required"))
                 
-            # Validate customer exists and is active
-            customer = frappe.db.get_value("Customer", self.client, 
-                ["disabled", "custom_is_exceed"], as_dict=1)
-                
-            if not customer:
-                frappe.throw(_("Selected customer {0} does not exist").format(self.client))
-                
-            if customer.disabled:
-                frappe.throw(_("Selected customer {0} is disabled").format(self.client))
-                
-            if customer.custom_is_exceed and not self.exceed:
-                frappe.throw(_("Customer {0} has exceeded their limit. Please check the 'Exceed' checkbox to proceed.").format(self.client))
+            # Only validate existing customer if we have a client specified
+            if self.client:
+                # Validate customer exists and is active
+                customer = frappe.db.get_value("Customer", self.client, 
+                    ["disabled", "custom_is_exceed"], as_dict=1)
+                    
+                if not customer:
+                    frappe.throw(_("Selected customer {0} does not exist").format(self.client))
+                    
+                if customer.disabled:
+                    frappe.throw(_("Selected customer {0} is disabled").format(self.client))
+                    
+                if customer.custom_is_exceed and not self.exceed:
+                    frappe.throw(_("Customer {0} has exceeded their limit. Please check the 'Exceed' checkbox to proceed.").format(self.client))
             
             # Basic validations
             if not self.treasury_code:
@@ -907,34 +981,22 @@ class TellerInvoice(Document):
         if not active_shift:
             frappe.throw(_("No active shift found"))
         
-        # Get user's permitted treasury
-        treasury_permission = frappe.db.get_value('User Permission', 
-            {'user': user, 'allow': 'Teller Treasury'}, 
-            'for_value'
-        )
-        
-        if not treasury_permission:
-            frappe.throw(_("No treasury permission found for user"))
-        
-        if treasury_permission != active_shift.treasury_permission:
-            frappe.throw(_("Treasury permission mismatch with active shift"))
+        # Get treasury details
+        treasury = frappe.get_doc("Teller Treasury", active_shift.treasury_permission)
+        if not treasury:
+            frappe.throw(_("No treasury found"))
         
         # Check permissions for each account in invoice details
         for row in self.get("teller_invoice_details", []):
             if row.account:
                 account = frappe.get_doc("Account", row.account)
-                if account.custom_teller_treasury != treasury_permission:
+                if account.custom_teller_treasury != treasury.name:
                     frappe.throw(_("Account {0} is not linked to your treasury").format(row.account))
         
-        # Check EGY account permission if set
+        # Check EGY account permission
         if self.egy:
-            # First check if it's the user's egy_account
-            user_egy_account = frappe.db.get_value("User", user, "egy_account")
-            if self.egy != user_egy_account:
-                # Only check treasury permission if it's not the user's egy_account
-                egy_account = frappe.get_doc("Account", self.egy)
-                if egy_account.custom_teller_treasury != treasury_permission:
-                    frappe.throw(_("EGY Account {0} is not linked to your treasury").format(self.egy))
+            if self.egy != treasury.egy_account:
+                frappe.throw(_("EGY Account must be the one assigned to your treasury"))
         
         return True
 

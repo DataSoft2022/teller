@@ -47,7 +47,35 @@ class TellerPurchase(Document):
             if not self.teller:
                 self.teller = frappe.session.user
                 
-            # Get branch and shift info
+            # Get employee linked to current user
+            employee = frappe.db.get_value('Employee', {'user_id': self.teller}, 'name')
+            if not employee:
+                frappe.throw(_("No employee found for user {0}").format(self.teller))
+                
+            # Get active shift
+            active_shift = frappe.db.get_value(
+                "Open Shift for Branch",
+                {
+                    "current_user": employee,
+                    "shift_status": "Active",
+                    "docstatus": 1
+                },
+                ["name", "treasury_permission"],
+                as_dict=1
+            )
+            
+            if not active_shift:
+                frappe.throw(_("No active shift found"))
+                
+            # Get treasury details
+            treasury = frappe.get_doc("Teller Treasury", active_shift.get('treasury_permission'))
+            if not treasury:
+                frappe.throw(_("No treasury found"))
+                
+            # Set EGP account from treasury
+            self.egy = treasury.egy_account
+                
+            # Set branch and shift info
             self.set_branch_and_shift()
             
             # Set treasury details
@@ -55,7 +83,7 @@ class TellerPurchase(Document):
             
             # Set movement number
             self.set_move_number()
-            
+                
         except Exception as e:
             frappe.log_error(
                 message=f"Error in before_insert: {str(e)}\nTraceback: {frappe.get_traceback()}",
@@ -93,8 +121,12 @@ class TellerPurchase(Document):
                 frappe.throw(_("Buyer {0} has exceeded their limit. Please check the 'Exceed' checkbox to proceed.").format(self.buyer))
             
             # Validate mobile number is provided when exceed is checked
-            if self.exceed and not self.buyer_mobile_number:
-                frappe.throw(_("Mobile number is mandatory when exceeding the limit"))
+            if self.exceed and not self.buyer_name:
+                frappe.throw(_("Buyer Name is required"))
+            if self.exceed and not self.buyer_nationality:
+                frappe.throw(_("Buyer Nationality is required"))
+            if self.exceed and not self.buyer_phone:
+                frappe.throw(_("Buyer Phone is required"))
             
             # Basic validations
             if not self.treasury_code:
@@ -125,6 +157,11 @@ class TellerPurchase(Document):
     def before_save(self):
         """Handle operations before saving"""
         try:
+            # Remove empty rows from purchase_transactions
+            if self.purchase_transactions:
+                self.purchase_transactions = [row for row in self.purchase_transactions 
+                    if row.currency_code or row.account or row.quantity or row.exchange_rate or row.amount or row.egy_amount]
+            
             # Only set treasury details for new documents
             if self.is_new():
                 self.set_treasury_details()
@@ -226,6 +263,10 @@ class TellerPurchase(Document):
         """Validate currency transactions"""
         try:
             for row in self.purchase_transactions:
+                # Skip empty rows (if no currency_code or quantity is entered)
+                if not row.currency_code and not row.quantity:
+                    continue
+                    
                 # Validate required fields
                 if not row.account:
                     frappe.throw(_("Account is required for all transactions"))
@@ -486,7 +527,6 @@ class TellerPurchase(Document):
             "buyer_passport_number": self.buyer_passport_number if self.buyer_card_type == "Passport" else None,
             "buyer_military_number": self.buyer_military_number if self.buyer_card_type == "Military Card" else None,
             "buyer_phone": self.buyer_phone,
-            "buyer_mobile_number": self.buyer_mobile_number,
             "buyer_work_for": self.buyer_work_for,
             "buyer_address": self.buyer_address,
             "buyer_nationality": self.buyer_nationality,
@@ -562,13 +602,12 @@ class TellerPurchase(Document):
             if not self.teller:
                 self.teller = frappe.session.user
             
-            # Set EGY account from user if not already set
+            # Set EGY account from treasury
             if not self.egy:
-                egy_account = frappe.db.get_value('User', frappe.session.user, 'egy_account')
-                if egy_account:
-                    self.egy = egy_account
+                if treasury.egy_account:
+                    self.egy = treasury.egy_account
                 else:
-                    frappe.throw(_("EGY Account not set for user {0}. Please set it in User settings.").format(frappe.session.user))
+                    frappe.throw(_("EGY Account not set for treasury {0}").format(treasury.name))
             
         except Exception as e:
             frappe.log_error(
@@ -639,66 +678,46 @@ class TellerPurchase(Document):
 
     def has_account_permissions(self):
         """Check if user has permissions for all accounts in the document"""
-        try:
-            user = frappe.session.user
-            
-            # Get the employee linked to the current user
-            employee = frappe.db.get_value('Employee', {'user_id': user}, 'name')
-            if not employee:
-                frappe.throw(_("No employee found for user {0}").format(user))
-            
-            # Get active shift for current employee
-            active_shift = frappe.db.get_value(
-                "Open Shift for Branch",
-                {
-                    "current_user": employee,
-                    "shift_status": "Active",
-                    "docstatus": 1
-                },
-                ["name", "treasury_permission"],
-                as_dict=1
-            )
-            
-            if not active_shift:
-                frappe.throw(_("No active shift found"))
-            
-            # Get user's permitted treasury
-            treasury_permission = frappe.db.get_value('User Permission', 
-                {'user': user, 'allow': 'Teller Treasury'}, 
-                'for_value'
-            )
-            
-            if not treasury_permission:
-                frappe.throw(_("No treasury permission found for user"))
-            
-            if treasury_permission != active_shift.get('treasury_permission'):
-                frappe.throw(_("Treasury permission mismatch with active shift"))
-            
-            # Check permissions for each account in purchase transactions
-            for row in self.get("purchase_transactions", []):
-                if row.account:
-                    account = frappe.get_doc("Account", row.account)
-                    if account.custom_teller_treasury != treasury_permission:
-                        frappe.throw(_("Account {0} is not linked to your treasury").format(row.account))
-            
-            # Check EGY account permission if set
-            if self.egy:
-                # First check if it's the user's egy_account
-                user_egy_account = frappe.db.get_value("User", user, "egy_account")
-                if self.egy != user_egy_account:
-                    # Only check treasury permission if it's not the user's egy_account
-                    egy_account = frappe.get_doc("Account", self.egy)
-                    if egy_account.custom_teller_treasury != treasury_permission:
-                        frappe.throw(_("EGY Account {0} is not linked to your treasury").format(self.egy))
-            
-            return True
-            
-        except Exception as e:
-            frappe.log_error(
-                message=f"Error checking account permissions: {str(e)}\nTraceback: {frappe.get_traceback()}",
-                title="Account Permission Error"
-            )
-            raise
+        user = frappe.session.user
+        
+        # Get the employee linked to the current user
+        employee = frappe.db.get_value('Employee', {'user_id': user}, 'name')
+        if not employee:
+            frappe.throw(_("No employee found for user {0}").format(user))
+        
+        # Get active shift for current employee
+        active_shift = frappe.db.get_value(
+            "Open Shift for Branch",
+            {
+                "current_user": employee,
+                "shift_status": "Active",
+                "docstatus": 1
+            },
+            ["name", "treasury_permission"],
+            as_dict=1
+        )
+        
+        if not active_shift:
+            frappe.throw(_("No active shift found"))
+        
+        # Get treasury details
+        treasury = frappe.get_doc("Teller Treasury", active_shift.treasury_permission)
+        if not treasury:
+            frappe.throw(_("No treasury found"))
+        
+        # Check permissions for each account in purchase transactions
+        for row in self.get("purchase_transactions", []):
+            if row.account:
+                account = frappe.get_doc("Account", row.account)
+                if account.custom_teller_treasury != treasury.name:
+                    frappe.throw(_("Account {0} is not linked to your treasury").format(row.account))
+        
+        # Check EGY account permission
+        if self.egy:
+            if self.egy != treasury.egy_account:
+                frappe.throw(_("EGY Account must be the one assigned to your treasury"))
+        
+        return True
 
     def validate_active_shift(self):
         """Validate user has active shift"""
@@ -1112,7 +1131,7 @@ def get_permission_query_conditions(user=None):
                 "shift_status": "Active",
                 "docstatus": 1
             },
-            ["name", "teller_treasury"],
+            ["name", "treasury_permission"],
             as_dict=1
         )
         
@@ -1120,7 +1139,7 @@ def get_permission_query_conditions(user=None):
             return "1=0"
             
         # Return condition to filter by treasury_code
-        return f"`tabTeller Purchase`.treasury_code = '{active_shift.get('teller_treasury')}'"
+        return f"`tabTeller Purchase`.treasury_code = '{active_shift.get('treasury_permission')}'"
         
     except Exception as e:
         frappe.log_error(f"Error in permission query: {str(e)}\n{frappe.get_traceback()}")
@@ -1152,7 +1171,7 @@ def has_permission(doc, ptype="read", user=None):
                 "shift_status": "Active",
                 "docstatus": 1
             },
-            ["name", "teller_treasury"],
+            ["name", "treasury_permission"],
             as_dict=1
         )
         
@@ -1160,7 +1179,7 @@ def has_permission(doc, ptype="read", user=None):
             return False
             
         # Allow access if treasury matches
-        return doc.treasury_code == active_shift.get('teller_treasury')
+        return doc.treasury_code == active_shift.get('treasury_permission')
         
     except Exception as e:
         frappe.log_error(f"Error checking permissions: {str(e)}\n{frappe.get_traceback()}")
@@ -1168,14 +1187,6 @@ def has_permission(doc, ptype="read", user=None):
 
 @frappe.whitelist()
 def search_buyer_by_id(search_id):
-    """
-    Search for a customer by various identifiers:
-    - National ID for Egyptian customers
-    - Commercial Number for Companies
-    - Passport Number for Foreigners
-    - Military Number for Military personnel
-    Returns customer details if found
-    """
     if not search_id:
         return None
         
@@ -1185,14 +1196,13 @@ def search_buyer_by_id(search_id):
     # Define fields to fetch
     fields = [
         "name", "customer_name", "custom_type", "custom_is_exceed",
-        "custom_phone", "custom_mobile_number", "custom_work_for",
-        "custom_address", "custom_national_id", "custom_passport_number",
-        "custom_military_number", "custom_nationality", "custom_issue_date",
-        "custom_expired", "custom_place_of_birth", "custom_date_of_birth",
-        "custom_job_title", "custom_card_type", "custom_commercial_no",
-        "custom_start_registration_date", "custom_end_registration_date",
-        "custom_legal_form", "custom_company_activity", "custom_is_expired",
-        "custom_interbank"
+        "custom_phone", "custom_work_for", "custom_address",
+        "custom_national_id", "custom_passport_number", "custom_military_number",
+        "custom_nationality", "custom_issue_date", "custom_expired",
+        "custom_place_of_birth", "custom_date_of_birth", "custom_job_title",
+        "custom_card_type", "custom_commercial_no", "custom_start_registration_date",
+        "custom_end_registration_date", "custom_legal_form", "custom_company_activity",
+        "custom_is_expired", "custom_interbank"
     ]
     
     # Try to find by National ID (Egyptian)
@@ -1225,44 +1235,42 @@ def search_buyer_by_id(search_id):
     if not customer:
         return None
         
-    # Prepare response based on customer type
+    # Base response with required fields
     response = {
         "buyer": customer.name,
-        "buyer_name": customer.customer_name,
+        "buyer_name": customer.customer_name or "",
         "category_of_buyer": customer.custom_type,
-        "exceed": customer.custom_is_exceed,
-        "buyer_phone": customer.custom_phone,
-        "buyer_mobile_number": customer.custom_mobile_number,
-        "buyer_work_for": customer.custom_work_for,
-        "buyer_address": customer.custom_address,
-        # Always include all ID fields, they will be populated based on the match
-        "buyer_national_id": customer.custom_national_id,
-        "buyer_passport_number": customer.custom_passport_number,
-        "buyer_military_number": customer.custom_military_number
+        "exceed": customer.custom_is_exceed or 0
     }
     
-    # Add type-specific fields
+    # Add individual fields only if they exist
     if customer.custom_type in ["Egyptian", "Foreigner"]:
         response.update({
-            "buyer_card_type": customer.custom_card_type,
-            "buyer_nationality": customer.custom_nationality,
-            "buyer_issue_date": customer.custom_issue_date,
-            "buyer_expired": customer.custom_expired,
-            "buyer_place_of_birth": customer.custom_place_of_birth,
-            "buyer_date_of_birth": customer.custom_date_of_birth,
-            "buyer_job_title": customer.custom_job_title
+            "buyer_card_type": customer.custom_card_type or "National ID",
+            "buyer_nationality": customer.custom_nationality or "",
+            "buyer_phone": customer.custom_phone or "",
+            "buyer_work_for": customer.custom_work_for or "",
+            "buyer_address": customer.custom_address or "",
+            "buyer_place_of_birth": customer.custom_place_of_birth or "",
+            "buyer_date_of_birth": customer.custom_date_of_birth or "",
+            "buyer_job_title": customer.custom_job_title or "",
+            "buyer_issue_date": customer.custom_issue_date or "",
+            "buyer_expired": customer.custom_expired or 0,
+            "buyer_national_id": customer.custom_national_id or "",
+            "buyer_passport_number": customer.custom_passport_number or "",
+            "buyer_military_number": customer.custom_military_number or ""
         })
     elif customer.custom_type == "Company":
         response.update({
-            "buyer_company_name": customer.customer_name,
-            "buyer_company_commercial_no": customer.custom_commercial_no,
-            "buyer_company_start_date": customer.custom_start_registration_date,
-            "buyer_company_end_date": customer.custom_end_registration_date,
-            "buyer_company_address": customer.custom_address,
-            "buyer_company_legal_form": customer.custom_legal_form,
-            "buyer_company_activity": customer.custom_company_activity,
-            "is_expired1": customer.custom_is_expired,
-            "interbank": customer.custom_interbank
+            "buyer_company_name": customer.customer_name or "",
+            "buyer_company_commercial_no": customer.custom_commercial_no or "",
+            "buyer_company_start_date": customer.custom_start_registration_date or "",
+            "buyer_company_end_date": customer.custom_end_registration_date or "",
+            "buyer_company_address": customer.custom_address or "",
+            "buyer_company_legal_form": customer.custom_legal_form or "",
+            "buyer_company_activity": customer.custom_company_activity or "",
+            "is_expired1": customer.custom_is_expired or 0,
+            "interbank": customer.custom_interbank or 0
         })
     
     return response

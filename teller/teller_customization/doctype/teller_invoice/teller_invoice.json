@@ -242,14 +242,16 @@
    "fieldname": "start_registration_date",
    "fieldtype": "Date",
    "label": "Start Registration Date",
-   "mandatory_depends_on": "eval: (doc.client_type === \"Company\" || doc.client_type === \"Interbank\")"
+   "mandatory_depends_on": "eval: (doc.client_type === \"Company\" || doc.client_type === \"Interbank\")",
+   "read_only_depends_on": "eval:doc.docstatus === 1"
   },
   {
    "depends_on": "eval: (doc.client_type === \"Company\" || doc.client_type === \"Interbank\")",
    "fieldname": "end_registration_date",
    "fieldtype": "Date",
    "label": "End Registration Date",
-   "mandatory_depends_on": "eval: (doc.client_type === \"Company\" || doc.client_type === \"Interbank\")"
+   "mandatory_depends_on": "eval: (doc.client_type === \"Company\" || doc.client_type === \"Interbank\")",
+   "read_only_depends_on": "eval:doc.docstatus === 1"
   },
   {
    "fieldname": "column_break_nqxf",
@@ -489,10 +491,11 @@
    "label": "Issue Date"
   },
   {
-   "default": "0",
    "fieldname": "expired",
    "fieldtype": "Check",
-   "label": "Expired"
+   "label": "Expired",
+   "hidden": 1,
+   "depends_on": "eval:doc.client_type=='Egyptian' || doc.client_type=='Foreigner'"
   },
   {
    "depends_on": "eval:(doc.client_type==\"Egyptian\"||doc.client_type==\"Foreigner\")&&doc.exceed==1",
@@ -564,20 +567,18 @@
    "mandatory_depends_on": "eval: (doc.client_type === \"Company\" || doc.client_type === \"Interbank\")"
   },
   {
-   "default": "0",
    "fieldname": "is_expired1",
    "fieldtype": "Check",
    "label": "Is Expired",
-   "read_only": 1
+   "hidden": 1,
+   "depends_on": "eval:doc.client_type=='Company' || doc.client_type=='Interbank'"
   },
   {
-   "default": "14 digit",
    "depends_on": "eval:doc.card_type==\"National ID\"",
    "fieldname": "national_id",
    "fieldtype": "Data",
    "label": "National ID",
-   "mandatory_depends_on": "eval: (doc.client_type === \"Egyptian\" || doc.client_type === \"Foreigner\") &&(doc.card_type==\"National ID\") ",
-   "read_only": 1
+   "mandatory_depends_on": "eval: (doc.client_type === \"Egyptian\" || doc.client_type === \"Foreigner\") &&(doc.card_type==\"National ID\") "
   },
   {
    "depends_on": "eval:doc.card_type==\"Passport\"",

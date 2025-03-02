@@ -1,6 +1,3 @@
-import frappe
-from frappe import _
-
 def get_permission_query_conditions(user=None):
     """Return SQL conditions with user permissions."""
     if not user:
@@ -33,10 +30,10 @@ def get_permission_query_conditions(user=None):
     if not account_list:
         return "1=0"
         
-    return f"""`tabAccount`.name in ({','.join(['%s']*len(account_list))})""" % tuple(account_list)
+    return f"""`tabAccount Permission`.account in ({','.join(['%s']*len(account_list))})""" % tuple(account_list)
 
 def has_permission(doc, ptype, user):
-    """Permission handler for Account doctype"""
+    """Permission handler for Account Permission doctype"""
     if not user:
         user = frappe.session.user
         
@@ -55,50 +52,11 @@ def has_permission(doc, ptype, user):
         
     # Get treasury's EGP account
     treasury = frappe.get_doc("Teller Treasury", treasury_permission)
-    if treasury and doc.name == treasury.egy_account:
+    if treasury and doc.account == treasury.egy_account:
         return True
         
     # Check if account is in user's currency codes
     return frappe.db.exists("Currency Code", {
         "user": user,
-        "account": doc.name
-    })
-
-def has_permission(doc, ptype="read", user=None):
-    """Permission handler for Account"""
-    try:
-        if not user:
-            user = frappe.session.user
-            
-        if "System Manager" in frappe.get_roles(user):
-            return True
-            
-        # Check if this is the user's egy_account
-        egy_account = frappe.db.get_value('User', user, 'egy_account')
-        if egy_account and doc.name == egy_account:
-            return True
-            
-        # Check if account belongs to a treasury the user has permission for
-        if doc.custom_teller_treasury:
-            has_treasury_permission = frappe.db.exists("User Permission", {
-                "user": user,
-                "allow": "Teller Treasury",
-                "for_value": doc.custom_teller_treasury
-            })
-            if has_treasury_permission:
-                return True
-        
-        # Check direct account permission
-        has_account_permission = frappe.db.exists("User Permission", {
-            "user": user,
-            "allow": "Account",
-            "for_value": doc.name
-        })
-        if has_account_permission:
-            return True
-            
-        return False
-        
-    except Exception as e:
-        frappe.log_error(f"Error in has_permission for doc {doc.name}: {str(e)}", "Account Permission Error")
-        return False 
+        "account": doc.account
+    }) 

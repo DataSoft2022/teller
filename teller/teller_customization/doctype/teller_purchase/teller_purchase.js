@@ -99,106 +99,113 @@ frappe.ui.form.on("Teller Purchase", {
             search_id: frm.doc.buyer_search_id
         },
         callback: function(r) {
-            if (r.message) {
-                const customer = r.message;
-                
-                // Set the buyer reference
-                frm.set_value('buyer', customer.buyer);
-                
-                // Set fields based on customer type
-                if (customer.category_of_buyer === 'Egyptian' || customer.category_of_buyer === 'Foreigner') {
-                    // Set individual fields
-                    frm.set_value('buyer_name', customer.buyer_name);
-                    frm.set_value('buyer_card_type', customer.buyer_card_type);
+            try {
+                if (r.message) {
+                    const customer = r.message;
                     
-                    // Set the appropriate ID field based on card type
-                    if (customer.buyer_card_type === "National ID") {
-                        frm.set_value('buyer_national_id', customer.buyer_national_id);
-                    } else if (customer.buyer_card_type === "Passport") {
-                        frm.set_value('buyer_passport_number', customer.buyer_passport_number);
-                    } else if (customer.buyer_card_type === "Military Card") {
-                        frm.set_value('buyer_military_number', customer.buyer_military_number);
+                    // Set the buyer reference
+                    if (customer.buyer) {
+                        frm.set_value('buyer', customer.buyer);
                     }
                     
-                    // Set other fields
-                    frm.set_value('buyer_nationality', customer.buyer_nationality);
-                    frm.set_value('buyer_mobile_number', customer.buyer_mobile_number);
-                    frm.set_value('buyer_work_for', customer.buyer_work_for);
-                    frm.set_value('buyer_phone', customer.buyer_phone);
-                    frm.set_value('buyer_place_of_birth', customer.buyer_place_of_birth);
-                    frm.set_value('buyer_date_of_birth', customer.buyer_date_of_birth);
-                    frm.set_value('buyer_job_title', customer.buyer_job_title);
-                    frm.set_value('buyer_address', customer.buyer_address);
-                    frm.set_value('buyer_expired', customer.buyer_expired);
-                } else if (customer.category_of_buyer === 'Company' || customer.category_of_buyer === 'Interbank') {
-                    // Set company fields
-                    frm.set_value('buyer_company_name', customer.buyer_company_name);
-                    frm.set_value('buyer_company_activity', customer.buyer_company_activity);
-                    frm.set_value('buyer_company_commercial_no', customer.buyer_company_commercial_no);
-                    frm.set_value('buyer_company_start_date', customer.buyer_company_start_date);
-                    frm.set_value('buyer_company_end_date', customer.buyer_company_end_date);
-                    frm.set_value('buyer_company_address', customer.buyer_company_address);
-                    frm.set_value('is_expired1', customer.is_expired1);
-                    frm.set_value('interbank', customer.interbank);
-                    frm.set_value('buyer_company_legal_form', customer.buyer_company_legal_form);
-                }
-                
-                // Set exceed flag
-                frm.set_value('exceed', customer.exceed);
-                
-                // Refresh all fields
-                frm.refresh_fields();
-                
-                // Show success message
-                frappe.show_alert({
-                    message: __('Customer found and details populated'),
-                    indicator: 'green'
-                });
-            } else {
-                // If no customer found, clear all fields except the search ID
-                if (frm.doc.category_of_buyer === 'Egyptian' || frm.doc.category_of_buyer === 'Foreigner') {
-                    const fields_to_clear = [
-                        'buyer_name', 'buyer_nationality', 'buyer_mobile_number',
-                        'buyer_work_for', 'buyer_phone', 'buyer_place_of_birth',
-                        'buyer_date_of_birth', 'buyer_job_title', 'buyer_address',
-                        'buyer_expired', 'buyer'
-                    ];
-                    
-                    fields_to_clear.forEach(field => frm.set_value(field, ''));
-                    
-                    // Set the search ID to the appropriate field based on card type
-                    if (frm.doc.buyer_card_type === "National ID") {
-                        frm.set_value('buyer_national_id', frm.doc.buyer_search_id);
-                        frm.set_value('buyer_passport_number', '');
-                        frm.set_value('buyer_military_number', '');
-                    } else if (frm.doc.buyer_card_type === "Passport") {
-                        frm.set_value('buyer_passport_number', frm.doc.buyer_search_id);
-                        frm.set_value('buyer_national_id', '');
-                        frm.set_value('buyer_military_number', '');
-                    } else if (frm.doc.buyer_card_type === "Military Card") {
-                        frm.set_value('buyer_military_number', frm.doc.buyer_search_id);
-                        frm.set_value('buyer_national_id', '');
-                        frm.set_value('buyer_passport_number', '');
+                    // Set fields based on customer type
+                    if (customer.category_of_buyer === 'Egyptian' || customer.category_of_buyer === 'Foreigner') {
+                        // Set individual fields one by one, checking if they exist
+                        const fields = [
+                            'buyer_name', 'buyer_card_type', 'buyer_nationality',
+                            'buyer_work_for', 'buyer_phone', 'buyer_place_of_birth',
+                            'buyer_date_of_birth', 'buyer_job_title', 'buyer_address',
+                            'buyer_expired'
+                        ];
+                        
+                        fields.forEach(field => {
+                            if (customer[field] !== undefined) {
+                                frm.set_value(field, customer[field]);
+                            }
+                        });
+                        
+                        // Set the appropriate ID field based on card type
+                        if (customer.buyer_card_type === "National ID" && customer.buyer_national_id) {
+                            frm.set_value('buyer_national_id', customer.buyer_national_id);
+                        } else if (customer.buyer_card_type === "Passport" && customer.buyer_passport_number) {
+                            frm.set_value('buyer_passport_number', customer.buyer_passport_number);
+                        } else if (customer.buyer_card_type === "Military Card" && customer.buyer_military_number) {
+                            frm.set_value('buyer_military_number', customer.buyer_military_number);
+                        }
+                    } else if (customer.category_of_buyer === 'Company' || customer.category_of_buyer === 'Interbank') {
+                        // Set company fields one by one, checking if they exist
+                        const companyFields = [
+                            'buyer_company_name', 'buyer_company_activity',
+                            'buyer_company_commercial_no', 'buyer_company_start_date',
+                            'buyer_company_end_date', 'buyer_company_address',
+                            'is_expired1', 'interbank', 'buyer_company_legal_form'
+                        ];
+                        
+                        companyFields.forEach(field => {
+                            if (customer[field] !== undefined) {
+                                frm.set_value(field, customer[field]);
+                            }
+                        });
                     }
-                } else if (frm.doc.category_of_buyer === 'Company' || frm.doc.category_of_buyer === 'Interbank') {
-                    const company_fields_to_clear = [
-                        'buyer_company_name', 'buyer_company_activity',
-                        'buyer_company_start_date', 'buyer_company_end_date',
-                        'buyer_company_address', 'is_expired1', 'interbank',
-                        'buyer_company_legal_form', 'buyer'
-                    ];
                     
-                    company_fields_to_clear.forEach(field => frm.set_value(field, ''));
-                    frm.set_value('buyer_company_commercial_no', frm.doc.buyer_search_id);
+                    // Set exceed flag if it exists
+                    if (customer.exceed !== undefined) {
+                        frm.set_value('exceed', customer.exceed);
+                    }
+                    
+                    // Refresh all fields
+                    frm.refresh_fields();
+                    
+                    // Show success message
+                    frappe.show_alert({
+                        message: __('Customer found and details populated'),
+                        indicator: 'green'
+                    });
+                } else {
+                    // If no customer found, clear all fields except the search ID
+                    if (frm.doc.category_of_buyer === 'Egyptian' || frm.doc.category_of_buyer === 'Foreigner') {
+                        const fields_to_clear = [
+                            'buyer_name', 'buyer_nationality',
+                            'buyer_work_for', 'buyer_phone',
+                            'buyer_place_of_birth', 'buyer_date_of_birth',
+                            'buyer_job_title', 'buyer_address',
+                            'buyer_expired', 'buyer'
+                        ];
+                        
+                        fields_to_clear.forEach(field => frm.set_value(field, ''));
+                        
+                        // Set the search ID to the appropriate field based on card type
+                        if (frm.doc.buyer_card_type === "National ID") {
+                            frm.set_value('buyer_national_id', frm.doc.buyer_search_id);
+                            frm.set_value('buyer_passport_number', '');
+                            frm.set_value('buyer_military_number', '');
+                        } else if (frm.doc.buyer_card_type === "Passport") {
+                            frm.set_value('buyer_passport_number', frm.doc.buyer_search_id);
+                            frm.set_value('buyer_national_id', '');
+                            frm.set_value('buyer_military_number', '');
+                        } else if (frm.doc.buyer_card_type === "Military Card") {
+                            frm.set_value('buyer_military_number', frm.doc.buyer_search_id);
+                            frm.set_value('buyer_national_id', '');
+                            frm.set_value('buyer_passport_number', '');
+                        }
+                    } else if (frm.doc.category_of_buyer === 'Company' || frm.doc.category_of_buyer === 'Interbank') {
+                        const company_fields_to_clear = [
+                            'buyer_company_name', 'buyer_company_activity',
+                            'buyer_company_start_date', 'buyer_company_end_date',
+                            'buyer_company_address', 'is_expired1', 'interbank',
+                            'buyer_company_legal_form', 'buyer'
+                        ];
+                        
+                        company_fields_to_clear.forEach(field => frm.set_value(field, ''));
+                        frm.set_value('buyer_company_commercial_no', frm.doc.buyer_search_id);
+                    }
+                    
+                    // Refresh all fields
+                    frm.refresh_fields();
                 }
-                
-                // Refresh all fields
-                frm.refresh_fields();
-                
-                frappe.show_alert({
-                    message: __('No existing customer found. You can create a new one.'),
-                    indicator: 'yellow'
-                });
+            } catch (e) {
+                console.error("Error handling buyer search response:", e);
+                frappe.msgprint(__("Error handling buyer search response. Please try again."));
             }
         }
     });
@@ -321,7 +328,6 @@ frappe.ui.form.on("Teller Purchase", {
             
             // Set other fields
             frm.set_value('buyer_nationality', customer.buyer_nationality);
-            frm.set_value('buyer_mobile_number', customer.buyer_mobile_number);
             frm.set_value('buyer_work_for', customer.buyer_work_for);
             frm.set_value('buyer_phone', customer.buyer_phone);
             frm.set_value('buyer_place_of_birth', customer.buyer_place_of_birth);
@@ -471,34 +477,58 @@ frappe.ui.form.on("Teller Purchase", {
   // },
 
   setup(frm) {
-    // Get user's egy_account and set it only for new documents
-    if (frm.is_new()) {
-      frappe.call({
-        method: "frappe.client.get_value",
-        args: {
-          doctype: "User",
-          filters: { name: frappe.session.user },
-          fieldname: "egy_account"
-        },
-        callback: function(r) {
-          if (r.message && r.message.egy_account) {
-            frm.set_value('egy', r.message.egy_account);
-            // After setting egy account, fetch its balance
-            frappe.call({
-              method: "teller.teller_customization.doctype.teller_purchase.teller_purchase.account_to_balance",
-              args: {
-                paid_to: r.message.egy_account
-              },
-              callback: function(r) {
-                if (r.message) {
-                  frm.set_value('egy_balance', r.message);
-                  frm.refresh_field('egy_balance');
+    // Get treasury details if not set
+    if (!frm.doc.treasury_code) {
+        frappe.call({
+            method: 'frappe.client.get_value',
+            args: {
+                doctype: 'Employee',
+                filters: { user_id: frappe.session.user },
+                fieldname: 'name'
+            },
+            callback: function(r) {
+                if (r.message && r.message.name) {
+                    frappe.call({
+                        method: 'frappe.client.get_list',
+                        args: {
+                            doctype: 'Open Shift for Branch',
+                            filters: {
+                                current_user: r.message.name,
+                                shift_status: 'Active',
+                                docstatus: 1
+                            },
+                            fields: ['name', 'treasury_permission'],
+                            limit: 1
+                        },
+                        callback: function(r) {
+                            if (r.message && r.message.length > 0) {
+                                let shift = r.message[0];
+                                frm.set_value('treasury_code', shift.treasury_permission);
+                                frm.set_value('shift', shift.name);
+                                
+                                // Get treasury's EGP account
+                                frappe.call({
+                                    method: 'frappe.client.get',
+                                    args: {
+                                        doctype: 'Teller Treasury',
+                                        name: shift.treasury_permission
+                                    },
+                                    callback: function(r) {
+                                        if (r.message && r.message.egy_account) {
+                                            frm.set_value('egy', r.message.egy_account);
+                                        } else {
+                                            frappe.msgprint(__('EGP Account not set for treasury {0}', [shift.treasury_permission]));
+                                        }
+                                    }
+                                });
+                            } else {
+                                frappe.msgprint(__('No active shift found'));
+                            }
+                        }
+                    });
                 }
-              }
-            });
-          }
-        }
-      });
+            }
+        });
     }
     
     // Make treasury_code and shift read-only after submission
@@ -807,20 +837,13 @@ frappe.ui.form.on("Teller Purchase", {
         
         if (frm.doc.category_of_buyer == "Egyptian" || frm.doc.category_of_buyer == "Foreigner") {
           // Set individual fields
-          const individualFields = {
-            "buyer_nationality": customer.custom_nationality,
-            "buyer_phone": customer.custom_phone,
-            "buyer_job_title": customer.custom_job_title,
-            "buyer_date_of_birth": customer.custom_date_of_birth,
-            "buyer_card_type": customer.custom_card_type,
-            "buyer_work_for": customer.custom_work_for,
-            "buyer_issue_date": customer.custom_issue_date,
-            "buyer_address": customer.custom_address,
-            "buyer_place_of_birth": customer.custom_place_of_birth,
-            "buyer_gender": customer.custom_gender,
-            "buyer_expired": customer.custom_expired,
-            "buyer_mobile_number": customer.custom_mobile_number
-          };
+          const individualFields = [
+            'buyer_name', 'buyer_gender', 'buyer_nationality',
+            'buyer_work_for', 'buyer_phone', 
+            'buyer_place_of_birth', 'buyer_date_of_birth', 'buyer_job_title', 
+            'buyer_address', 'buyer_national_id', 'buyer_passport_number', 
+            'buyer_military_number'
+          ];
 
           // Set individual fields only if they have values
           Object.entries(individualFields).forEach(([field, value]) => {
@@ -975,17 +998,10 @@ frappe.ui.form.on("Teller Purchase", {
             customer_name: frm.doc.buyer_name,
             gender: frm.doc.buyer_gender,
             custom_card_type: frm.doc.buyer_card_type,
-            custom_mobile: frm.doc.buyer_mobile_number ? frm.doc.buyer_mobile_number : "",
-            // custom_work_for: frm.doc.work_for,
             custom_address: frm.doc.buyer_address,
-            // custom_nationality: frm.doc.nationality,
-            // custom_issue_date: frm.doc.issue_date,
-            // custom_expired: frm.doc.expired,
-            // custom_place_of_birth: frm.doc.place_of_birth,
             custom_date_of_birth: frm.doc.buyer_date_of_birth
               ? frm.doc.buyer_date_of_birth
               : frappe.datetime.get_today(),
-            // custom_job_title: frm.doc.job_title,
             custom_type: frm.doc.category_of_buyer,
             custom_national_id:
               frm.doc.buyer_card_type == "National ID" ? frm.doc.buyer_national_id : null,
@@ -1043,14 +1059,8 @@ frappe.ui.form.on("Teller Purchase", {
                   latest_client.custom_work_for = frm.doc.buyer_work_for;
 
                   latest_client.custom_nationality = frm.doc.buyer_nationality;
-                  latest_client.custom_mobile = frm.doc.buyer_mobile_number;
-                  latest_client.custom_phone = frm.doc.buyer_phone;
-                  latest_client.custom_place_of_birth = frm.doc.buyer_place_of_birth;
-
                   latest_client.custom_address = frm.doc.buyer_address;
-                  latest_client.custom_issue_date = frm.doc.buyer_issue_date;
 
-                  latest_client.custom_job_title = frm.doc.buyer_job_title;
                   latest_client.custom_date_of_birth =
                     frm.doc.buyer_date_of_birth || frappe.datetime.get_today();
                   latest_client.custom_national_id =
@@ -1684,7 +1694,7 @@ function handleCommissarCreationOrUpdate(frm) {
     (frm.doc.category_of_buyer == "Company" ||
       frm.doc.category_of_buyer == "Interbank") &&
     frm.doc.buyer &&
-    !frm.doc.commissar
+    !frm.doc.purchase_commissar
   ) {
     if (!frm.doc.buyer) {
       frappe.msgprint(__("Please select Company first."));
@@ -1720,7 +1730,7 @@ function handleCommissarCreationOrUpdate(frm) {
             message: __("Commissar added successfully"),
             indicator: "green",
           });
-          frm.set_value("commissar", r.message.name);
+          frm.set_value("purchase_commissar", r.message.name);
         }
       },
     });
@@ -1728,13 +1738,13 @@ function handleCommissarCreationOrUpdate(frm) {
     (frm.doc.category_of_buyer === "Company" ||
       frm.doc.category_of_buyer === "Interbank") &&
     frm.doc.buyer &&
-    frm.doc.commissar
+    frm.doc.purchase_commissar
   ) {
     frappe.call({
       method: "frappe.client.get",
       args: {
         doctype: "Contact",
-        name: frm.doc.commissar,
+        name: frm.doc.purchase_commissar,
       },
       callback: function (r) {
         if (r.message) {
@@ -1760,7 +1770,7 @@ function handleCommissarCreationOrUpdate(frm) {
                   message: __("Commissar updated successfully"),
                   indicator: "green",
                 });
-                frm.set_value("commissar", save_response.message.name);
+                frm.set_value("purchase_commissar", save_response.message.name);
               } else {
                 frappe.throw(__("Error while updating Commissar"));
               }
@@ -1946,7 +1956,7 @@ function clearFieldsBasedOnCategory(frm) {
         if (frm.doc.category_of_buyer !== "Egyptian" && frm.doc.category_of_buyer !== "Foreigner") {
             const individualFields = [
                 'buyer_name', 'buyer_gender', 'buyer_nationality',
-                'buyer_mobile_number', 'buyer_work_for', 'buyer_phone', 
+                'buyer_work_for', 'buyer_phone', 
                 'buyer_place_of_birth', 'buyer_date_of_birth', 'buyer_job_title', 
                 'buyer_address', 'buyer_national_id', 'buyer_passport_number', 
                 'buyer_military_number'
@@ -1957,9 +1967,9 @@ function clearFieldsBasedOnCategory(frm) {
         if (frm.doc.category_of_buyer !== "Company" && frm.doc.category_of_buyer !== "Interbank") {
             const companyFields = [
                 'buyer_company_name', 'buyer_company_activity', 
-                'buyer_company_commercial_no', 'buyer_company_end_date', 
-                'buyer_company_start_date', 'buyer_company_address', 
-                'buyer_expired', 'interbank', 'buyer_company_legal_form'
+                'buyer_company_start_date', 'buyer_company_end_date', 
+                'buyer_company_address', 'is_expired1', 'interbank',
+                'buyer_company_legal_form', 'buyer'
             ];
             companyFields.forEach(field => frm.set_value(field, ''));
         }

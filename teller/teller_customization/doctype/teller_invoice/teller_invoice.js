@@ -91,6 +91,17 @@ frappe.ui.form.on("Teller Invoice", {
         },
       };
     });
+
+    // filters commissar based on company name
+    frm.set_query("commissar", function (doc) {
+      return {
+        query: "teller.teller_customization.doctype.teller_invoice.teller_invoice.get_contacts_by_link",
+        filters: {
+          link_doctype: "Customer",
+          link_name: doc.client,
+        }
+      };
+    });
     
     // Add buttons for submitted documents
     if (frm.doc.docstatus === 1) {
@@ -150,40 +161,6 @@ frappe.ui.form.on("Teller Invoice", {
     }
 
     set_branch_and_shift(frm);
-    loginUser = frappe.session.logged_in_user;
-    frappe
-      .call({
-        method: "frappe.client.get",
-        args: {
-          doctype: "User",
-          name: loginUser,
-        },
-      })
-      .then((r) => {
-        if (r.message) {
-          console.log(r.message.egy_account);
-          let user_account = r.message.egy_account;
-          if (user_account) {
-            frm.set_value("egy", user_account);
-          } else {
-            frappe.throw("there is no egy account linked to this user");
-          }
-        } else {
-          frappe.throw("Error while getting user");
-        }
-      });
-
-    // filters commissar based on company name
-    frm.set_query("commissar", function (doc) {
-      return {
-        query:
-          "teller.teller_customization.doctype.teller_invoice.teller_invoice.get_contacts_by_link",
-        filters: {
-          link_doctype: "Customer",
-          link_name: doc.client,
-        },
-      };
-    });
 
     // Make invoice info section always expandable
     frm.toggle_display('invoice_info_section', true);
@@ -193,7 +170,84 @@ frappe.ui.form.on("Teller Invoice", {
     if (frm.doc.docstatus || !frm.doc.__islocal) {
       frm.toggle_display('treasury_code', true);
     }
+
+    // Get treasury details if not set
+    if (!frm.doc.treasury_code) {
+      frappe.call({
+        method: 'frappe.client.get_value',
+        args: {
+          doctype: 'Employee',
+          filters: { user_id: frappe.session.user },
+          fieldname: 'name'
+        },
+        callback: function(r) {
+          if (r.message && r.message.name) {
+            frappe.call({
+              method: 'frappe.client.get_list',
+              args: {
+                doctype: 'Open Shift for Branch',
+                filters: {
+                  current_user: r.message.name,
+                  shift_status: 'Active',
+                  docstatus: 1
+                },
+                fields: ['name', 'treasury_permission'],
+                limit: 1
+              },
+              callback: function(r) {
+                if (r.message && r.message.length > 0) {
+                  let shift = r.message[0];
+                  frm.set_value('treasury_code', shift.treasury_permission);
+                  frm.set_value('shift', shift.name);
+                  
+                  // Get treasury's EGP account
+                  frappe.call({
+                    method: 'frappe.client.get',
+                    args: {
+                      doctype: 'Teller Treasury',
+                      name: shift.treasury_permission
+                    },
+                    callback: function(r) {
+                      if (r.message && r.message.egy_account) {
+                        frm.set_value('egy', r.message.egy_account);
+                      } else {
+                        frappe.msgprint(__('EGP Account not set for treasury {0}', [shift.treasury_permission]));
+                      }
+                    }
+                  });
+                } else {
+                  frappe.msgprint(__('No active shift found'));
+                }
+              }
+            });
+          }
+        }
+      });
+    }
+
+    // Hide expired fields by default
+    frm.toggle_display("expired", false);
+    frm.toggle_display("is_expired1", false);
+    
+    // Check expiry if data exists
+    if (frm.doc.issue_date) {
+      validateIdExpiration(frm);
+    }
+    if (frm.doc.end_registration_date) {
+      validateRegistrationDateExpiration(frm, frm.doc.end_registration_date);
+    }
+
+    // Make registration date fields read-only after submission
+    if (frm.doc.docstatus === 1) {
+      frm.set_df_property('start_registration_date', 'read_only', 1);
+      frm.set_df_property('end_registration_date', 'read_only', 1);
+    }
   },
+
+  issue_date: function(frm) {
+    validateIdExpiration(frm);
+  },
+
   custom_special_price_2(frm) {
     var d = new frappe.ui.Dialog({
       title: "Booked Special Price",
@@ -274,49 +328,29 @@ frappe.ui.form.on("Teller Invoice", {
 
   // Get customer information if exists
   client: function (frm) {
-    // Set contact query filters
-    frm.set_query("contact", function() {
-      return {
-        query: "frappe.contacts.doctype.contact.contact.contact_query",
-        filters: {
-          link_doctype: "Customer",
-          link_name: frm.doc.client
-        }
-      };
-    });
-
-    if(frm.doc.client && (frm.doc.client_type === "Egyptian" || frm.doc.client_type === "Foreigner")) {
+    if (!frm.doc.client) return;
+    
+    // Set flag to prevent recursive updates
+    if (frm._updatingClient) return;
+    frm._updatingClient = true;
+    
       frappe.db.get_doc('Customer', frm.doc.client)
         .then(customer => {
-          // Always set customer name
-          frm.set_value('customer_name', customer.customer_name);
-          
-          // Set other fields only if they have data
-          const fieldMappings = {
-            'gender': customer.gender,
-            'nationality': customer.custom_nationality,
-            'mobile_number': customer.custom_mobile,
-            'work_for': customer.custom_work_for,
-            'phone': customer.custom_phone,
-            'place_of_birth': customer.custom_place_of_birth,
-            'date_of_birth': customer.custom_date_of_birth,
-            'job_title': customer.custom_job_title,
-            'address': customer.custom_address,
-            'national_id': customer.custom_national_id
-          };
-
-          // Only set values for fields that have data
-          Object.entries(fieldMappings).forEach(([field, value]) => {
-            if (value) {
-              frm.set_value(field, value);
-            }
-          });
-
-          frm.refresh_fields();
-        });
-    } else if(frm.doc.client && (frm.doc.client_type === "Company" || frm.doc.client_type === "Interbank")) {
-      frappe.db.get_doc('Customer', frm.doc.client)
-        .then(customer => {
+        if (frm.doc.client_type === "Company" || frm.doc.client_type === "Interbank") {
+          // For submitted docs, only update display without triggering form changes
+          if (frm.doc.docstatus === 1) {
+            // Don't update registration dates for submitted docs
+            frm.doc.company_name = customer.customer_name;
+            frm.doc.company_activity = customer.custom_company_activity;
+            frm.doc.company_commercial_no = customer.custom_commercial_no;
+            frm.doc.company_num = customer.custom_company_no;
+            frm.doc.comoany_address = customer.custom_comany_address1;
+            frm.doc.is_expired1 = customer.custom_is_expired;
+            frm.doc.interbank = customer.custom_interbank;
+            frm.doc.company_legal_form = customer.custom_legal_form;
+            frm.refresh_fields();
+          } else {
+            // For non-submitted docs, use set_value
           const companyFields = {
             'company_name': customer.customer_name,
             'company_activity': customer.custom_company_activity,
@@ -330,16 +364,16 @@ frappe.ui.form.on("Teller Invoice", {
             'company_legal_form': customer.custom_legal_form
           };
 
-          // Only set values for fields that have data
+            // Only set values for fields that have data and are different
           Object.entries(companyFields).forEach(([field, value]) => {
-            if (value) {
+              if (value && frm.doc[field] !== value && (!frm.doc.docstatus || !['start_registration_date', 'end_registration_date'].includes(field))) {
               frm.set_value(field, value);
             }
-          });
-
-          frm.refresh_fields();
         });
     }
+        }
+        frm._updatingClient = false;
+      });
   },
 
   // add comissar to invoice
@@ -508,7 +542,34 @@ frappe.ui.form.on("Teller Invoice", {
                     },
                     callback: function (save_response) {
                       if (save_response.message) {
-                        frm.set_value("client", save_response.message.name);
+                        // Set flags to prevent recursive updates
+                        frm._preventCommissarUpdate = true;
+                        frm._preventCustomerUpdate = true;
+                        frm._updatingClient = true;
+                        
+                        // Update the client reference without triggering the client field's change event
+                        frm.doc.client = save_response.message.name;
+                        frm.refresh_field("client");
+                        
+                        // Clear the prevention flags after a short delay
+                        setTimeout(() => {
+                            frm._preventCommissarUpdate = false;
+                            frm._preventCustomerUpdate = false;
+                            frm._updatingClient = false;
+                            
+                            // Only update commissar if needed and flags are cleared
+                            if (!frm._commissarBeingUpdated && (frm.doc.com_name || frm.doc.com_national_id)) {
+                                handleCommissarCreationOrUpdate(frm).then(() => {
+                                    // After commissar update, mark the form as saved
+                                    frm.doc.__unsaved = false;
+                                    frm.page.clear_indicator();
+                                });
+                            } else {
+                                // If no commissar update needed, mark the form as saved
+                                frm.doc.__unsaved = false;
+                                frm.page.clear_indicator();
+                            }
+                        }, 300);
                       } else {
                         frappe.throw("Error while updating customer");
                       }
@@ -528,6 +589,10 @@ frappe.ui.form.on("Teller Invoice", {
         frm.doc.client_type == "Interbank") &&
       !frm.doc.client
     ) {
+      // Skip if we're already updating
+      if (frm._updatingCompany) return;
+      frm._updatingCompany = true;
+
       frappe.call({
         method: "frappe.client.insert",
         args: {
@@ -582,6 +647,10 @@ frappe.ui.form.on("Teller Invoice", {
         frm.doc.client_type == "Interbank") &&
       frm.doc.client
     ) {
+      // Skip if we're already updating
+      if (frm._updatingCompany) return;
+      frm._updatingCompany = true;
+
       frappe.call({
         method: "frappe.client.get",
         args: {
@@ -592,12 +661,8 @@ frappe.ui.form.on("Teller Invoice", {
         },
         callback: function (r) {
           if (r.message) {
-            console.log("response from comapny updated", r.message);
-
-            /////////////////////////////////
             var existing_company = r.message;
 
-            // Fetch the latest version of the document
             frappe.call({
               method: "frappe.client.get",
               args: {
@@ -606,156 +671,75 @@ frappe.ui.form.on("Teller Invoice", {
               },
               callback: function (response) {
                 if (response.message) {
-                  console.log("company name response", response.message);
                   let latest_company = response.message;
-                  // Update the relevant fields
-                  latest_company.custom_start_registration_date =
-                    frm.doc.start_registration_date;
-                  latest_company.custom_end_registration_date =
-                    frm.doc.end_registration_date;
-                  latest_company.custom_comany_address1 =
-                    frm.doc.comoany_address || "";
-                  latest_company.custom_commercial_no =
-                    frm.doc.company_commercial_no;
-                  latest_company.custom_legal_form = frm.doc.company_legal_form;
-                  latest_company.custom_company_no = frm.doc.company_num;
-                  latest_company.custom_company_activity =
-                    frm.doc.company_activity;
+                  
+                  // Only update if values are different
+                  let hasChanges = false;
+                  const fieldsToCheck = {
+                    'custom_start_registration_date': 'start_registration_date',
+                    'custom_end_registration_date': 'end_registration_date',
+                    'custom_comany_address1': 'comoany_address',
+                    'custom_commercial_no': 'company_commercial_no',
+                    'custom_legal_form': 'company_legal_form',
+                    'custom_company_no': 'company_num',
+                    'custom_company_activity': 'company_activity'
+                  };
 
-                  // latest_company.custom_interbank = true
-                  //   ? frm.doc.interbank && frm.doc.client_type == "Interbank"
-                  //   : false;
+                  Object.entries(fieldsToCheck).forEach(([companyField, formField]) => {
+                    if (latest_company[companyField] !== frm.doc[formField]) {
+                      latest_company[companyField] = frm.doc[formField];
+                      hasChanges = true;
+                    }
+                  });
 
-                  // Save the updated client document
+                  // Only save if there are actual changes
+                  if (hasChanges) {
                   frappe.call({
                     method: "frappe.client.save",
                     args: {
                       doc: latest_company,
                     },
                     callback: function (save_response) {
+                        frm._updatingCompany = false;
                       if (save_response.message) {
-                        frm.set_value("client", save_response.message.name);
+                          // Update client reference without triggering updates
+                          frm.doc.client = save_response.message.name;
+                          frm.refresh_field("client");
+                          
+                          // Only update commissar if commissar fields have changed
+                          const commissarFields = ['com_name', 'com_national_id', 'com_gender', 
+                                                 'com_address', 'com_phone', 'com_job_title', 
+                                                 'com_mobile_number'];
+                          
+                          let commissarChanged = commissarFields.some(field => 
+                            frm.doc[field] && frm.doc[field] !== frm.doc.__prev_values?.[field]
+                          );
+                          
+                          if (commissarChanged && !frm._commissarBeingUpdated) {
                         handleCommissarCreationOrUpdate(frm);
-                      } else {
-                        frappe.throw("Error while updating customer");
+                          }
                       }
                     },
+                      error: function() {
+                        frm._updatingCompany = false;
+                      }
                   });
+                  } else {
+                    frm._updatingCompany = false;
+                  }
                 }
               },
+              error: function() {
+                frm._updatingCompany = false;
+              }
             });
           }
         },
+        error: function() {
+          frm._updatingCompany = false;
+        }
       });
     }
-
-    //  add commissar to coompant from invoice
-
-    // if (
-    //   (frm.doc.client_type == "Company" ||
-    //     frm.doc.client_type == "Interbank") &&
-    //   frm.doc.client &&
-    //   !frm.doc.commissar
-    // ) {
-    //   if (!frm.doc.client) {
-    //     frappe.msgprint(__("Please select Company first."));
-    //     return;
-    //   }
-
-    //   // Create a new contact document
-    //   var newContact = frappe.model.get_new_doc("Contact");
-    //   // var newContact = frappe.new_doc("Contact");
-    //   newContact.links = [
-    //     {
-    //       link_doctype: "Customer",
-    //       link_name: frm.doc.client,
-    //     },
-    //   ];
-
-    //   // Set the necessary fields
-    //   newContact.first_name = frm.doc.com_name;
-    //   newContact.custom_com_gender = frm.doc.com_gender;
-
-    //   newContact.custom_com_address = frm.doc.com_address;
-    //   newContact.custom_com_phone = frm.doc.com_phone;
-    //   newContact.custom_national_id = frm.doc.com_national_id;
-    //   newContact.custom_job_title = frm.doc.com_job_title;
-    //   newContact.custom_mobile_number = frm.doc.com_mobile_number;
-
-    //   // Insert the new contact
-    //   frappe.call({
-    //     method: "frappe.client.insert",
-    //     args: {
-    //       doc: newContact,
-    //     },
-    //     callback: function (r) {
-    //       if (r.message) {
-    //         frappe.show_alert({
-    //           message: __("Commissar added successfully"),
-    //           indicator: "green",
-    //         });
-    //         frm.set_value("commissar", r.message.name);
-    //       }
-    //     },
-    //   });
-    // }
-
-    // // update contact if existing
-    // else if (
-    //   (frm.doc.client_type === "Company" ||
-    //     frm.doc.client_type === "Interbank") &&
-    //   frm.doc.client &&
-    //   frm.doc.commissar
-    // ) {
-    //   frappe.call({
-    //     method: "frappe.client.get",
-    //     args: {
-    //       doctype: "Contact",
-    //       name: frm.doc.commissar,
-    //     },
-    //     callback: function (r) {
-    //       if (r.message) {
-    //         let existing_contact = r.message;
-
-    //         // Update the relevant fields
-    //         existing_contact.first_name = frm.doc.com_name;
-    //         existing_contact.custom_com_gender = frm.doc.com_gender;
-    //         existing_contact.custom_national_id = frm.doc.com_national_id;
-    //         existing_contact.custom_com_address = frm.doc.com_address || "";
-    //         existing_contact.custom_com_phone = frm.doc.com_phone;
-    //         existing_contact.custom_job_title = frm.doc.com_job_title;
-    //         existing_contact.custom_mobile_number = frm.doc.com_mobile_number;
-
-    //         // Save the updated contact document
-    //         frappe.call({
-    //           method: "frappe.client.save",
-    //           args: {
-    //             doc: existing_contact,
-    //           },
-    //           callback: function (save_response) {
-    //             if (save_response.message) {
-    //               frappe.show_alert({
-    //                 message: __("Commissar updated successfully"),
-    //                 indicator: "green",
-    //               });
-    //               frm.set_value("commissar", save_response.message.name);
-    //             } else {
-    //               frappe.throw(__("Error while updating Commissar"));
-    //             }
-    //           },
-    //           error: function () {
-    //             frappe.throw(__("Error while updating Commissar"));
-    //           },
-    //         });
-    //       } else {
-    //         frappe.throw(__("Commissar not found"));
-    //       }
-    //     },
-    //     error: function () {
-    //       frappe.throw(__("Error while fetching Commissar details"));
-    //     },
-    //   });
-    // }
   },
 
   /////////////////////////////////////////////
@@ -823,14 +807,6 @@ frappe.ui.form.on("Teller Invoice", {
     if (frm.doc.client && frm.doc.total) {
       // check if the total is exceeded
       isExceededLimit(frm, frm.doc.client, frm.doc.total);
-    } else {
-      // teller_invoice_details
-      frappe.msgprint({
-        message:
-          '<div style="background-color: #f8d7da; color: #721c24; padding: 10px; border-radius: 5px; font-family: Arial, sans-serif; font-size: 14px;">Pleases enter Customer to validate the transaction</div>',
-        title: "Missing Data Error",
-        indicator: "red",
-      });
     }
   },
   //validate if national id is valid
@@ -892,50 +868,86 @@ frappe.ui.form.on("Teller Invoice", {
     if (!frm.doc.client_type || !frm.doc.client_search_id) return;
     
     frappe.call({
-        method: 'teller.teller_customization.doctype.teller_invoice.teller_invoice.search_client_by_id',
-        args: {
-            search_id: frm.doc.client_search_id
-        },
-        callback: function(r) {
-            if (r.message) {
-                const customer = r.message;
+      method: 'teller.teller_customization.doctype.teller_invoice.teller_invoice.search_client_by_id',
+      args: {
+        search_id: frm.doc.client_search_id
+      },
+      callback: function(r) {
+        if (r.message) {
+          const customer = r.message;
+          
+          // Set the client reference
+          if (frm.doc.docstatus === 1) {
+            frm.doc.client = customer.name;
+          } else {
+          frm.set_value('client', customer.name);
+          }
+          
+          // Get full customer details
+          frappe.db.get_doc('Customer', customer.name)
+            .then(customer_doc => {
+              if (customer_doc.custom_type === 'Company' || customer_doc.custom_type === 'Interbank') {
+                // For submitted docs, only update display without triggering form changes
+                if (frm.doc.docstatus === 1) {
+                  // Don't update registration dates for submitted docs
+                  frm.doc.company_name = customer_doc.customer_name;
+                  frm.doc.company_activity = customer_doc.custom_company_activity;
+                  frm.doc.company_commercial_no = customer_doc.custom_commercial_no;
+                  frm.doc.comoany_address = customer_doc.custom_comany_address1;
+                  frm.doc.is_expired1 = customer_doc.custom_is_expired;
+                  frm.doc.interbank = customer_doc.custom_interbank;
+                  frm.doc.company_legal_form = customer_doc.custom_legal_form;
+                  frm.refresh_fields();
+                } else {
+                  // For non-submitted docs, use set_value
+                frm.set_value('company_name', customer_doc.customer_name);
+                frm.set_value('company_activity', customer_doc.custom_company_activity);
+                frm.set_value('company_commercial_no', customer_doc.custom_commercial_no);
+                frm.set_value('start_registration_date', customer_doc.custom_start_registration_date);
+                frm.set_value('end_registration_date', customer_doc.custom_end_registration_date);
+                frm.set_value('comoany_address', customer_doc.custom_comany_address1);
+                frm.set_value('is_expired1', customer_doc.custom_is_expired);
+                frm.set_value('interbank', customer_doc.custom_interbank);
+                frm.set_value('company_legal_form', customer_doc.custom_legal_form);
+                }
+              } else {
+                // Set individual fields
+                frm.set_value('card_type', customer_doc.custom_card_type);
+                frm.set_value('customer_name', customer_doc.customer_name);
                 
-                // Set the client reference
-                frm.set_value('client', customer.name);
-                
-                // Get full customer details
-                frappe.db.get_doc('Customer', customer.name)
-                    .then(customer_doc => {
-                        if (customer_doc.custom_type === 'Company' || customer_doc.custom_type === 'Interbank') {
-                            // Set company fields
-                            frm.set_value('company_name', customer_doc.customer_name);
-                            frm.set_value('company_activity', customer_doc.custom_company_activity);
-                            frm.set_value('company_commercial_no', customer_doc.custom_commercial_no);
-                            frm.set_value('start_registration_date', customer_doc.custom_start_registration_date);
-                            frm.set_value('end_registration_date', customer_doc.custom_end_registration_date);
-                            frm.set_value('comoany_address', customer_doc.custom_comany_address1);
-                            frm.set_value('is_expired1', customer_doc.custom_is_expired);
-                            frm.set_value('interbank', customer_doc.custom_interbank);
-                            frm.set_value('company_legal_form', customer_doc.custom_legal_form);
-                        } else {
-                            // Set individual fields
-                            frm.set_value('card_type', customer_doc.custom_card_type);
-                            frm.set_value('customer_name', customer_doc.customer_name);
-                            
-                            // Set the appropriate ID based on card type
-                            if (customer_doc.custom_card_type === 'Passport') {
-                                frm.set_value('passport_number', customer_doc.custom_passport_number);
-                            } else if (customer_doc.custom_card_type === 'National ID') {
-                                frm.set_value('national_id', customer_doc.custom_national_id);
-                            } else if (customer_doc.custom_card_type === 'Military Card') {
-                                frm.set_value('military_number', customer_doc.custom_military_number);
-                            }
-                        }
-                        
-                        frm.refresh_fields();
-                    });
+                // Set the appropriate ID based on card type
+                if (customer_doc.custom_card_type === 'Passport') {
+                  frm.set_value('passport_number', customer_doc.custom_passport_number);
+                } else if (customer_doc.custom_card_type === 'National ID') {
+                  frm.set_value('national_id', customer_doc.custom_national_id);
+                } else if (customer_doc.custom_card_type === 'Military Card') {
+                  frm.set_value('military_number', customer_doc.custom_military_number);
+                }
+              }
+              
+              frm.refresh_fields();
+            });
+        } else {
+          // No existing customer found - handle based on client type
+          if (frm.doc.client_type === "Company" || frm.doc.client_type === "Interbank") {
+            // For company/interbank, set the commercial number
+            frm.set_value('company_commercial_no', frm.doc.client_search_id);
+            
+            // Set default dates if not set
+            if (!frm.doc.start_registration_date) {
+              frm.set_value('start_registration_date', frappe.datetime.get_today());
             }
+            if (!frm.doc.end_registration_date) {
+              // Set end date to 1 year from today by default
+              let end_date = frappe.datetime.add_days(frappe.datetime.get_today(), 365);
+              frm.set_value('end_registration_date', end_date);
+            }
+          } else if (frm.doc.card_type === "National ID" && 
+              (frm.doc.client_type === "Egyptian" || frm.doc.client_type === "Foreigner")) {
+            frm.set_value('national_id', frm.doc.client_search_id);
+          }
         }
+      }
     });
   },
 
@@ -1283,101 +1295,146 @@ async function fetchLimitDuration() {
 // create or update commissar for company
 
 function handleCommissarCreationOrUpdate(frm) {
-  if (
-    (frm.doc.client_type == "Company" || frm.doc.client_type == "Interbank") &&
-    frm.doc.client &&
-    !frm.doc.commissar
-  ) {
-    if (!frm.doc.client) {
-      frappe.msgprint(__("Please select Company first."));
+  return new Promise((resolve, reject) => {
+    // Check if update is needed
+    if (frm._commissarBeingUpdated || frm._preventCommissarUpdate) {
+      resolve();
       return;
     }
 
-    var newContact = frappe.model.get_new_doc("Contact");
-    newContact.links = [
-      {
-        link_doctype: "Customer",
-        link_name: frm.doc.client,
-      },
-    ];
+    // Check if any commissar fields have changed
+    const commissarFields = ['com_name', 'com_national_id', 'com_gender', 
+                           'com_address', 'com_phone', 'com_job_title', 
+                           'com_mobile_number'];
+    
+    let commissarChanged = commissarFields.some(field => 
+      frm.doc[field] && frm.doc[field] !== frm.doc.__prev_values?.[field]
+    );
 
-    // Set the necessary fields
-    newContact.first_name = frm.doc.com_name;
-    newContact.custom_com_gender = frm.doc.com_gender;
+    if (!commissarChanged) {
+      resolve();
+      return;
+    }
+    
+    if (
+      (frm.doc.client_type === "Company" ||
+        frm.doc.client_type === "Interbank") &&
+      frm.doc.client &&
+      !frm.doc.commissar
+    ) {
+      if (!frm.doc.client) {
+        frappe.msgprint(__("Please select Company first."));
+        resolve();
+        return;
+      }
 
-    newContact.custom_com_address = frm.doc.com_address;
-    newContact.custom_com_phone = frm.doc.com_phone;
-    newContact.custom_national_id = frm.doc.com_national_id;
-    newContact.custom_job_title = frm.doc.com_job_title;
-    newContact.custom_mobile_number = frm.doc.com_mobile_number;
+      var newContact = frappe.model.get_new_doc("Contact");
+      newContact.links = [
+        {
+          link_doctype: "Customer",
+          link_name: frm.doc.client,
+        },
+      ];
 
-    frappe.call({
-      method: "frappe.client.insert",
-      args: {
-        doc: newContact,
-      },
-      callback: function (r) {
-        if (r.message) {
-          frappe.show_alert({
-            message: __("Commissar added successfully"),
-            indicator: "green",
-          });
-          frm.set_value("commissar", r.message.name);
+      // Set the necessary fields
+      newContact.first_name = frm.doc.com_name;
+      newContact.custom_com_gender = frm.doc.com_gender;
+      newContact.custom_com_address = frm.doc.com_address;
+      newContact.custom_com_phone = frm.doc.com_phone;
+      newContact.custom_national_id = frm.doc.com_national_id;
+      newContact.custom_job_title = frm.doc.com_job_title;
+      newContact.custom_mobile_number = frm.doc.com_mobile_number;
+
+      frm._commissarBeingUpdated = true;
+      frappe.call({
+        method: "frappe.client.insert",
+        args: {
+          doc: newContact,
+        },
+        callback: function (r) {
+          frm._commissarBeingUpdated = false;
+          if (r.message) {
+            frappe.show_alert({
+              message: __("Commissar added successfully"),
+              indicator: "green",
+            });
+            // Set flag to prevent recursive updates
+            frm._preventCommissarUpdate = true;
+            frm.set_value("commissar", r.message.name);
+            frm._preventCommissarUpdate = false;
+            resolve();
+          } else {
+            reject();
+          }
+        },
+        error: function() {
+          frm._commissarBeingUpdated = false;
+          reject();
         }
-      },
-    });
-  } else if (
-    (frm.doc.client_type === "Company" ||
-      frm.doc.client_type === "Interbank") &&
-    frm.doc.client &&
-    frm.doc.commissar
-  ) {
-    frappe.call({
-      method: "frappe.client.get",
-      args: {
-        doctype: "Contact",
-        name: frm.doc.commissar,
-      },
-      callback: function (r) {
-        if (r.message) {
-          let existing_contact = r.message;
+      });
+    } else if (
+      (frm.doc.client_type === "Company" ||
+        frm.doc.client_type === "Interbank") &&
+      frm.doc.client &&
+      frm.doc.commissar
+    ) {
+      frm._commissarBeingUpdated = true;
+      frappe.call({
+        method: "frappe.client.get",
+        args: {
+          doctype: "Contact",
+          name: frm.doc.commissar,
+        },
+        callback: function (r) {
+          if (r.message) {
+            let existing_contact = r.message;
 
-          // Update the relevant fields
-          existing_contact.first_name = frm.doc.com_name;
-          existing_contact.custom_com_gender = frm.doc.com_gender;
-          existing_contact.custom_national_id = frm.doc.com_national_id;
-          existing_contact.custom_com_address = frm.doc.com_address || "";
-          existing_contact.custom_com_phone = frm.doc.com_phone;
-          existing_contact.custom_job_title = frm.doc.com_job_title;
-          existing_contact.custom_mobile_number = frm.doc.com_mobile_number;
+            // Update the relevant fields
+            existing_contact.first_name = frm.doc.com_name;
+            existing_contact.custom_com_gender = frm.doc.com_gender;
+            existing_contact.custom_national_id = frm.doc.com_national_id;
+            existing_contact.custom_com_address = frm.doc.com_address || "";
+            existing_contact.custom_com_phone = frm.doc.com_phone;
+            existing_contact.custom_job_title = frm.doc.com_job_title;
+            existing_contact.custom_mobile_number = frm.doc.com_mobile_number;
 
-          frappe.call({
-            method: "frappe.client.save",
-            args: {
-              doc: existing_contact,
-            },
-            callback: function (save_response) {
-              if (save_response.message) {
-                frappe.show_alert({
-                  message: __("Commissar updated successfully"),
-                  indicator: "green",
-                });
-                frm.set_value("commissar", save_response.message.name);
-              } else {
-                frappe.throw(__("Error while updating Commissar"));
-              }
-            },
-            error: function () {
-              frappe.throw(__("Error while updating Commissar"));
-            },
-          });
-        }
-      },
-      error: function () {
-        frappe.throw(__("Error while fetching Commissar details"));
-      },
-    });
-  }
+            frappe.call({
+              method: "frappe.client.save",
+              args: {
+                doc: existing_contact,
+              },
+              callback: function (save_response) {
+                frm._commissarBeingUpdated = false;
+                if (save_response.message) {
+                  frappe.show_alert({
+                    message: __("Commissar updated successfully"),
+                    indicator: "green",
+                  });
+                  // Set flag to prevent recursive updates
+                  frm._preventCommissarUpdate = true;
+                  frm.set_value("commissar", save_response.message.name);
+                  frm._preventCommissarUpdate = false;
+                  resolve();
+                } else {
+                  reject(new Error("Error while updating Commissar"));
+                }
+              },
+              error: function () {
+                frm._commissarBeingUpdated = false;
+                reject(new Error("Error while updating Commissar"));
+              },
+            });
+          }
+        },
+        error: function () {
+          frm._commissarBeingUpdated = false;
+          reject(new Error("Error while fetching Commissar details"));
+        },
+      });
+    } else {
+      resolve(); // No commissar update needed
+    }
+  });
 }
 
 // validate the national id
@@ -1411,9 +1468,40 @@ function validateRegistrationDateExpiration(frm, end) {
     // Compare the dates
     if (endDate < todayDate) {
       frm.set_value("is_expired1", true);
+      // Show the is_expired1 field
+      frm.toggle_display("is_expired1", true);
+    } else {
+      frm.toggle_display("is_expired1", false);
     }
   }
 }
+
+// Add function to validate ID expiry
+function validateIdExpiration(frm) {
+  if (frm.doc.issue_date) {
+    const today = frappe.datetime.get_today();
+    const issueDate = new Date(frm.doc.issue_date);
+    const todayDate = new Date(today);
+    
+    // For Egyptian IDs - typically valid for 7 years
+    let expiryDate = new Date(issueDate);
+    if (frm.doc.card_type === "National ID") {
+      expiryDate.setFullYear(expiryDate.getFullYear() + 7);
+    }
+    // For passports - typically valid for 5 years
+    else if (frm.doc.card_type === "Passport") {
+      expiryDate.setFullYear(expiryDate.getFullYear() + 5);
+    }
+    
+    if (expiryDate < todayDate) {
+      frm.set_value("expired", true);
+      frm.toggle_display("expired", true);
+    } else {
+      frm.toggle_display("expired", false);
+    }
+  }
+}
+
 //////////////////////////////////////Ahmed Reda //////////////////////////////////////////
 //////////////////////////////////////Ahmed Reda //////////////////////////////////////////
 //////////////////////////////////////Ahmed Reda //////////////////////////////////////////

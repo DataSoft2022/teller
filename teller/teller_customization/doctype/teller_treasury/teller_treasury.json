@@ -9,7 +9,8 @@
   "teller_name",
   "branch",
   "teller_number",
-  "teller_type"
+  "teller_type",
+  "egy_account"
  ],
  "fields": [
   {
@@ -43,6 +44,15 @@
    "options": "\nManager\nTeller",
    "reqd": 1,
    "in_list_view": 1
+  },
+  {
+   "fieldname": "egy_account",
+   "fieldtype": "Link",
+   "label": "EGP Account",
+   "options": "Account",
+   "reqd": 1,
+   "in_list_view": 1,
+   "description": "The EGP account used for all currency transactions"
   }
  ],
  "index_web_pages_for_search": 1,
