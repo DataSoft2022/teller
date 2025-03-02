@@ -85,15 +85,62 @@ class TreasuryTransferRequest(Document):
             frappe.throw("Please add at least one currency transfer")
 
     def on_submit(self):
-        """Set status to pending and notify master"""
-        # Set status to pending master approval
-        self.db_set('status', 'Pending Master Approval')
+        """Set status to pending and notify manager or auto-approve if destination is reports-to manager"""
+        # Check if destination treasury belongs to the source employee's reports-to manager
+        source_employee = frappe.db.get_value('Employee', 
+            {'user_id': frappe.db.get_value('User Permission', 
+                {'allow': 'Teller Treasury', 'for_value': self.treasury_from}, 'user')
+            }, 
+            ['name', 'reports_to']
+        )
         
-        # Notify master about the request
-        self.notify_master()
+        if source_employee and source_employee[1]:  # If source employee has a reports_to manager
+            # Get the manager's treasury
+            manager_user = frappe.db.get_value('Employee', source_employee[1], 'user_id')
+            if manager_user:
+                manager_treasury = frappe.db.get_value('User Permission', 
+                    {'user': manager_user, 'allow': 'Teller Treasury'}, 'for_value')
+                
+                # Check if destination treasury is the manager's treasury and it's a Manager type
+                is_manager_treasury = False
+                if manager_treasury and manager_treasury == self.treasury_to:
+                    treasury_type = frappe.db.get_value('Teller Treasury', manager_treasury, 'teller_type')
+                    if treasury_type == 'Manager':
+                        is_manager_treasury = True
+                
+                if is_manager_treasury:
+                    # Auto-approve the request
+                    self.db_set('status', 'Approved')
+                    self.db_set('master_approval', manager_user)
+                    
+                    # Create treasury transfer
+                    transfer = frappe.get_doc({
+                        "doctype": "Treasury Transfer",
+                        "from_treasury": self.treasury_from,
+                        "to_treasury": self.treasury_to,
+                        "currency_transfers": self.currency_transfers
+                    })
+                    transfer.insert()
+                    transfer.submit()
+                    
+                    # Notify branches
+                    notify_branches(self, "approved", transfer.name)
+                    
+                    frappe.msgprint(f"Request auto-approved as destination is your reporting manager's treasury. Transfer {transfer.name} created.")
+                    return
         
-    def notify_master(self):
+        # If not auto-approved, proceed with normal flow
+        self.db_set('status', 'Pending Manager Approval')
+        
+        # Notify manager about the request
+        self.notify_manager()
+        
+    def notify_manager(self):
         """Send notification to the reporting manager of destination treasury employee"""
+        # Skip notification if already approved
+        if self.status == 'Approved':
+            return
+            
         # Get employee assigned to destination treasury
         dest_employee = frappe.db.get_value('Employee', 
             {'user_id': frappe.db.get_value('User Permission', 
@@ -159,10 +206,13 @@ def approve_request(request_name, user):
     if doc.docstatus != 1:
         frappe.throw("Request must be submitted before it can be approved")
     
-    if doc.status != "Pending Master Approval":
+    if doc.status == "Approved":
+        frappe.throw("This request is already approved")
+        
+    if doc.status != "Pending Manager Approval":
         frappe.throw("This request cannot be approved because it is not pending approval. Current status: " + doc.status)
         
-    # Update status and master approval using db_set
+    # Update status and manager approval using db_set
     doc.db_set('status', 'Approved')
     doc.db_set('master_approval', user)
     
@@ -189,10 +239,13 @@ def reject_request(request_name, user, reason=None):
     if doc.docstatus != 1:
         frappe.throw("Request must be submitted before it can be rejected")
     
-    if doc.status != "Pending Master Approval":
+    if doc.status == "Approved":
+        frappe.throw("This request is already approved and cannot be rejected")
+        
+    if doc.status != "Pending Manager Approval":
         frappe.throw("This request cannot be rejected because it is not pending approval. Current status: " + doc.status)
         
-    # Update status and master approval using db_set
+    # Update status and manager approval using db_set
     doc.db_set('status', 'Rejected')
     doc.db_set('master_approval', user)
     

@@ -100,7 +100,7 @@ class TreasuryTransfer(Document):
 
 @frappe.whitelist()
 def get_available_currencies(from_treasury):
-	"""Get all currencies available in the source treasury"""
+	"""Get all currencies available in the source treasury with positive balance"""
 	accounts = frappe.get_all(
 		"Account",
 		filters={
@@ -118,18 +118,20 @@ def get_available_currencies(from_treasury):
 			continue
 			
 		balance = get_balance_on(account=account.name)
-		currencies.append({
-			"currency_code": account.custom_currency_code,
-			"currency_name": account.account_currency,
-			"account": account.name,
-			"balance": balance
-		})
+		# Only add currencies with positive balance
+		if flt(balance) > 0:
+			currencies.append({
+				"currency_code": account.custom_currency_code,
+				"currency_name": account.account_currency,
+				"account": account.name,
+				"balance": balance
+			})
 	
 	return currencies
 
 @frappe.whitelist()
 def get_available_currency_codes(doctype, txt, searchfield, start, page_len, filters):
-	"""Get list of currency codes available in the specified treasury"""
+	"""Get list of currency codes available in the specified treasury with positive balance"""
 	treasury = filters.get('treasury')
 	if not treasury:
 		return []
@@ -149,6 +151,12 @@ def get_available_currency_codes(doctype, txt, searchfield, start, page_len, fil
 			a.custom_currency_code LIKE %s
 			OR c.name LIKE %s
 		)
+		AND (
+			SELECT IFNULL(SUM(debit) - SUM(credit), 0)
+			FROM `tabGL Entry`
+			WHERE account = a.name
+			AND is_cancelled = 0
+		) > 0
 		ORDER BY a.custom_currency_code
 		LIMIT %s, %s
 	""", (

@@ -99,113 +99,101 @@ frappe.ui.form.on("Teller Purchase", {
             search_id: frm.doc.buyer_search_id
         },
         callback: function(r) {
-            try {
-                if (r.message) {
-                    const customer = r.message;
+            if (r.message) {
+                const customer = r.message;
+                
+                // Set the buyer reference
+                frm.set_value('buyer', customer.buyer);
+                
+                // Set fields based on customer type
+                if (customer.category_of_buyer === 'Egyptian' || customer.category_of_buyer === 'Foreigner') {
+                    // Set individual fields
+                    frm.set_value('buyer_name', customer.buyer_name);
+                    frm.set_value('buyer_card_type', customer.buyer_card_type);
                     
-                    // Set the buyer reference
-                    if (customer.buyer) {
-                        frm.set_value('buyer', customer.buyer);
+                    // Set the appropriate ID field based on card type
+                    if (customer.buyer_card_type === "National ID") {
+                        frm.set_value('buyer_national_id', customer.buyer_national_id);
+                    } else if (customer.buyer_card_type === "Passport") {
+                        frm.set_value('buyer_passport_number', customer.buyer_passport_number);
+                    } else if (customer.buyer_card_type === "Military Card") {
+                        frm.set_value('buyer_military_number', customer.buyer_military_number);
                     }
                     
-                    // Set fields based on customer type
-                    if (customer.category_of_buyer === 'Egyptian' || customer.category_of_buyer === 'Foreigner') {
-                        // Set individual fields one by one, checking if they exist
-                        const fields = [
-                            'buyer_name', 'buyer_card_type', 'buyer_nationality',
-                            'buyer_work_for', 'buyer_phone', 'buyer_place_of_birth',
-                            'buyer_date_of_birth', 'buyer_job_title', 'buyer_address',
-                            'buyer_expired'
-                        ];
-                        
-                        fields.forEach(field => {
-                            if (customer[field] !== undefined) {
-                                frm.set_value(field, customer[field]);
-                            }
-                        });
-                        
-                        // Set the appropriate ID field based on card type
-                        if (customer.buyer_card_type === "National ID" && customer.buyer_national_id) {
-                            frm.set_value('buyer_national_id', customer.buyer_national_id);
-                        } else if (customer.buyer_card_type === "Passport" && customer.buyer_passport_number) {
-                            frm.set_value('buyer_passport_number', customer.buyer_passport_number);
-                        } else if (customer.buyer_card_type === "Military Card" && customer.buyer_military_number) {
-                            frm.set_value('buyer_military_number', customer.buyer_military_number);
-                        }
-                    } else if (customer.category_of_buyer === 'Company' || customer.category_of_buyer === 'Interbank') {
-                        // Set company fields one by one, checking if they exist
-                        const companyFields = [
-                            'buyer_company_name', 'buyer_company_activity',
-                            'buyer_company_commercial_no', 'buyer_company_start_date',
-                            'buyer_company_end_date', 'buyer_company_address',
-                            'is_expired1', 'interbank', 'buyer_company_legal_form'
-                        ];
-                        
-                        companyFields.forEach(field => {
-                            if (customer[field] !== undefined) {
-                                frm.set_value(field, customer[field]);
-                            }
-                        });
-                    }
-                    
-                    // Set exceed flag if it exists
-                    if (customer.exceed !== undefined) {
-                        frm.set_value('exceed', customer.exceed);
-                    }
-                    
-                    // Refresh all fields
-                    frm.refresh_fields();
-                    
-                    // Show success message
-                    frappe.show_alert({
-                        message: __('Customer found and details populated'),
-                        indicator: 'green'
-                    });
-                } else {
-                    // If no customer found, clear all fields except the search ID
-                    if (frm.doc.category_of_buyer === 'Egyptian' || frm.doc.category_of_buyer === 'Foreigner') {
-                        const fields_to_clear = [
-                            'buyer_name', 'buyer_nationality',
-                            'buyer_work_for', 'buyer_phone',
-                            'buyer_place_of_birth', 'buyer_date_of_birth',
-                            'buyer_job_title', 'buyer_address',
-                            'buyer_expired', 'buyer'
-                        ];
-                        
-                        fields_to_clear.forEach(field => frm.set_value(field, ''));
-                        
-                        // Set the search ID to the appropriate field based on card type
-                        if (frm.doc.buyer_card_type === "National ID") {
-                            frm.set_value('buyer_national_id', frm.doc.buyer_search_id);
-                            frm.set_value('buyer_passport_number', '');
-                            frm.set_value('buyer_military_number', '');
-                        } else if (frm.doc.buyer_card_type === "Passport") {
-                            frm.set_value('buyer_passport_number', frm.doc.buyer_search_id);
-                            frm.set_value('buyer_national_id', '');
-                            frm.set_value('buyer_military_number', '');
-                        } else if (frm.doc.buyer_card_type === "Military Card") {
-                            frm.set_value('buyer_military_number', frm.doc.buyer_search_id);
-                            frm.set_value('buyer_national_id', '');
-                            frm.set_value('buyer_passport_number', '');
-                        }
-                    } else if (frm.doc.category_of_buyer === 'Company' || frm.doc.category_of_buyer === 'Interbank') {
-                        const company_fields_to_clear = [
-                            'buyer_company_name', 'buyer_company_activity',
-                            'buyer_company_start_date', 'buyer_company_end_date',
-                            'buyer_company_address', 'is_expired1', 'interbank',
-                            'buyer_company_legal_form', 'buyer'
-                        ];
-                        
-                        company_fields_to_clear.forEach(field => frm.set_value(field, ''));
-                        frm.set_value('buyer_company_commercial_no', frm.doc.buyer_search_id);
-                    }
-                    
-                    // Refresh all fields
-                    frm.refresh_fields();
+                    // Set other fields
+                    frm.set_value('buyer_nationality', customer.buyer_nationality);
+                    frm.set_value('buyer_work_for', customer.buyer_work_for);
+                    frm.set_value('buyer_phone', customer.buyer_phone);
+                    frm.set_value('buyer_place_of_birth', customer.buyer_place_of_birth);
+                    frm.set_value('buyer_date_of_birth', customer.buyer_date_of_birth);
+                    frm.set_value('buyer_job_title', customer.buyer_job_title);
+                    frm.set_value('buyer_address', customer.buyer_address);
+                    frm.set_value('buyer_expired', customer.buyer_expired);
+                } else if (customer.category_of_buyer === 'Company' || customer.category_of_buyer === 'Interbank') {
+                    // Set company fields
+                    frm.set_value('buyer_company_name', customer.buyer_company_name);
+                    frm.set_value('buyer_company_activity', customer.buyer_company_activity);
+                    frm.set_value('buyer_company_commercial_no', customer.buyer_company_commercial_no);
+                    frm.set_value('buyer_company_start_date', customer.buyer_company_start_date);
+                    frm.set_value('buyer_company_end_date', customer.buyer_company_end_date);
+                    frm.set_value('buyer_company_address', customer.buyer_company_address);
+                    frm.set_value('is_expired1', customer.is_expired1);
+                    frm.set_value('interbank', customer.interbank);
+                    frm.set_value('buyer_company_legal_form', customer.buyer_company_legal_form);
                 }
-            } catch (e) {
-                console.error("Error handling buyer search response:", e);
-                frappe.msgprint(__("Error handling buyer search response. Please try again."));
+                
+                // Set exceed flag
+                frm.set_value('exceed', customer.exceed);
+                
+                // Refresh all fields
+                frm.refresh_fields();
+                
+                // Show success message
+                frappe.show_alert({
+                    message: __('Customer found and details populated'),
+                    indicator: 'green'
+                });
+            } else {
+                // If no customer found, clear all fields except the search ID
+                if (frm.doc.category_of_buyer === 'Egyptian' || frm.doc.category_of_buyer === 'Foreigner') {
+                    const fields_to_clear = [
+                        'buyer_name', 'buyer_nationality',
+                        'buyer_work_for', 'buyer_phone',
+                        'buyer_place_of_birth', 'buyer_date_of_birth',
+                        'buyer_job_title', 'buyer_address',
+                        'buyer_expired', 'buyer'
+                    ];
+                    
+                    fields_to_clear.forEach(field => frm.set_value(field, ''));
+                    
+                    // Set the search ID to the appropriate field based on card type
+                    if (frm.doc.buyer_card_type === "National ID") {
+                        frm.set_value('buyer_national_id', frm.doc.buyer_search_id);
+                        frm.set_value('buyer_passport_number', '');
+                        frm.set_value('buyer_military_number', '');
+                    } else if (frm.doc.buyer_card_type === "Passport") {
+                        frm.set_value('buyer_passport_number', frm.doc.buyer_search_id);
+                        frm.set_value('buyer_national_id', '');
+                        frm.set_value('buyer_military_number', '');
+                    } else if (frm.doc.buyer_card_type === "Military Card") {
+                        frm.set_value('buyer_military_number', frm.doc.buyer_search_id);
+                        frm.set_value('buyer_national_id', '');
+                        frm.set_value('buyer_passport_number', '');
+                    }
+                } else if (frm.doc.category_of_buyer === 'Company' || frm.doc.category_of_buyer === 'Interbank') {
+                    const company_fields_to_clear = [
+                        'buyer_company_name', 'buyer_company_activity',
+                        'buyer_company_start_date', 'buyer_company_end_date',
+                        'buyer_company_address', 'is_expired1', 'interbank',
+                        'buyer_company_legal_form', 'buyer'
+                    ];
+                    
+                    company_fields_to_clear.forEach(field => frm.set_value(field, ''));
+                    frm.set_value('buyer_company_commercial_no', frm.doc.buyer_search_id);
+                }
+                
+                // Refresh all fields
+                frm.refresh_fields();
             }
         }
     });
@@ -1283,19 +1271,6 @@ frappe.ui.form.on("Teller Purchase", {
             frm.refresh_field('egy_balance');
           }
         },
-      });
-    }
-  },
-  total: function (frm) {
-    if (frm.doc.buyer && frm.doc.total) {
-      // check if the total is exceeded
-      isExceededLimit(frm, frm.doc.buyer, frm.doc.total);
-    } else {
-      frappe.msgprint({
-        message:
-          '<div style="background-color: #f8d7da; color: #721c24; padding: 10px; border-radius: 5px; font-family: Arial, sans-serif; font-size: 14px;">Please enter Buyer to validate the transaction</div>',
-        title: "Missing Data Error",
-        indicator: "red",
       });
     }
   },

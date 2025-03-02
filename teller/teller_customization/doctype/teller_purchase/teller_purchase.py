@@ -383,13 +383,6 @@ class TellerPurchase(Document):
                     "remarks": f"Currency purchase: Received {row.quantity} {row.currency_code} for {row.egy_amount} EGY"
                 })
                 credit_entry.insert(ignore_permissions=True).submit()
-
-                if debit_entry and credit_entry:
-                    frappe.msgprint(
-                        _("Teller Purchase created successfully with Total {0}").format(
-                            self.total
-                        )
-                    )
                 
         except Exception as e:
             frappe.log_error(
@@ -1187,6 +1180,14 @@ def has_permission(doc, ptype="read", user=None):
 
 @frappe.whitelist()
 def search_buyer_by_id(search_id):
+    """
+    Search for a customer by various identifiers:
+    - National ID for Egyptian customers
+    - Commercial Number for Companies
+    - Passport Number for Foreigners and Egyptians
+    - Military Number for Military personnel
+    Returns customer details if found
+    """
     if not search_id:
         return None
         
@@ -1196,13 +1197,14 @@ def search_buyer_by_id(search_id):
     # Define fields to fetch
     fields = [
         "name", "customer_name", "custom_type", "custom_is_exceed",
-        "custom_phone", "custom_work_for", "custom_address",
-        "custom_national_id", "custom_passport_number", "custom_military_number",
-        "custom_nationality", "custom_issue_date", "custom_expired",
-        "custom_place_of_birth", "custom_date_of_birth", "custom_job_title",
-        "custom_card_type", "custom_commercial_no", "custom_start_registration_date",
-        "custom_end_registration_date", "custom_legal_form", "custom_company_activity",
-        "custom_is_expired", "custom_interbank"
+        "custom_phone", "custom_mobile_number", "custom_work_for",
+        "custom_address", "custom_national_id", "custom_passport_number",
+        "custom_military_number", "custom_nationality", "custom_issue_date",
+        "custom_expired", "custom_place_of_birth", "custom_date_of_birth",
+        "custom_job_title", "custom_card_type", "custom_commercial_no",
+        "custom_start_registration_date", "custom_end_registration_date",
+        "custom_legal_form", "custom_company_activity", "custom_is_expired",
+        "custom_interbank"
     ]
     
     # Try to find by National ID (Egyptian)
@@ -1211,17 +1213,17 @@ def search_buyer_by_id(search_id):
         fields, as_dict=1
     )
     
+    # Try to find by Passport Number (Egyptian or Foreigner)
+    if not customer:
+        customer = frappe.db.get_value('Customer',
+            {'custom_passport_number': search_id, 'custom_type': ['in', ['Egyptian', 'Foreigner']]},
+            fields, as_dict=1
+        )
+    
     # Try to find by Commercial Number (Company)
     if not customer:
         customer = frappe.db.get_value('Customer',
             {'custom_commercial_no': search_id, 'custom_type': 'Company'},
-            fields, as_dict=1
-        )
-    
-    # Try to find by Passport Number (Foreigner)
-    if not customer:
-        customer = frappe.db.get_value('Customer',
-            {'custom_passport_number': search_id, 'custom_type': 'Foreigner'},
             fields, as_dict=1
         )
     
@@ -1235,42 +1237,43 @@ def search_buyer_by_id(search_id):
     if not customer:
         return None
         
-    # Base response with required fields
+    # Prepare response based on customer type
     response = {
         "buyer": customer.name,
-        "buyer_name": customer.customer_name or "",
+        "buyer_name": customer.customer_name,
         "category_of_buyer": customer.custom_type,
-        "exceed": customer.custom_is_exceed or 0
+        "exceed": customer.custom_is_exceed,
+        "buyer_phone": customer.custom_phone,
+        "buyer_work_for": customer.custom_work_for,
+        "buyer_address": customer.custom_address,
+        # Always include all ID fields, they will be populated based on the match
+        "buyer_national_id": customer.custom_national_id,
+        "buyer_passport_number": customer.custom_passport_number,
+        "buyer_military_number": customer.custom_military_number
     }
     
-    # Add individual fields only if they exist
+    # Add type-specific fields
     if customer.custom_type in ["Egyptian", "Foreigner"]:
         response.update({
-            "buyer_card_type": customer.custom_card_type or "National ID",
-            "buyer_nationality": customer.custom_nationality or "",
-            "buyer_phone": customer.custom_phone or "",
-            "buyer_work_for": customer.custom_work_for or "",
-            "buyer_address": customer.custom_address or "",
-            "buyer_place_of_birth": customer.custom_place_of_birth or "",
-            "buyer_date_of_birth": customer.custom_date_of_birth or "",
-            "buyer_job_title": customer.custom_job_title or "",
-            "buyer_issue_date": customer.custom_issue_date or "",
-            "buyer_expired": customer.custom_expired or 0,
-            "buyer_national_id": customer.custom_national_id or "",
-            "buyer_passport_number": customer.custom_passport_number or "",
-            "buyer_military_number": customer.custom_military_number or ""
+            "buyer_card_type": customer.custom_card_type,
+            "buyer_nationality": customer.custom_nationality,
+            "buyer_issue_date": customer.custom_issue_date,
+            "buyer_expired": customer.custom_expired,
+            "buyer_place_of_birth": customer.custom_place_of_birth,
+            "buyer_date_of_birth": customer.custom_date_of_birth,
+            "buyer_job_title": customer.custom_job_title
         })
     elif customer.custom_type == "Company":
         response.update({
-            "buyer_company_name": customer.customer_name or "",
-            "buyer_company_commercial_no": customer.custom_commercial_no or "",
-            "buyer_company_start_date": customer.custom_start_registration_date or "",
-            "buyer_company_end_date": customer.custom_end_registration_date or "",
-            "buyer_company_address": customer.custom_address or "",
-            "buyer_company_legal_form": customer.custom_legal_form or "",
-            "buyer_company_activity": customer.custom_company_activity or "",
-            "is_expired1": customer.custom_is_expired or 0,
-            "interbank": customer.custom_interbank or 0
+            "buyer_company_name": customer.customer_name,
+            "buyer_company_commercial_no": customer.custom_commercial_no,
+            "buyer_company_start_date": customer.custom_start_registration_date,
+            "buyer_company_end_date": customer.custom_end_registration_date,
+            "buyer_company_address": customer.custom_address,
+            "buyer_company_legal_form": customer.custom_legal_form,
+            "buyer_company_activity": customer.custom_company_activity,
+            "is_expired1": customer.custom_is_expired,
+            "interbank": customer.custom_interbank
         })
     
     return response

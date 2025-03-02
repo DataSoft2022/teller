@@ -54,9 +54,9 @@ frappe.ui.form.on('Treasury Transfer Request', {
     },
 
     refresh: function(frm) {
-        // Add custom buttons for master approval/rejection
-        if (frm.doc.docstatus === 1 && frm.doc.status === 'Pending Master Approval' && 
-            frappe.user.has_role('System Manager')) {  // Replace with actual master role
+        // Add custom buttons for manager approval/rejection
+        if (frm.doc.docstatus === 1 && frm.doc.status === 'Pending Manager Approval' && 
+            frappe.user.has_role('System Manager')) {  // Replace with actual manager role
             
             frm.add_custom_button(__('Approve'), function() {
                 frappe.confirm(
@@ -119,7 +119,7 @@ frappe.ui.form.on('Treasury Transfer Request', {
             let indicator = 'gray';
             if (frm.doc.status === 'Approved') indicator = 'green';
             else if (frm.doc.status === 'Rejected') indicator = 'red';
-            else if (frm.doc.status === 'Pending Master Approval') indicator = 'orange';
+            else if (frm.doc.status === 'Pending Manager Approval') indicator = 'orange';
             
             frm.page.set_indicator(frm.doc.status, indicator);
         }
@@ -216,17 +216,27 @@ frappe.ui.form.on('Treasury Transfer Request', {
         
         // Get employee for destination treasury - now using a direct DB query
         if (frm.doc.treasury_to) {
-            frappe.db.get_value('Teller Treasury', frm.doc.treasury_to, 'branch')
+            frappe.db.get_value('Teller Treasury', frm.doc.treasury_to, ['branch', 'teller_type'])
                 .then(r => {
-                    if (r.message && r.message.branch) {
-                        return frappe.db.get_list('Employee', {
-                            filters: {
-                                'branch': r.message.branch,
-                                'status': 'Active'
-                            },
-                            fields: ['employee_name'],
-                            limit: 1
-                        });
+                    if (r.message) {
+                        // Check if destination is a manager treasury
+                        if (r.message.teller_type === 'Manager') {
+                            frappe.show_alert({
+                                message: __('Destination is a manager treasury. If this is your reporting manager, the request will be auto-approved on submission.'),
+                                indicator: 'blue'
+                            });
+                        }
+                        
+                        if (r.message.branch) {
+                            return frappe.db.get_list('Employee', {
+                                filters: {
+                                    'branch': r.message.branch,
+                                    'status': 'Active'
+                                },
+                                fields: ['employee_name'],
+                                limit: 1
+                            });
+                        }
                     }
                 })
                 .then(employees => {
