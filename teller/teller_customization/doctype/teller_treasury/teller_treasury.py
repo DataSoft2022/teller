@@ -26,15 +26,21 @@ class TellerTreasury(Document):
 					frappe.throw(_("EGY Account must be of type Bank or Cash"))
 				
 				# Check if account belongs to correct branch
-				branch_accounts = frappe.get_all("Account", 
-					filters={
-						"parent_account": ["like", f"%{self.branch}%"],
-						"is_group": 0
-					},
-					pluck="name"
-				)
-				if self.egy_account not in branch_accounts:
-					frappe.throw(_("EGY Account must belong to branch {0}").format(self.branch))
+				# Instead of checking parent_account, check the custom_branch field
+				if hasattr(account, 'custom_branch') and account.custom_branch:
+					if str(account.custom_branch) != str(self.branch):
+						frappe.throw(_("EGY Account must belong to branch {0}").format(self.branch))
+				else:
+					# If custom_branch is not set, check using the old method as fallback
+					branch_accounts = frappe.get_all("Account", 
+						filters={
+							"parent_account": ["like", f"%{self.branch}%"],
+							"is_group": 0
+						},
+						pluck="name"
+					)
+					if self.egy_account not in branch_accounts:
+						frappe.throw(_("EGY Account must belong to branch {0}").format(self.branch))
 		except Exception as e:
 			frappe.log_error(f"Error validating accounts: {str(e)}\n{frappe.get_traceback()}")
 			frappe.throw(_("Error validating accounts: {0}").format(str(e)))
