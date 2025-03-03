@@ -5,46 +5,7 @@ import frappe
 from frappe.model.document import Document
 from frappe import _
 
-def get_permission_query_conditions(user=None):
-    """Return SQL conditions with user permissions for Open Shift for Branch."""
-    if not user:
-        user = frappe.session.user
-        
-    # Only System Manager and Administrator can create/view shifts
-    if user == "Administrator" or "System Manager" in frappe.get_roles(user):
-        return ""
-        
-    # Regular employees cannot create shifts - they can only view their own
-    employee = frappe.db.get_value('Employee', {'user_id': user}, 'name')
-    if not employee:
-        return "1=0"
-        
-    # Regular users can only view shifts assigned to them
-    return f"`tabOpen Shift for Branch`.current_user = '{employee}'"
 
-def has_permission(doc, ptype="read", user=None):
-    """Permission handler for Open Shift for Branch"""
-    if not user:
-        user = frappe.session.user
-        
-    # System Manager and Administrator have full access
-    if user == "Administrator" or "System Manager" in frappe.get_roles(user):
-        return True
-        
-    # Get the employee linked to the current user
-    employee = frappe.db.get_value('Employee', {'user_id': user}, 'name')
-    if not employee:
-        return False
-        
-    # Check if user has role-based permissions
-    if frappe.has_permission("Open Shift for Branch", ptype=ptype, user=user):
-        # For read operations, users can access their own shifts
-        if ptype == "read":
-            return doc.current_user == employee
-        # For create/write operations, check if user has explicit permissions
-        return True
-        
-    return False
 
 @frappe.whitelist()
 def get_available_employees(doctype, txt, searchfield, start, page_len, filters):
