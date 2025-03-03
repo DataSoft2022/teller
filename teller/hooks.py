@@ -104,16 +104,12 @@ home_page = "login"
 # Permissions evaluated in scripted ways
 
 permission_query_conditions = {
-    "Open Shift for Branch": "teller.teller_customization.doctype.open_shift_for_branch.open_shift_for_branch.get_permission_query_conditions",
-    "Teller Invoice": "teller.teller_customization.doctype.teller_invoice.teller_invoice.get_permission_query_conditions",
-    "Account": "teller.teller_customization.doctype.account.account_permission.get_permission_query_conditions"
+    
 }
 
 # Permissions for all doctypes
 has_permission = {
-    "Open Shift for Branch": "teller.teller_customization.doctype.open_shift_for_branch.open_shift_for_branch.has_permission",
-    "Teller Invoice": "teller.teller_customization.doctype.teller_invoice.teller_invoice.has_permission",
-    "Account": "teller.teller_customization.doctype.account.account_permission.has_permission"
+    
 }
 
 # DocType Class
