@@ -60,7 +60,7 @@ frappe.pages['currency-screen'].on_page_load = function (wrapper) {
   wrapper.appendChild(container);
 
   let currentPage = 0;
-  const itemsPerPage = 9; // Changed from 15 to 9 items per page
+  const itemsPerPage = 16; // Changed from 15 to 9 items per page
   let allData = []; // Store all data
 
   function populateTable(data) {

@@ -85,119 +85,126 @@ frappe.ui.form.on("Teller Purchase", {
   },
 
   buyer_search_id: function(frm) {
-    if (!frm.doc.category_of_buyer || !frm.doc.buyer_search_id) return;
+    if (!frm.doc.category_of_buyer || !frm.doc.buyer_search_id) {
+      return;
+    }
     
-    // Clear all ID fields first
-    frm.set_value('buyer_national_id', '');
-    frm.set_value('buyer_passport_number', '');
-    frm.set_value('buyer_military_number', '');
+    // Show a loading indicator
+    frm.set_value('buyer', ''); // Clear buyer first to avoid conflicts
+    frm.toggle_display('search_buyer', true);
     
     // Automatically search when ID is entered
     frappe.call({
-        method: 'teller.teller_customization.doctype.teller_purchase.teller_purchase.search_buyer_by_id',
-        args: {
-            search_id: frm.doc.buyer_search_id
-        },
-        callback: function(r) {
-            if (r.message) {
-                const customer = r.message;
-                
-                // Set the buyer reference
-                frm.set_value('buyer', customer.buyer);
-                
-                // Set fields based on customer type
-                if (customer.category_of_buyer === 'Egyptian' || customer.category_of_buyer === 'Foreigner') {
-                    // Set individual fields
-                    frm.set_value('buyer_name', customer.buyer_name);
-                    frm.set_value('buyer_card_type', customer.buyer_card_type);
-                    
-                    // Set the appropriate ID field based on card type
-                    if (customer.buyer_card_type === "National ID") {
-                        frm.set_value('buyer_national_id', customer.buyer_national_id);
-                    } else if (customer.buyer_card_type === "Passport") {
-                        frm.set_value('buyer_passport_number', customer.buyer_passport_number);
-                    } else if (customer.buyer_card_type === "Military Card") {
-                        frm.set_value('buyer_military_number', customer.buyer_military_number);
-                    }
-                    
-                    // Set other fields
-                    frm.set_value('buyer_nationality', customer.buyer_nationality);
-                    frm.set_value('buyer_work_for', customer.buyer_work_for);
-                    frm.set_value('buyer_phone', customer.buyer_phone);
-                    frm.set_value('buyer_place_of_birth', customer.buyer_place_of_birth);
-                    frm.set_value('buyer_date_of_birth', customer.buyer_date_of_birth);
-                    frm.set_value('buyer_job_title', customer.buyer_job_title);
-                    frm.set_value('buyer_address', customer.buyer_address);
-                    frm.set_value('buyer_expired', customer.buyer_expired);
-                } else if (customer.category_of_buyer === 'Company' || customer.category_of_buyer === 'Interbank') {
-                    // Set company fields
-                    frm.set_value('buyer_company_name', customer.buyer_company_name);
-                    frm.set_value('buyer_company_activity', customer.buyer_company_activity);
-                    frm.set_value('buyer_company_commercial_no', customer.buyer_company_commercial_no);
-                    frm.set_value('buyer_company_start_date', customer.buyer_company_start_date);
-                    frm.set_value('buyer_company_end_date', customer.buyer_company_end_date);
-                    frm.set_value('buyer_company_address', customer.buyer_company_address);
-                    frm.set_value('is_expired1', customer.is_expired1);
-                    frm.set_value('interbank', customer.interbank);
-                    frm.set_value('buyer_company_legal_form', customer.buyer_company_legal_form);
-                }
-                
-                // Set exceed flag
-                frm.set_value('exceed', customer.exceed);
-                
-                // Refresh all fields
-                frm.refresh_fields();
-                
-                // Show success message
-                frappe.show_alert({
-                    message: __('Customer found and details populated'),
-                    indicator: 'green'
-                });
-            } else {
-                // If no customer found, clear all fields except the search ID
-                if (frm.doc.category_of_buyer === 'Egyptian' || frm.doc.category_of_buyer === 'Foreigner') {
-                    const fields_to_clear = [
-                        'buyer_name', 'buyer_nationality',
-                        'buyer_work_for', 'buyer_phone',
-                        'buyer_place_of_birth', 'buyer_date_of_birth',
-                        'buyer_job_title', 'buyer_address',
-                        'buyer_expired', 'buyer'
-                    ];
-                    
-                    fields_to_clear.forEach(field => frm.set_value(field, ''));
-                    
-                    // Set the search ID to the appropriate field based on card type
-                    if (frm.doc.buyer_card_type === "National ID") {
-                        frm.set_value('buyer_national_id', frm.doc.buyer_search_id);
-                        frm.set_value('buyer_passport_number', '');
-                        frm.set_value('buyer_military_number', '');
-                    } else if (frm.doc.buyer_card_type === "Passport") {
-                        frm.set_value('buyer_passport_number', frm.doc.buyer_search_id);
-                        frm.set_value('buyer_national_id', '');
-                        frm.set_value('buyer_military_number', '');
-                    } else if (frm.doc.buyer_card_type === "Military Card") {
-                        frm.set_value('buyer_military_number', frm.doc.buyer_search_id);
-                        frm.set_value('buyer_national_id', '');
-                        frm.set_value('buyer_passport_number', '');
-                    }
-                } else if (frm.doc.category_of_buyer === 'Company' || frm.doc.category_of_buyer === 'Interbank') {
-                    const company_fields_to_clear = [
-                        'buyer_company_name', 'buyer_company_activity',
-                        'buyer_company_start_date', 'buyer_company_end_date',
-                        'buyer_company_address', 'is_expired1', 'interbank',
-                        'buyer_company_legal_form', 'buyer'
-                    ];
-                    
-                    company_fields_to_clear.forEach(field => frm.set_value(field, ''));
-                    frm.set_value('buyer_company_commercial_no', frm.doc.buyer_search_id);
-                }
-                
-                // Refresh all fields
-                frm.refresh_fields();
+      method: 'teller.teller_customization.doctype.teller_purchase.teller_purchase.search_buyer_by_id',
+      args: {
+        search_id: frm.doc.buyer_search_id
+      },
+      callback: function(r) {
+        if (r.message) {
+          const customer = r.message;
+          
+          // First set the category to trigger any dependent field updates
+          if (customer.category_of_buyer) {
+            frm.set_value('category_of_buyer', customer.category_of_buyer);
+          }
+          
+          // Then set the buyer
+          if (customer.buyer) {
+            frm.set_value('buyer', customer.buyer);
+          }
+          
+          // Set card type if available
+          if (customer.buyer_card_type) {
+            frm.set_value('buyer_card_type', customer.buyer_card_type);
+          }
+          
+          // Set fields based on customer type
+          if (customer.category_of_buyer === 'Egyptian' || customer.category_of_buyer === 'Foreigner') {
+            // Set individual fields
+            const individualFields = [
+              'buyer_name', 'buyer_nationality', 'buyer_gender',
+              'buyer_work_for', 'buyer_phone', 'buyer_mobile_number',
+              'buyer_place_of_birth', 'buyer_date_of_birth', 'buyer_job_title',
+              'buyer_address', 'buyer_issue_date', 'buyer_expired'
+            ];
+            
+            // Set each field if it has a value
+            individualFields.forEach(field => {
+              if (customer[field] !== undefined && customer[field] !== null) {
+                frm.set_value(field, customer[field]);
+              }
+            });
+            
+            // Clear all ID fields first
+            frm.set_value('buyer_national_id', '');
+            frm.set_value('buyer_passport_number', '');
+            frm.set_value('buyer_military_number', '');
+            
+            // Set the appropriate ID field based on card type
+            if (customer.buyer_card_type === "National ID" && customer.buyer_national_id) {
+              frm.set_value('buyer_national_id', customer.buyer_national_id);
+            } else if (customer.buyer_card_type === "Passport" && customer.buyer_passport_number) {
+              frm.set_value('buyer_passport_number', customer.buyer_passport_number);
+            } else if (customer.buyer_card_type === "Military Card" && customer.buyer_military_number) {
+              frm.set_value('buyer_military_number', customer.buyer_military_number);
             }
+            
+            // Show the appropriate ID field
+            showIdentificationFields(frm);
+            
+          } else if (customer.category_of_buyer === 'Company' || customer.category_of_buyer === 'Interbank') {
+            // Set company fields
+            const companyFields = [
+              'buyer_company_name', 'buyer_company_activity', 'buyer_company_commercial_no',
+              'buyer_company_start_date', 'buyer_company_end_date',
+              'buyer_company_address', 'buyer_company_legal_form'
+            ];
+            
+            // Set each field if it has a value
+            companyFields.forEach(field => {
+              if (customer[field] !== undefined && customer[field] !== null) {
+                frm.set_value(field, customer[field]);
+              }
+            });
+            
+            // Set boolean fields
+            if (customer.is_expired1 !== undefined) {
+              frm.set_value('is_expired1', customer.is_expired1);
+            }
+            
+            if (customer.interbank !== undefined) {
+              frm.set_value('interbank', customer.interbank);
+            }
+          }
+          
+          // Set exceed flag if available
+          if (customer.exceed !== undefined) {
+            frm.set_value('exceed', customer.exceed);
+          }
+          
+          // Refresh all fields to ensure UI is updated
+          frm.refresh_fields();
+          
+          frappe.show_alert({
+            message: __('Customer information loaded successfully'),
+            indicator: 'green'
+          });
+        } else {
+          frappe.show_alert({
+            message: __('No customer found with ID: {0}', [frm.doc.buyer_search_id]),
+            indicator: 'red'
+          });
         }
+      },
+      error: function(err) {
+        console.error("Error searching buyer:", err);
+        frappe.show_alert({
+          message: __('Error searching for customer'),
+          indicator: 'red'
+        });
+      }
     });
-},
+  },
 
   category_of_buyer: function(frm) {
     // First clear all ID fields
@@ -823,7 +830,7 @@ frappe.ui.form.on("Teller Purchase", {
         // Set common fields regardless of category
         frm.set_value("buyer_name", customer.customer_name);
         
-        if (frm.doc.category_of_buyer == "Egyptian" || frm.doc.category_of_buyer == "Foreigner") {
+        if (frm.doc.category_of_buyer == "Egyptian" || frm.doc.category_of_buyer === "Foreigner") {
           // Set individual fields
           const individualFields = [
             'buyer_name', 'buyer_gender', 'buyer_nationality',
@@ -860,7 +867,7 @@ frappe.ui.form.on("Teller Purchase", {
           // Ensure fields are refreshed
           frm.refresh_fields(['buyer_national_id', 'buyer_passport_number', 'buyer_military_number']);
 
-        } else if (frm.doc.category_of_buyer == "Company" || frm.doc.category_of_buyer == "Interbank") {
+        } else if (frm.doc.category_of_buyer == "Company" || frm.doc.category_of_buyer === "Interbank") {
           // Set company fields
           const companyFields = {
             "buyer_company_name": customer.customer_name,
@@ -1314,52 +1321,128 @@ frappe.ui.form.on("Teller Purchase", {
           filters: {
             status: ["in", ["Partial Billed", "Not Billed"]],
             docstatus: 1,
+            type: "Purchasing" // Ensure we only get purchasing records for Teller Purchase
           }
         };
       },
       action(selections, args) {
+        // Clear console for debugging
+        console.clear();
+        console.log("Selected bookings:", selections);
+        console.log("Args:", args);
+        
+        if (!selections || selections.length === 0) {
+          frappe.msgprint(__("No bookings selected"));
+          return;
+        }
+        
+        // Process each selected booking
         selections.forEach(function(booking_ib) {
           if (booking_ib) {
             frappe.call({
               method: "frappe.client.get",
               args: {
                 doctype: "Booking Interbank",
-                filters: {
-                  "name": booking_ib,
-                  "status": ["in", ["Partial Billed", "Not Billed"]]
-                }
+                name: booking_ib
               },
               callback: function(response) {
+                console.log("Booking response:", response);
+                
                 if (response && response.message) {
-                  response.message.booked_currency.forEach(function(item) {
-                    var bo_items = args.filtered_children;
-                    if (item.status === "Not Billed") {
-                      if (bo_items.length) {
-                        bo_items.forEach(function(bo_item) {
-                          if (bo_item == item.name) {
-                            var child = frm.add_child("purchase_transactions");
-                            child.code = item.currency_code;
-                            child.currency_code = item.currency;
-                            child.usd_amount = item.qty;
-                            child.rate = item.rate;
-                            child.total_amount = item.qty * item.rate;
-                            child.booking_interbank = booking_ib;
-                            get_account(frm, child);
+                  let booking = response.message;
+                  
+                  // Check if booked_currency exists and has items
+                  if (booking.booked_currency && booking.booked_currency.length > 0) {
+                    console.log("Processing booked currencies:", booking.booked_currency);
+                    
+                    // Filter to get only items with status "Not Billed" or "Partial Billed"
+                    let availableItems = booking.booked_currency.filter(item => 
+                      item.status === "Not Billed" || item.status === "Partial Billed");
+                    
+                    console.log("Available items:", availableItems);
+                    
+                    if (availableItems.length === 0) {
+                      frappe.msgprint(__("No available currencies in booking {0}", [booking_ib]));
+                      return;
+                    }
+                    
+                    // Process filtered items
+                    availableItems.forEach(function(item) {
+                      // Calculate available quantity
+                      let availableQty = item.qty;
+                      if (item.booking_qty) {
+                        availableQty -= item.booking_qty;
+                      }
+                      
+                      if (availableQty <= 0) {
+                        console.log("Item has no available quantity:", item);
+                        return; // Skip items with no available quantity
+                      }
+                      
+                      console.log("Adding item with available qty:", availableQty, item);
+                      
+                      // Add to purchase transactions
+                      let child = frm.add_child("purchase_transactions");
+                      
+                      // Set all required fields
+                      child.currency_code = item.currency_code;
+                      child.currency = item.currency;
+                      child.quantity = availableQty;
+                      child.exchange_rate = item.rate;
+                      child.booking_interbank = booking_ib;
+                      child.amount = availableQty;
+                      child.egy_amount = availableQty * item.rate;
+                      
+                      // If there's an account field that needs to be set based on currency
+                      if (item.currency) {
+                        // Find the appropriate account for this currency
+                        frappe.call({
+                          method: 'frappe.client.get_list',
+                          args: {
+                            doctype: 'Account',
+                            filters: {
+                              'account_currency': item.currency,
+                              'account_type': ['in', ['Bank', 'Cash']],
+                              'custom_teller_treasury': frm.doc.treasury_code
+                            },
+                            fields: ['name'],
+                            limit: 1
+                          },
+                          callback: function(account_response) {
+                            if (account_response.message && account_response.message.length > 0) {
+                              child.account = account_response.message[0].name;
+                              frm.refresh_field("purchase_transactions");
+                            }
                           }
                         });
                       }
-                    }
-                  });
-
-                  frm.refresh_field("purchase_transactions");
-                  cur_dialog.hide();
-                  let total = 0;
-                  frm.doc.purchase_transactions.forEach((item) => {
-                    total += item.total_amount;
-                  });
-                  frm.set_value("total", total);
-                  frm.refresh_field("total");
+                    });
+                    
+                    // Refresh the child table
+                    frm.refresh_field("purchase_transactions");
+                    
+                    // Update total
+                    let total = 0;
+                    frm.doc.purchase_transactions.forEach((item) => {
+                      total += flt(item.egy_amount || 0);
+                    });
+                    frm.set_value("total", total);
+                    frm.refresh_field("total");
+                    
+                    frappe.show_alert({
+                      message: __('Successfully added currencies from booking {0}', [booking_ib]),
+                      indicator: 'green'
+                    });
+                  } else {
+                    frappe.msgprint(__("No booked currencies found in booking {0}", [booking_ib]));
+                  }
+                } else {
+                  frappe.msgprint(__("Could not retrieve booking {0}", [booking_ib]));
                 }
+              },
+              error: function(err) {
+                console.error("Error fetching booking:", err);
+                frappe.msgprint(__("Error fetching booking details"));
               }
             });
           }
@@ -1516,261 +1599,61 @@ frappe.ui.form.on("Teller Purchase Child", {
 
     exchange_rate: function(frm, cdt, cdn) {
         calculate_amounts(frm, cdt, cdn);
+    },
+  
+  purchase_transactions_remove: function(frm) {
+    // Recalculate total when a row is removed
+    let total = 0;
+    if (frm.doc.purchase_transactions) {
+      frm.doc.purchase_transactions.forEach((item) => {
+        total += flt(item.egy_amount || 0);
+      });
     }
+    frm.set_value('total', total);
+    frm.refresh_field('total');
+    
+    // Check limits if buyer is set
+    if (frm.doc.buyer && total > 0) {
+      isExceededLimit(frm, frm.doc.buyer, total);
+    }
+  }
 });
 
 function calculate_amounts(frm, cdt, cdn) {
-    let row = locals[cdt][cdn];
-    if (row.quantity && row.exchange_rate) {
-        // Calculate amount in original currency
-        let amount = flt(row.quantity);
-        frappe.model.set_value(cdt, cdn, 'amount', amount);
-        
-        // Calculate amount in EGY
-        let egy_amount = flt(amount * row.exchange_rate);
-        frappe.model.set_value(cdt, cdn, 'egy_amount', egy_amount);
-        
-        // Update balance after
-        if (row.balance_after !== undefined) {
-            let new_balance = flt(row.balance_after) + flt(amount);
-            frappe.model.set_value(cdt, cdn, 'balance_after', new_balance);
-        }
-        
-        // Update parent's total by summing all egy_amounts
-        let total = 0;
-        frm.doc.purchase_transactions.forEach((item) => {
-            total += flt(item.egy_amount);
-        });
-        frm.set_value('total', total);
-        frm.refresh_field('total');
+  let row = locals[cdt][cdn];
+  if (row.quantity && row.exchange_rate) {
+    // Calculate amount in original currency
+    let amount = flt(row.quantity);
+    frappe.model.set_value(cdt, cdn, 'amount', amount);
+    
+    // Calculate amount in EGY
+    let egy_amount = flt(amount * row.exchange_rate);
+    frappe.model.set_value(cdt, cdn, 'egy_amount', egy_amount);
+    
+    // Update balance after
+    if (row.balance_after !== undefined) {
+      let new_balance = flt(row.balance_after) + flt(amount);
+      frappe.model.set_value(cdt, cdn, 'balance_after', new_balance);
     }
-}
-
-// function to setup branch and shift
-function set_branch_and_shift(frm) {
-  // Skip for existing documents
-  if (!frm.is_new()) {
-    return;
-  }
-
-  // Get the employee linked to the current user
-  frappe.call({
-    method: "frappe.client.get_value",
-    args: {
-      doctype: "Employee",
-      filters: { "user_id": frappe.session.user },
-      fieldname: ["name"]
-    },
-    callback: function(r) {
-      if (!r.exc && r.message) {
-        const employee = r.message.name;
-        
-        // Get active shift for current employee
-        frappe.call({
-          method: "frappe.client.get_list",
-          args: {
-            doctype: "Open Shift for Branch",
-            filters: {
-              "current_user": employee,
-              "shift_status": "Active",
-              "docstatus": 1
-            },
-            fields: ["name", "treasury_permission", "printing_roll"],
-            limit: 1
-          },
-          callback: function(shift_r) {
-            if (shift_r.message && shift_r.message.length > 0) {
-              const active_shift = shift_r.message[0];
-              
-              // Set shift and treasury details only for new documents
-              if (frm.is_new()) {
-                frm.set_value("shift", active_shift.name);
-                frm.set_value("teller", frappe.session.user);
-                
-                // Get treasury details to set branch and treasury code
-                frappe.call({
-                  method: "frappe.client.get",
-                  args: {
-                    doctype: "Teller Treasury",
-                    name: active_shift.treasury_permission
-                  },
-                  callback: function(treasury_r) {
-                    if (treasury_r.message) {
-                      const treasury = treasury_r.message;
-                      
-                      // Set treasury code
-                      frm.set_value("treasury_code", treasury.name);
-                      
-                      // Set branch details from treasury
-                      if (treasury.branch) {
-                        frm.set_value("branch_no", treasury.branch);
-                        
-                        // Get branch name
-                        frappe.call({
-                          method: "frappe.client.get_value",
-                          args: {
-                            doctype: "Branch",
-                            filters: { "name": treasury.branch },
-                            fieldname: ["custom_branch_no"]
-                          },
-                          callback: function(branch_r) {
-                            if (branch_r.message) {
-                              frm.set_value("branch_name", branch_r.message.custom_branch_no);
-                            }
-                          }
-                        });
-                      }
-                    }
-                  }
-                });
-              }
-              
-              // Handle printing roll for new documents
-              if (frm.is_new() && active_shift.printing_roll) {
-                frappe.call({
-                  method: "frappe.client.get",
-                  args: {
-                    doctype: "Printing Roll",
-                    name: active_shift.printing_roll
-                  },
-                  callback: function(roll_r) {
-                    if (roll_r.message) {
-                      const roll = roll_r.message;
-                      
-                      if (!roll.active) {
-                        frappe.msgprint(__("Selected printing roll is not active"));
-                        return;
-                      }
-                      
-                      if (roll.last_printed_number >= roll.end_count) {
-                        frappe.msgprint(__("Printing roll has reached its end count. Please configure a new roll."));
-                        return;
-                      }
-                      
-                      // Set current roll
-                      frm.set_value("current_roll", roll.name);
-                    }
-                  }
-                });
-              }
-            } else if (frm.is_new()) {
-              frappe.msgprint(__("No active shift found. Please open a shift first."));
-            }
-          }
-        });
-      }
-    }
-  });
-}
-
-// create or update commissar
-function handleCommissarCreationOrUpdate(frm) {
-  if (
-    (frm.doc.category_of_buyer == "Company" ||
-      frm.doc.category_of_buyer == "Interbank") &&
-    frm.doc.buyer &&
-    !frm.doc.purchase_commissar
-  ) {
-    if (!frm.doc.buyer) {
-      frappe.msgprint(__("Please select Company first."));
-      return;
-    }
-
-    var newContact = frappe.model.get_new_doc("Contact");
-    newContact.links = [
-      {
-        link_doctype: "Customer",
-        link_name: frm.doc.buyer,
-      },
-    ];
-
-    // Set the necessary fields
-    newContact.first_name = frm.doc.purchase_com_name;
-    newContact.custom_com_gender = frm.doc.purchase_com_gender;
-
-    newContact.custom_com_address = frm.doc.purchase_com_address;
-    newContact.custom_com_phone = frm.doc.purchase_com_phone;
-    newContact.custom_national_id = frm.doc.purchase_com_national_id;
-    newContact.custom_job_title = frm.doc.purchase_com_job_title;
-    newContact.custom_mobile_number = frm.doc.purchase_com_mobile_number;
-
-    frappe.call({
-      method: "frappe.client.insert",
-      args: {
-        doc: newContact,
-      },
-      callback: function (r) {
-        if (r.message) {
-          frappe.show_alert({
-            message: __("Commissar added successfully"),
-            indicator: "green",
-          });
-          frm.set_value("purchase_commissar", r.message.name);
-        }
-      },
+    
+    // Update parent's total by summing all egy_amounts
+    let total = 0;
+    frm.doc.purchase_transactions.forEach((item) => {
+      total += flt(item.egy_amount || 0);
     });
-  } else if (
-    (frm.doc.category_of_buyer === "Company" ||
-      frm.doc.category_of_buyer === "Interbank") &&
-    frm.doc.buyer &&
-    frm.doc.purchase_commissar
-  ) {
-    frappe.call({
-      method: "frappe.client.get",
-      args: {
-        doctype: "Contact",
-        name: frm.doc.purchase_commissar,
-      },
-      callback: function (r) {
-        if (r.message) {
-          let existing_contact = r.message;
-
-          // Update the relevant fields
-          existing_contact.first_name = frm.doc.purchase_com_name;
-          existing_contact.custom_com_gender = frm.doc.purchase_com_gender;
-          existing_contact.custom_national_id = frm.doc.purchase_com_national_id;
-          existing_contact.custom_com_address = frm.doc.purchase_com_address || "";
-          existing_contact.custom_com_phone = frm.doc.purchase_com_phone;
-          existing_contact.custom_job_title = frm.doc.purchase_com_job_title;
-          existing_contact.custom_mobile_number = frm.doc.purchase_com_mobile_number;
-
-          frappe.call({
-            method: "frappe.client.save",
-            args: {
-              doc: existing_contact,
-            },
-            callback: function (save_response) {
-              if (save_response.message) {
-                frappe.show_alert({
-                  message: __("Commissar updated successfully"),
-                  indicator: "green",
-                });
-                frm.set_value("purchase_commissar", save_response.message.name);
-              } else {
-                frappe.throw(__("Error while updating Commissar"));
-              }
-            },
-            error: function () {
-              frappe.throw(__("Error while updating Commissar"));
-            },
-          });
-        } else {
-          frappe.throw(__("Commissar not found"));
-        }
-      },
-      error: function () {
-        frappe.throw(__("Error while fetching Commissar details"));
-      },
-    });
+    frm.set_value('total', total);
+    frm.refresh_field('total');
+    
+    // Check limits if buyer is set
+    if (frm.doc.buyer && total > 0) {
+      isExceededLimit(frm, frm.doc.buyer, total);
+    }
   }
 }
 
-// get the allowed amount from Teller settings
+// fetch the allowed amount from teller setting
 async function fetchAllowedAmount() {
-  return frappe.db.get_single_value(
-    "Teller Setting",
-    "purchase_allowed_amount"
-  );
+  return frappe.db.get_single_value("Teller Setting", "purchase_limit");
 }
 
 // fetch the duration of days for the limit
@@ -1783,70 +1666,91 @@ async function getCustomerTotalAmount(buyerName) {
   let limiDuration = await fetchLimitDuration();
   return new Promise((resolve, reject) => {
     frappe.call({
-      method:
-        "teller.teller_customization.doctype.teller_purchase.teller_purchase.get_customer_total_amount",
+      method: "teller.teller_customization.doctype.teller_purchase.teller_purchase.get_customer_total_amount",
       args: {
         client_name: buyerName,
         duration: limiDuration,
       },
       callback: function (r) {
-        if (r.message) {
+        if (r.message !== undefined) {
           resolve(r.message);
         } else {
           reject("No response message");
         }
       },
+      error: function(err) {
+        console.error("Error fetching customer total:", err);
+        resolve(0); // Default to 0 on error to avoid breaking the flow
+      }
     });
   });
 }
 
-//  check if the if the current invioce or customer total invoices  exceeds the limit
-
+// Check if the current invoice or customer total invoices exceeds the limit
 async function isExceededLimit(frm, buyerName, invoiceTotal) {
-  let allowedAmount = await fetchAllowedAmount();
-  console.log("the allowed amount is", allowedAmount);
-
-  let customerTotal = await getCustomerTotalAmount(buyerName);
-  console.log("the customer total is", customerTotal);
-
-  let limiDuration = await fetchLimitDuration();
-  console.log("the limit duration", limiDuration);
-
-  if (customerTotal >= 0) {
-    let total = customerTotal + invoiceTotal;
-    console.log("total is", total);
-    if (total > allowedAmount) {
-      frm.set_value("exceed", 1);
-      frappe.msgprint({
-        message: `<div style="background-color: #f8d7da; color: #721c24; padding: 10px; border-radius: 5px; font-family: Arial, sans-serif; font-size: 14px;">
-                    Customer total transactions (${total}) exceed the allowed amount (${allowedAmount}). 
-                    Additional information is required.
-                  </div>`,
-        title: "Limit Exceeded",
-        indicator: "red",
-      });
+  if (!buyerName || !invoiceTotal) {
+    return;
+  }
+  
+  try {
+    let allowedAmount = await fetchAllowedAmount();
+    console.log("Allowed amount:", allowedAmount);
+    
+    let customerTotal = await getCustomerTotalAmount(buyerName);
+    console.log("Customer total:", customerTotal);
+    
+    let limiDuration = await fetchLimitDuration();
+    console.log("Limit duration:", limiDuration);
+    
+    // Convert values to numbers to ensure proper comparison
+    allowedAmount = parseFloat(allowedAmount) || 0;
+    customerTotal = parseFloat(customerTotal) || 0;
+    invoiceTotal = parseFloat(invoiceTotal) || 0;
+    
+    if (customerTotal >= 0) {
+      let total = customerTotal + invoiceTotal;
+      console.log("Total (customer + current):", total);
+      
+      if (total > allowedAmount) {
+        frm.set_value("exceed", 1);
+        frappe.msgprint({
+          message: `<div style="background-color: #f8d7da; color: #721c24; padding: 10px; border-radius: 5px; font-family: Arial, sans-serif; font-size: 14px;">
+                      Customer total transactions (${format_currency(total, "EGP")}) exceed the allowed amount (${format_currency(allowedAmount, "EGP")}). 
+                      Additional information is required.
+                    </div>`,
+          title: "Limit Exceeded",
+          indicator: "red",
+        });
+      } else {
+        frm.set_value("exceed", 0);
+      }
     } else {
-      frm.set_value("exceed", 0);
+      // If we couldn't get customer total, just check current invoice
+      if (invoiceTotal > allowedAmount) {
+        frm.set_value("exceed", 1);
+        frappe.msgprint({
+          message: `<div style="background-color: #f8d7da; color: #721c24; padding: 10px; border-radius: 5px; font-family: Arial, sans-serif; font-size: 14px;">
+                      Transaction amount (${format_currency(invoiceTotal, "EGP")}) exceeds the allowed amount (${format_currency(allowedAmount, "EGP")}). 
+                      Additional information is required.
+                    </div>`,
+          title: "Limit Exceeded",
+          indicator: "red",
+        });
+      } else {
+        frm.set_value("exceed", 0);
+      }
     }
-  } else {
-    if (invoiceTotal > allowedAmount) {
-      frm.set_value("exceed", 1);
-      frappe.msgprint({
-        message: `<div style="background-color: #f8d7da; color: #721c24; padding: 10px; border-radius: 5px; font-family: Arial, sans-serif; font-size: 14px;">
-                    Transaction amount (${invoiceTotal}) exceeds the allowed amount (${allowedAmount}). 
-                    Additional information is required.
-                  </div>`,
-        title: "Limit Exceeded",
-        indicator: "red",
-      });
-    } else {
-      frm.set_value("exceed", 0);
-    }
+    
+    // Refresh the exceed field to ensure UI is updated
+    frm.refresh_field("exceed");
+    
+  } catch (error) {
+    console.error("Error in isExceededLimit:", error);
+    // Don't change exceed status on error
   }
 }
 
 // validate the national id
-
 function validateNationalId(frm, nationalId) {
   if (nationalId && nationalId.length !== 14) {
     frappe.throw({
@@ -1855,6 +1759,7 @@ function validateNationalId(frm, nationalId) {
     });
   }
 }
+
 // validate end registration date is must be after start registration
 function validateRegistrationDate(frm, start, end) {
   if (start && end) {
@@ -1869,6 +1774,7 @@ function validateRegistrationDate(frm, start, end) {
     }
   }
 }
+
 // validate if the registration date is expired
 function validateRegistrationDateExpiration(frm, end) {
   if (end) {
