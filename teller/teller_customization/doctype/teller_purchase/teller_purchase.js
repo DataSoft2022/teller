@@ -1653,7 +1653,7 @@ function calculate_amounts(frm, cdt, cdn) {
 
 // fetch the allowed amount from teller setting
 async function fetchAllowedAmount() {
-  return frappe.db.get_single_value("Teller Setting", "purchase_limit");
+  return frappe.db.get_single_value("Teller Setting", "purchase_allowed_amount");
 }
 
 // fetch the duration of days for the limit
