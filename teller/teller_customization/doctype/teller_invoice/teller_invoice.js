@@ -42,6 +42,16 @@ frappe.ui.form.on("Teller Invoice", {
       settingField = 'sales_company_number';
     } else if (frm.doc.client_type === 'Interbank') {
       settingField = 'sales_interbank_number';
+      
+      // For Interbank, automatically set the customer to "البنك الاهلي"
+      frappe.db.get_value('Customer', {customer_name: 'البنك الاهلي'}, 'name')
+        .then(r => {
+          if (r && r.message && r.message.name) {
+            frm.set_value('client', r.message.name);
+          } else {
+            frappe.msgprint(__('Customer "البنك الاهلي" not found. Please create this customer first.'));
+          }
+        });
     }
 
     if (settingField) {
@@ -258,14 +268,16 @@ frappe.ui.form.on("Teller Invoice", {
           fieldtype: "Link",
           options: "Special price document",
           get_query: function() {
-     
+            // Get the current branch from the form
+            let branch = frm.doc.branch_no || '';
+            
             return {
                 filters: [
                     ['custom_interbank_type', '=', 'Selling'],
-     
+                    ['custom_branch', '=', branch]
                 ]
             };
-        }
+          }
         },
       ],
       size: "small", // small, large, extra-large

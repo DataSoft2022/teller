@@ -237,6 +237,16 @@ frappe.ui.form.on("Teller Purchase", {
                 break;
             case 'Interbank':
                 field_name = 'purchase_interbank_number';
+                
+                // For Interbank, automatically set the buyer to "البنك الاهلي"
+                frappe.db.get_value('Customer', {customer_name: 'البنك الاهلي'}, 'name')
+                  .then(r => {
+                    if (r && r.message && r.message.name) {
+                      frm.set_value('buyer', r.message.name);
+                    } else {
+                      frappe.msgprint(__('Customer "البنك الاهلي" not found. Please create this customer first.'));
+                    }
+                  });
                 break;
             default:
                 field_name = null;
@@ -373,14 +383,16 @@ frappe.ui.form.on("Teller Purchase", {
           fieldtype: "Link",
           options: "Special price document",
           get_query: function() {
+            // Get the current branch from the form
+            let branch = frm.doc.branch_no || '';
      
             return {
                 filters: [
                     ['custom_interbank_type', '=', 'Buying'],
-     
+                    ['custom_branch', '=', branch]
                 ]
             };
-        }
+          }
         },
       ],
       size: "small", // small, large, extra-large

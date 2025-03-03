@@ -8,8 +8,69 @@ from frappe.model.document import Document
 from frappe.model.mapper import get_mapped_doc
 from frappe.model.mapper import make_mapped_doc
 from frappe.utils import flt
+
 class BookingInterbank(Document):
-  pass        
+    def after_insert(self):
+        self.create_special_price_document()
+        
+    def on_update(self):
+        self.create_special_price_document()
+        
+    def create_special_price_document(self):
+        """Create or update a Special Price Document based on this Booking Interbank"""
+        # Check if a Special Price Document already exists for this booking
+        existing_docs = frappe.get_all(
+            "Special price document",
+            filters={"custom_booking_reference": self.name},
+            fields=["name"]
+        )
+        
+        if existing_docs:
+            # Update existing document
+            special_price = frappe.get_doc("Special price document", existing_docs[0].name)
+            special_price.custom_interbank_type = self.transaction
+            special_price.custom_branch = self.branch
+            special_price.custom_interbank_refrence = self.interbank_reference
+            
+            # Clear existing booked_currency items
+            special_price.booked_currency = []
+            
+            # Add current booked_currency items
+            for item in self.booked_currency:
+                special_price.append("booked_currency", {
+                    "currency": item.currency,
+                    "custom_currency_code": item.currency_code,
+                    "rate": item.rate,
+                    "custom_qty": item.qty,
+                    "booking_qty": item.booking_qty
+                })
+                
+            special_price.save(ignore_permissions=True)
+            frappe.msgprint(f"Updated Special Price Document {special_price.name}")
+            
+        else:
+            # Create new document
+            special_price = frappe.new_doc("Special price document")
+            special_price.custom_transaction = self.transaction
+            special_price.custom_interbank_type = self.transaction
+            special_price.custom_branch = self.branch
+            special_price.custom_interbank_refrence = self.interbank_reference
+            special_price.custom_booking_reference = self.name
+            
+            for item in self.booked_currency:
+                special_price.append("booked_currency", {
+                    "currency": item.currency,
+                    "custom_currency_code": item.currency_code,
+                    "rate": item.rate,
+                    "custom_qty": item.qty,
+                    "booking_qty": item.booking_qty
+                })
+                
+            special_price.insert(ignore_permissions=True)
+            frappe.msgprint(f"Created Special Price Document {special_price.name}")
+            
+        return special_price
+        
 @frappe.whitelist(allow_guest=True)
 def make_teller_invoice(doc):
     # sales_invoice = "hi"
