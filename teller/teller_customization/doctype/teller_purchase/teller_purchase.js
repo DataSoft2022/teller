@@ -374,6 +374,28 @@ frappe.ui.form.on("Teller Purchase", {
   },
 
   custom_special_price2(frm) {
+    // Log the current branch for debugging
+    console.log("Current branch:", frm.doc.branch_no);
+    
+    // Check if there are any Booking Interbank records at all
+    frappe.db.get_list('Booking Interbank', {
+      fields: ['name', 'transaction', 'branch'],
+      limit: 10
+    }).then(records => {
+      console.log("All Booking Interbank records:", records);
+      
+      // Check if there are any records matching our criteria
+      frappe.db.get_list('Booking Interbank', {
+        fields: ['name', 'transaction', 'branch'],
+        filters: {
+          'transaction': 'Purchasing'
+        },
+        limit: 10
+      }).then(filtered_records => {
+        console.log("Filtered Booking Interbank records by transaction:", filtered_records);
+      });
+    });
+    
     var d = new frappe.ui.Dialog({
       title: "Select Booking Interbank",
       fields: [
@@ -384,13 +406,16 @@ frappe.ui.form.on("Teller Purchase", {
           options: "Booking Interbank",
           get_query: function() {
             // Get the current branch from the form
-            let branch = frm.doc.branch_no || '';
-     
+            console.log("Dialog filter - branch_no:", frm.doc.branch_no);
+            
+            // Only filter by transaction type, not by branch
+            let filters = {
+              'transaction': 'Purchasing'
+            };
+            console.log("Dialog filters:", filters);
+            
             return {
-                filters: [
-                    ['transaction', '=', 'Purchasing'],
-                    ['branch', '=', branch]
-                ]
+                filters: filters
             };
           }
         },
