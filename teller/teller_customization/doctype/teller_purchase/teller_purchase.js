@@ -375,21 +375,21 @@ frappe.ui.form.on("Teller Purchase", {
 
   custom_special_price2(frm) {
     var d = new frappe.ui.Dialog({
-      title: "Booked Special Price",
+      title: "Select Booking Interbank",
       fields: [
         {
-          label: "Special price document",
+          label: "Booking Interbank",
           fieldname: "name",
           fieldtype: "Link",
-          options: "Special price document",
+          options: "Booking Interbank",
           get_query: function() {
             // Get the current branch from the form
             let branch = frm.doc.branch_no || '';
      
             return {
                 filters: [
-                    ['custom_interbank_type', '=', 'Buying'],
-                    ['custom_branch', '=', branch]
+                    ['transaction', '=', 'Purchasing'],
+                    ['branch', '=', branch]
                 ]
             };
           }
@@ -398,9 +398,14 @@ frappe.ui.form.on("Teller Purchase", {
       size: "small", // small, large, extra-large
       primary_action_label: "Submit",
       primary_action: async function (values) {
+        if (!values.name) {
+          frappe.msgprint("Please select a Booking Interbank record");
+          return;
+        }
+        
         console.log(values.name);
         let doc = await frappe.db.get_doc(
-          "Special price document",
+          "Booking Interbank",
           values.name
         );
         console.log(doc.booked_currency);
@@ -409,11 +414,9 @@ frappe.ui.form.on("Teller Purchase", {
           console.log(item.currency);
           let child = frm.add_child("transactions");
           child.currency = item.currency;
-          child.currency_code = item.custom_currency_code;
+          child.currency_code = item.currency_code;
           child.rate = item.rate;
-          // frm.doc.transactions.forEach((row) => {
-          //   frappe.model.set_value(cdt, cdn, "currency", item.currency);
-          // });
+          child.qty = item.booking_qty || item.qty;
         }
         frm.refresh_field("transactions");
         d.hide();
@@ -602,7 +605,7 @@ frappe.ui.form.on("Teller Purchase", {
     frm.set_df_property('egy_balance', 'hidden', 0);
   },
 
-  refresh(frm) {
+  refresh: function(frm) {
     // Handle form state based on docstatus
     if (frm.doc.docstatus === 1) {
       // For submitted documents
@@ -784,6 +787,13 @@ frappe.ui.form.on("Teller Purchase", {
     // Ensure egy_balance is always visible
     frm.toggle_display('egy_balance', true);
     frm.set_df_property('egy_balance', 'hidden', 0);
+
+    // Add Special Price button for Interbank
+    if (frm.doc.category_of_buyer === 'Interbank' && frm.doc.buyer) {
+      frm.add_custom_button(__('Select Booking Interbank'), function() {
+        frm.events.custom_special_price2(frm);
+      });
+    }
   },
 
   // add ledger report button on submit doctype

@@ -252,6 +252,13 @@ frappe.ui.form.on("Teller Invoice", {
       frm.set_df_property('start_registration_date', 'read_only', 1);
       frm.set_df_property('end_registration_date', 'read_only', 1);
     }
+
+    // Add Special Price button for Interbank
+    if (frm.doc.client_type === 'Interbank' && frm.doc.client) {
+      frm.add_custom_button(__('Select Booking Interbank'), function() {
+        frm.events.custom_special_price_2(frm);
+      });
+    }
   },
 
   issue_date: function(frm) {
@@ -260,21 +267,21 @@ frappe.ui.form.on("Teller Invoice", {
 
   custom_special_price_2(frm) {
     var d = new frappe.ui.Dialog({
-      title: "Booked Special Price",
+      title: "Select Booking Interbank",
       fields: [
         {
-          label: "Special price document",
+          label: "Booking Interbank",
           fieldname: "name",
           fieldtype: "Link",
-          options: "Special price document",
+          options: "Booking Interbank",
           get_query: function() {
             // Get the current branch from the form
             let branch = frm.doc.branch_no || '';
             
             return {
                 filters: [
-                    ['custom_interbank_type', '=', 'Selling'],
-                    ['custom_branch', '=', branch]
+                    ['transaction', '=', 'Selling'],
+                    ['branch', '=', branch]
                 ]
             };
           }
@@ -283,9 +290,14 @@ frappe.ui.form.on("Teller Invoice", {
       size: "small", // small, large, extra-large
       primary_action_label: "Submit",
       primary_action: async function (values) {
+        if (!values.name) {
+          frappe.msgprint("Please select a Booking Interbank record");
+          return;
+        }
+        
         console.log(values.name);
         let doc = await frappe.db.get_doc(
-          "Special price document",
+          "Booking Interbank",
           values.name
         );
         console.log(doc.booked_currency);
@@ -294,11 +306,9 @@ frappe.ui.form.on("Teller Invoice", {
           console.log(item.currency);
           let child = frm.add_child("teller_invoice_details");
           child.currency = item.currency;
-          child.currency_code = item.custom_currency_code;
+          child.currency_code = item.currency_code;
           child.rate = item.rate;
-          // frm.doc.teller_invoice_details.forEach((row) => {
-          //   frappe.model.set_value(cdt, cdn, "currency", item.currency);
-          // });
+          child.qty = item.booking_qty || item.qty;
         }
         frm.refresh_field("teller_invoice_details");
         d.hide();
