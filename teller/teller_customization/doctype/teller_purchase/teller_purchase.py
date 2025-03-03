@@ -1108,8 +1108,6 @@ def get_permission_query_conditions(user=None):
         if not user:
             user = frappe.session.user
             
-        if "System Manager" in frappe.get_roles(user):
-            return ""
             
         # Get the employee linked to the current user
         employee = frappe.db.get_value('Employee', {'user_id': user}, 'name')
@@ -1144,8 +1142,6 @@ def has_permission(doc, ptype="read", user=None):
         if not user:
             user = frappe.session.user
             
-        if "System Manager" in frappe.get_roles(user):
-            return True
             
         # For new documents
         if not doc or doc.is_new():
