@@ -45,10 +45,42 @@ frappe.ui.form.on("Branch Interbank Request", {
             });
         }, 250); // Delay for smoother user experience
     }
-  }
-
+  },
   
+  refresh(frm) {
+    // Set current user if not already set
+    let currentUser = frappe.session.logged_in_user;
+    if (!frm.doc.user) {
+      cur_frm.set_value('user', currentUser);
+    }
+    
+    // Add button to update interbank percentages for submitted documents
+    if (frm.doc.docstatus === 1) {
+      frm.add_custom_button(__('Update Interbank Percentages'), function() {
+        frappe.confirm(
+          __('This will update the booking percentages for all related interbank records. Continue?'),
+          function() {
+            // Yes - update percentages
+            frm.call({
+              doc: frm.doc,
+              method: 'update_interbank_percentages',
+              args: {
+                currency_table: frm.doc.branch_request_details
+              },
+              callback: function(r) {
+                frappe.msgprint(__('Interbank percentages have been updated.'));
+              }
+            });
+          },
+          function() {
+            // No - do nothing
+          }
+        );
+      });
+    }
+  }
 });
+
 frappe.ui.form.on('Branch Request Details', {
     currency_code(frm, cdt, cdn) {
     var row = locals[cdt][cdn];
@@ -80,18 +112,4 @@ frappe.ui.form.on('Branch Request Details', {
       },
     });
   },
-
-})
-//////////////////////////////////////fetch user and Customer///////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////////
-frappe.ui.form.on('Branch Interbank Request', {
-	refresh(frm) {
-		// your code here
-			// your code here
-		
-		cur_frm.set_value('customer','البنك الاهلي');
-    	let currentUser = frappe.session.logged_in_user;
-    // 	let user = frappe.user_info().email;
-			cur_frm.set_value('user',currentUser);
-	}
 })
