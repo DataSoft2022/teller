@@ -78,6 +78,36 @@ class BookingInterbank(Document):
             
         return special_price
         
+    @frappe.whitelist()
+    def update_interbank_details(self):
+        """Update the booked currency details for this Booking Interbank"""
+        if not self.booked_currency:
+            return
+            
+        for row in self.booked_currency:
+            if not row.currency:
+                continue
+                
+            if row.booking_qty > 0:
+                # Update the status based on booking quantity vs total quantity
+                if row.booking_qty >= row.qty:
+                    row.status = "Billed"
+                else:
+                    row.status = "Partial Billed"
+                    
+        # Update the overall document status
+        all_billed = all(row.status == "Billed" for row in self.booked_currency if row.currency)
+        partial_billed = any(row.status == "Partial Billed" for row in self.booked_currency if row.currency)
+        
+        if all_billed:
+            self.status = "Billed"
+        elif partial_billed:
+            self.status = "Partial Billed"
+        else:
+            self.status = "Not Billed"
+            
+        self.save()
+
 @frappe.whitelist(allow_guest=True)
 def make_teller_invoice(doc):
     # sales_invoice = "hi"
