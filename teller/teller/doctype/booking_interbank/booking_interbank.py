@@ -11,13 +11,20 @@ from frappe.utils import flt
 
 class BookingInterbank(Document):
     def after_insert(self):
-        self.create_special_price_document()
+        # Disabled to prevent errors with missing Special price document doctype
+        # self.create_special_price_document()
+        pass
         
     def on_update(self):
-        self.create_special_price_document()
+        # Disabled to prevent errors with missing Special price document doctype
+        # self.create_special_price_document()
+        pass
         
     def create_special_price_document(self):
         """Create or update a Special Price Document based on this Booking Interbank"""
+        # Disable this function to prevent errors with missing doctype
+        return
+        
         # Check if a Special Price Document already exists for this booking
         existing_docs = frappe.get_all(
             "Special price document",

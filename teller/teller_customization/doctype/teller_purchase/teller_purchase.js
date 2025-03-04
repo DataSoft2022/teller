@@ -1360,8 +1360,8 @@ frappe.ui.form.on("Teller Purchase", {
         return {
           filters: {
             status: ["in", ["Partial Billed", "Not Billed"]],
-            docstatus: 1,
-            type: "Purchasing" // Ensure we only get purchasing records for Teller Purchase
+            docstatus: ["in", [0, 1]],
+            type: "Purchasing"
           }
         };
       },
