@@ -101,56 +101,52 @@ frappe.ui.form.on("Teller Purchase", {
             if (r.message) {
                 const customer = r.message;
                 
-                if (customer.category_of_buyer) {
-                    frm.set_value('category_of_buyer', customer.category_of_buyer);
-                }
-                
+                // Set basic fields
                 if (customer.buyer) {
                     frm.set_value('buyer', customer.buyer);
                 }
                 
-                if (customer.buyer_card_type) {
-                    frm.set_value('buyer_card_type', customer.buyer_card_type);
-                }
-                
+                // Handle individual (Egyptian/Foreigner) fields
                 if (customer.category_of_buyer === 'Egyptian' || customer.category_of_buyer === 'Foreigner') {
-                    const individualFields = [
-                        'buyer_name', 'buyer_gender', 'buyer_nationality',
-                        'buyer_work_for', 'buyer_phone', 'buyer_mobile_number',
-                        'buyer_place_of_birth', 'buyer_date_of_birth', 'buyer_job_title',
-                        'buyer_address', 'buyer_national_id', 'buyer_passport_number',
-                        'buyer_military_number', 'buyer_issue_date', 'buyer_expired'
-                    ];
+                    frm.set_value('buyer_name', customer.buyer_name);
+                    frm.set_value('buyer_nationality', customer.buyer_nationality);
+                    frm.set_value('buyer_phone', customer.buyer_phone);
+                    frm.set_value('buyer_work_for', customer.buyer_work_for);
+                    frm.set_value('buyer_address', customer.buyer_address);
+                    frm.set_value('buyer_place_of_birth', customer.buyer_place_of_birth);
+                    frm.set_value('buyer_date_of_birth', customer.buyer_date_of_birth);
+                    frm.set_value('buyer_job_title', customer.buyer_job_title);
                     
-                    individualFields.forEach(field => {
-                        if (customer[field] !== undefined && customer[field] !== null) {
-                            frm.set_value(field, customer[field]);
-                        }
-                    });
-                } else if (customer.category_of_buyer === 'Company' || customer.category_of_buyer === 'Interbank') {
-                    const companyFields = [
-                        'buyer_company_name', 'buyer_company_activity', 'buyer_company_commercial_no',
-                        'buyer_company_start_date', 'buyer_company_end_date',
-                        'buyer_company_address', 'buyer_company_legal_form'
-                    ];
-                    
-                    companyFields.forEach(field => {
-                        if (customer[field] !== undefined && customer[field] !== null) {
-                            frm.set_value(field, customer[field]);
-                        }
-                    });
-                    
-                    if (customer.is_expired1 !== undefined) {
-                        frm.set_value('is_expired1', customer.is_expired1);
-                    }
-                    
-                    if (customer.interbank !== undefined) {
-                        frm.set_value('interbank', customer.interbank);
+                    // Show/hide ID fields based on category
+                    if (customer.category_of_buyer === 'Egyptian') {
+                        frm.set_value('buyer_national_id', customer.buyer_national_id);
+                        frm.set_df_property('buyer_national_id', 'hidden', 0);
+                        frm.set_df_property('buyer_passport_number', 'hidden', 1);
+                        frm.set_df_property('buyer_military_number', 'hidden', 1);
+                    } else if (customer.category_of_buyer === 'Foreigner') {
+                        frm.set_value('buyer_passport_number', customer.buyer_passport_number);
+                        frm.set_df_property('buyer_national_id', 'hidden', 1);
+                        frm.set_df_property('buyer_passport_number', 'hidden', 0);
+                        frm.set_df_property('buyer_military_number', 'hidden', 1);
                     }
                 }
                 
-                if (customer.exceed !== undefined) {
-                    frm.set_value('exceed', customer.exceed);
+                // Handle company/interbank fields
+                if (customer.category_of_buyer === 'Company' || customer.category_of_buyer === 'Interbank') {
+                    frm.set_value('buyer_company_name', customer.buyer_company_name);
+                    frm.set_value('buyer_company_activity', customer.buyer_company_activity);
+                    frm.set_value('buyer_company_commercial_no', customer.buyer_company_commercial_no);
+                    frm.set_value('buyer_company_start_date', customer.buyer_company_start_date);
+                    frm.set_value('buyer_company_end_date', customer.buyer_company_end_date);
+                    frm.set_value('buyer_company_address', customer.buyer_company_address);
+                    frm.set_value('buyer_company_legal_form', customer.buyer_company_legal_form);
+                    frm.set_value('is_expired1', customer.is_expired1);
+                    frm.set_value('interbank', customer.interbank);
+                    
+                    // Hide all ID fields for companies
+                    frm.set_df_property('buyer_national_id', 'hidden', 1);
+                    frm.set_df_property('buyer_passport_number', 'hidden', 1);
+                    frm.set_df_property('buyer_military_number', 'hidden', 1);
                 }
                 
                 frm.refresh_fields();

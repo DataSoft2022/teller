@@ -1492,7 +1492,7 @@ def search_client_by_id(search_id, client_type=None):
     - National ID for Egyptian customers
     - Commercial Number for Companies
     - Passport Number for Foreigners
-    Returns dict with customer name and type if found
+    Returns dict with customer name and type if found, or search info if not found
     """
     if not search_id or not client_type:
         return None
@@ -1507,34 +1507,65 @@ def search_client_by_id(search_id, client_type=None):
         # For Egyptian, search by National ID
         customer = frappe.db.get_value('Customer', 
             {'custom_national_id': search_id, 'custom_type': 'Egyptian'}, 
-            ['name', 'custom_type', 'custom_national_id', 'custom_gender', 'custom_nationality',
-             'custom_mobile_number', 'custom_work_for', 'custom_phone', 'custom_job_title',
+            ['name', 'custom_type', 'custom_national_id', 'customer_name', 'custom_nationality',
+             'custom_mobile', 'custom_work', 'custom_phone', 'custom_job',
              'custom_address', 'custom_place_of_birth'], as_dict=1
         )
+        if not customer:
+            # Return search info for creating new Egyptian customer
+            return {
+                "not_found": True,
+                "client_type": "Egyptian",
+                "national_id": search_id
+            }
+            
     elif client_type == 'Company':
         # For Company, search by Commercial Number
         customer = frappe.db.get_value('Customer', 
             {'custom_commercial_no': search_id, 'custom_type': 'Company'}, 
-            ['name', 'custom_type', 'custom_commercial_no', 'custom_company_activity',
+            ['name', 'custom_type', 'custom_commercial_no', 'customer_name', 'custom_company_activity',
              'custom_company_address', 'custom_company_legal_form', 'custom_start_registration_date',
              'custom_end_registration_date'], as_dict=1
         )
+        if not customer:
+            # Return search info for creating new Company customer
+            return {
+                "not_found": True,
+                "client_type": "Company",
+                "custom_commercial_no": search_id
+            }
+            
     elif client_type == 'Foreigner':
         # For Foreigner, search by Passport Number
         customer = frappe.db.get_value('Customer', 
             {'custom_passport_number': search_id, 'custom_type': 'Foreigner'}, 
-            ['name', 'custom_type', 'custom_passport_number', 'custom_gender', 'custom_nationality',
-             'custom_mobile_number', 'custom_work_for', 'custom_phone', 'custom_job_title',
+            ['name', 'custom_type', 'custom_passport_number', 'customer_name', 'custom_nationality',
+             'custom_mobile', 'custom_work', 'custom_phone', 'custom_job',
              'custom_address', 'custom_place_of_birth'], as_dict=1
         )
+        if not customer:
+            # Return search info for creating new Foreigner customer
+            return {
+                "not_found": True,
+                "client_type": "Foreigner",
+                "passport_number": search_id
+            }
+            
     elif client_type == 'Interbank':
         # For Interbank, search by Commercial Number
         customer = frappe.db.get_value('Customer', 
             {'custom_commercial_no': search_id, 'custom_type': 'Interbank'}, 
-            ['name', 'custom_type', 'custom_commercial_no', 'custom_company_activity',
+            ['name', 'custom_type', 'custom_commercial_no', 'customer_name', 'custom_company_activity',
              'custom_company_address', 'custom_company_legal_form', 'custom_start_registration_date',
              'custom_end_registration_date'], as_dict=1
         )
+        if not customer:
+            # Return search info for creating new Interbank customer
+            return {
+                "not_found": True,
+                "client_type": "Interbank",
+                "custom_commercial_no": search_id
+            }
         
     return customer
 

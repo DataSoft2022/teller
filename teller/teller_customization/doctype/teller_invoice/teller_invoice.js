@@ -190,10 +190,6 @@ frappe.ui.form.on("Teller Invoice", {
                 },
                 callback: function(r) {
                   if (r.message) {
-                    frappe.show_alert({
-                      message: __('Return created successfully'),
-                      indicator: 'green'
-                    });
                     frm.reload_doc();
                   }
                 }
@@ -978,76 +974,69 @@ frappe.ui.form.on("Teller Invoice", {
     if (!frm.doc.client_type || !frm.doc.client_search_id) return;
     
     frappe.call({
-      method: 'teller.teller_customization.doctype.teller_invoice.teller_invoice.search_client_by_id',
-      args: {
-        search_id: frm.doc.client_search_id,
-        client_type: frm.doc.client_type
-      },
-      callback: function(r) {
-        if (r.message) {
-          const customer = r.message;
-          
-          // Set the client reference
-          if (frm.doc.docstatus === 1) {
-            frm.doc.client = customer.name;
-          } else {
-            frm.set_value('client', customer.name);
-          }
-          
-          // Get full customer details
-          frappe.db.get_doc('Customer', customer.name)
-            .then(customer_doc => {
-              if (customer_doc.custom_type === 'Company' || customer_doc.custom_type === 'Interbank') {
-                // Set company fields
-                frm.set_value('company_name', customer_doc.customer_name);
-                frm.set_value('company_activity', customer_doc.custom_company_activity);
-                frm.set_value('company_commercial_no', customer_doc.custom_commercial_no);
-                frm.set_value('company_num', customer_doc.custom_company_no);
-                frm.set_value('comoany_address', customer_doc.custom_comany_address1);
-                frm.set_value('is_expired1', customer_doc.custom_is_expired);
-                frm.set_value('interbank', customer_doc.custom_interbank);
-                frm.set_value('company_legal_form', customer_doc.custom_legal_form);
-              } else {
-                // Set individual fields
-                frm.set_value('client_name', customer_doc.customer_name);
-                frm.set_value('client_gender', customer_doc.custom_gender);
-                frm.set_value('client_nationality', customer_doc.custom_nationality);
-                frm.set_value('client_work_for', customer_doc.custom_work_for);
-                frm.set_value('client_phone', customer_doc.custom_phone);
-                frm.set_value('client_place_of_birth', customer_doc.custom_place_of_birth);
-                frm.set_value('client_date_of_birth', customer_doc.custom_date_of_birth);
-                frm.set_value('client_job_title', customer_doc.custom_job_title);
-                frm.set_value('client_address', customer_doc.custom_address);
-                frm.set_value('client_expired', customer_doc.custom_expired);
-                frm.set_value('client_issue_date', customer_doc.custom_issue_date);
+        method: 'teller.teller_customization.doctype.teller_invoice.teller_invoice.search_client_by_id',
+        args: {
+            search_id: frm.doc.client_search_id,
+            client_type: frm.doc.client_type
+        },
+        callback: function(r) {
+            if (r.message) {
+                const customer = r.message;
                 
-                // Set ID fields based on client type
-                if (frm.doc.client_type === 'Egyptian') {
-                  frm.set_value('client_national_id', customer_doc.custom_national_id);
-                } else if (frm.doc.client_type === 'Foreigner') {
-                  frm.set_value('client_passport_number', customer_doc.custom_passport_number);
+                if (frm.doc.docstatus === 1) {
+                    frm.doc.client = customer.name;
+                } else {
+                    frm.set_value('client', customer.name);
                 }
-              }
-              
-              // Refresh all fields
-              frm.refresh_fields();
-              
-              frappe.show_alert({
-                message: __('Customer found and details populated'),
-                indicator: 'green'
-              });
-            });
-        } else {
-          // If no customer found, preserve the search ID in the appropriate field
-          if (frm.doc.client_type === 'Foreigner') {
-            frm.set_value('client_passport_number', frm.doc.client_search_id);
-          }
-          frappe.show_alert({
-            message: __('No customer found with ID: {0}', [frm.doc.client_search_id]),
-            indicator: 'red'
-          });
+                
+                frappe.db.get_doc('Customer', customer.name)
+                    .then(customer_doc => {
+                        if (customer_doc.custom_type === 'Company' || customer_doc.custom_type === 'Interbank') {
+                            frm.set_value('company_name', customer_doc.customer_name);
+                            frm.set_value('company_activity', customer_doc.custom_company_activity);
+                            frm.set_value('company_commercial_no', customer_doc.custom_commercial_no);
+                            frm.set_value('company_num', customer_doc.custom_company_no);
+                            frm.set_value('comoany_address', customer_doc.custom_comany_address1);
+                            frm.set_value('is_expired1', customer_doc.custom_is_expired);
+                            frm.set_value('interbank', customer_doc.custom_interbank);
+                            frm.set_value('company_legal_form', customer_doc.custom_legal_form);
+                        } else {
+                            frm.set_value('customer_name', customer_doc.customer_name);
+                            frm.set_value('gender', customer_doc.custom_gender);
+                            frm.set_value('nationality', customer_doc.custom_nationality);
+                            frm.set_value('work_for', customer_doc.custom_work_for);
+                            frm.set_value('phone', customer_doc.custom_phone);
+                            frm.set_value('place_of_birth', customer_doc.custom_place_of_birth);
+                            frm.set_value('date_of_birth', customer_doc.custom_date_of_birth);
+                            frm.set_value('job_title', customer_doc.custom_job_title);
+                            frm.set_value('address', customer_doc.custom_address);
+                            frm.set_value('expired', customer_doc.custom_expired);
+                            frm.set_value('issue_date', customer_doc.custom_issue_date);
+                            
+                            if (customer_doc.custom_card_type) {
+                                frm.set_value('card_type', customer_doc.custom_card_type);
+                            }
+                            
+                            if (customer_doc.custom_card_type === 'National ID') {
+                                frm.set_value('national_id', customer_doc.custom_national_id);
+                            } else if (customer_doc.custom_card_type === 'Passport') {
+                                frm.set_value('passport_number', customer_doc.custom_passport_number);
+                            } else if (customer_doc.custom_card_type === 'Military Card') {
+                                frm.set_value('military_number', customer_doc.custom_military_number);
+                            }
+                        }
+                        
+                        showIdentificationFields(frm);
+                        frm.refresh_fields();
+                    });
+            } else {
+                if (frm.doc.client_type === 'Foreigner') {
+                    frm.set_value('passport_number', frm.doc.client_search_id);
+                } else if (frm.doc.client_type === 'Egyptian') {
+                    frm.set_value('national_id', frm.doc.client_search_id);
+                }
+            }
         }
-      }
     });
   },
 
@@ -1396,13 +1385,11 @@ async function fetchLimitDuration() {
 
 function handleCommissarCreationOrUpdate(frm) {
   return new Promise((resolve, reject) => {
-    // Check if update is needed
     if (frm._commissarBeingUpdated || frm._preventCommissarUpdate) {
       resolve();
       return;
     }
 
-    // Check if any commissar fields have changed
     const commissarFields = ['com_name', 'com_national_id', 'com_gender', 
                            'com_address', 'com_phone', 'com_job_title', 
                            'com_mobile_number'];
@@ -1416,123 +1403,101 @@ function handleCommissarCreationOrUpdate(frm) {
       return;
     }
     
-    if (
-      (frm.doc.client_type === "Company" ||
-        frm.doc.client_type === "Interbank") &&
-      frm.doc.client &&
-      !frm.doc.commissar
-    ) {
-      if (!frm.doc.client) {
-        frappe.msgprint(__("Please select Company first."));
-        resolve();
-        return;
-      }
-
-      var newContact = frappe.model.get_new_doc("Contact");
-      newContact.links = [
-        {
-          link_doctype: "Customer",
-          link_name: frm.doc.client,
-        },
-      ];
-
-      // Set the necessary fields
-      newContact.first_name = frm.doc.com_name;
-      newContact.custom_com_gender = frm.doc.com_gender;
-      newContact.custom_com_address = frm.doc.com_address;
-      newContact.custom_com_phone = frm.doc.com_phone;
-      newContact.custom_national_id = frm.doc.com_national_id;
-      newContact.custom_job_title = frm.doc.com_job_title;
-      newContact.custom_mobile_number = frm.doc.com_mobile_number;
-
-      frm._commissarBeingUpdated = true;
-      frappe.call({
-        method: "frappe.client.insert",
-        args: {
-          doc: newContact,
-        },
-        callback: function (r) {
-          frm._commissarBeingUpdated = false;
-          if (r.message) {
-            frappe.show_alert({
-              message: __("Commissar added successfully"),
-              indicator: "green",
-            });
-            // Set flag to prevent recursive updates
-            frm._preventCommissarUpdate = true;
-            frm.set_value("commissar", r.message.name);
-            frm._preventCommissarUpdate = false;
+    if ((frm.doc.client_type === "Company" || frm.doc.client_type === "Interbank") && 
+        frm.doc.client && !frm.doc.commissar) {
+        
+        if (!frm.doc.client) {
             resolve();
-          } else {
-            reject();
-          }
-        },
-        error: function() {
-          frm._commissarBeingUpdated = false;
-          reject();
+            return;
         }
-      });
-    } else if (
-      (frm.doc.client_type === "Company" ||
-        frm.doc.client_type === "Interbank") &&
-      frm.doc.client &&
-      frm.doc.commissar
-    ) {
-      frm._commissarBeingUpdated = true;
-      frappe.call({
-        method: "frappe.client.get",
-        args: {
-          doctype: "Contact",
-          name: frm.doc.commissar,
-        },
-        callback: function (r) {
-          if (r.message) {
-            let existing_contact = r.message;
 
-            // Update the relevant fields
-            existing_contact.first_name = frm.doc.com_name;
-            existing_contact.custom_com_gender = frm.doc.com_gender;
-            existing_contact.custom_national_id = frm.doc.com_national_id;
-            existing_contact.custom_com_address = frm.doc.com_address || "";
-            existing_contact.custom_com_phone = frm.doc.com_phone;
-            existing_contact.custom_job_title = frm.doc.com_job_title;
-            existing_contact.custom_mobile_number = frm.doc.com_mobile_number;
+        var newContact = frappe.model.get_new_doc("Contact");
+        newContact.links = [{
+            link_doctype: "Customer",
+            link_name: frm.doc.client,
+        }];
 
-            frappe.call({
-              method: "frappe.client.save",
-              args: {
-                doc: existing_contact,
-              },
-              callback: function (save_response) {
+        newContact.first_name = frm.doc.com_name;
+        newContact.custom_com_gender = frm.doc.com_gender;
+        newContact.custom_com_address = frm.doc.com_address;
+        newContact.custom_com_phone = frm.doc.com_phone;
+        newContact.custom_national_id = frm.doc.com_national_id;
+        newContact.custom_job_title = frm.doc.com_job_title;
+        newContact.custom_mobile_number = frm.doc.com_mobile_number;
+
+        frm._commissarBeingUpdated = true;
+        frappe.call({
+            method: "frappe.client.insert",
+            args: {
+                doc: newContact,
+            },
+            callback: function (r) {
                 frm._commissarBeingUpdated = false;
-                if (save_response.message) {
-                  frappe.show_alert({
-                    message: __("Commissar updated successfully"),
-                    indicator: "green",
-                  });
-                  // Set flag to prevent recursive updates
-                  frm._preventCommissarUpdate = true;
-                  frm.set_value("commissar", save_response.message.name);
-                  frm._preventCommissarUpdate = false;
-                  resolve();
+                if (r.message) {
+                    frm._preventCommissarUpdate = true;
+                    frm.set_value("commissar", r.message.name);
+                    frm._preventCommissarUpdate = false;
+                    resolve();
                 } else {
-                  reject(new Error("Error while updating Commissar"));
+                    reject();
                 }
-              },
-              error: function () {
+            },
+            error: function() {
                 frm._commissarBeingUpdated = false;
-                reject(new Error("Error while updating Commissar"));
-              },
-            });
-          }
-        },
-        error: function () {
-          frm._commissarBeingUpdated = false;
-          reject(new Error("Error while fetching Commissar details"));
-        },
-      });
+                reject();
+            }
+        });
+    } else if ((frm.doc.client_type === "Company" || frm.doc.client_type === "Interbank") && 
+               frm.doc.client && frm.doc.commissar) {
+        
+        frm._commissarBeingUpdated = true;
+        frappe.call({
+            method: "frappe.client.get",
+            args: {
+                doctype: "Contact",
+                name: frm.doc.commissar,
+            },
+            callback: function (r) {
+                if (r.message) {
+                    let existing_contact = r.message;
+                    existing_contact.first_name = frm.doc.com_name;
+                    existing_contact.custom_com_gender = frm.doc.com_gender;
+                    existing_contact.custom_national_id = frm.doc.com_national_id;
+                    existing_contact.custom_com_address = frm.doc.com_address || "";
+                    existing_contact.custom_com_phone = frm.doc.com_phone;
+                    existing_contact.custom_job_title = frm.doc.com_job_title;
+                    existing_contact.custom_mobile_number = frm.doc.com_mobile_number;
+
+                    frappe.call({
+                        method: "frappe.client.save",
+                        args: {
+                            doc: existing_contact,
+                        },
+                        callback: function (save_response) {
+                            frm._commissarBeingUpdated = false;
+                            if (save_response.message) {
+                                frm._preventCommissarUpdate = true;
+                                frm.set_value("commissar", save_response.message.name);
+                                frm._preventCommissarUpdate = false;
+                                resolve();
+                            } else {
+                                reject();
+                            }
+                        },
+                        error: function () {
+                            frm._commissarBeingUpdated = false;
+                            reject();
+                        },
+                    });
+                }
+            },
+            error: function () {
+                frm._commissarBeingUpdated = false;
+                reject();
+            },
+        });
     } else {
-      resolve(); // No commissar update needed
+        resolve();
     }
   });
 }
@@ -1841,12 +1806,8 @@ function showIdentificationFields(frm) {
 
 // Helper function to add a transaction row
 function addTransactionRow(frm, item, availableQty, booking_ib) {
-    console.log("Adding item with available qty:", availableQty, item);
-    
-    // Add to teller_invoice_details
     let child = frm.add_child("teller_invoice_details");
     
-    // Set all required fields
     child.currency_code = item.currency_code;
     child.currency = item.currency;
     child.quantity = availableQty;
@@ -1855,9 +1816,7 @@ function addTransactionRow(frm, item, availableQty, booking_ib) {
     child.amount = availableQty;
     child.egy_amount = availableQty * item.rate;
     
-    // If there's an account field that needs to be set based on currency
     if (item.currency) {
-        // Find the appropriate account for this currency
         frappe.call({
             method: 'frappe.client.get_list',
             args: {
@@ -1879,21 +1838,14 @@ function addTransactionRow(frm, item, availableQty, booking_ib) {
         });
     }
     
-    // Refresh the child table
     frm.refresh_field("teller_invoice_details");
     
-    // Update total
     let total = 0;
     frm.doc.teller_invoice_details.forEach((item) => {
         total += flt(item.egy_amount || 0);
     });
     frm.set_value("total", total);
     frm.refresh_field("total");
-    
-    frappe.show_alert({
-        message: __('Successfully added currency from booking {0}', [booking_ib]),
-        indicator: 'green'
-    });
 }
 
 // Add list indicator color
