@@ -126,7 +126,8 @@ class TellerPurchase(Document):
             # Only check nationality for non-Interbank clients when exceed is true
             if self.exceed and not self.buyer_nationality and self.category_of_buyer != "Interbank":
                 frappe.throw(_("Buyer Nationality is required"))
-            if self.exceed and not self.buyer_phone:
+            # Only check phone for non-Interbank clients when exceed is true
+            if self.exceed and not self.buyer_phone and self.category_of_buyer != "Interbank":
                 frappe.throw(_("Buyer Phone is required"))
             
             # Basic validations
