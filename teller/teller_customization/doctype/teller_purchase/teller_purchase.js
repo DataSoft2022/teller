@@ -812,13 +812,6 @@ frappe.ui.form.on("Teller Purchase", {
     // Ensure egy_balance is always visible
     frm.toggle_display('egy_balance', true);
     frm.set_df_property('egy_balance', 'hidden', 0);
-
-    // Add Special Price button for Interbank
-    if (frm.doc.category_of_buyer === 'Interbank' && frm.doc.buyer) {
-      frm.add_custom_button(__('Select Booking Interbank'), function() {
-        frm.events.custom_special_price2(frm);
-      });
-    }
   },
 
   // add ledger report button on submit doctype

@@ -252,13 +252,6 @@ frappe.ui.form.on("Teller Invoice", {
       frm.set_df_property('start_registration_date', 'read_only', 1);
       frm.set_df_property('end_registration_date', 'read_only', 1);
     }
-
-    // Add Special Price button for Interbank
-    if (frm.doc.client_type === 'Interbank' && frm.doc.client) {
-      frm.add_custom_button(__('Select Booking Interbank'), function() {
-        frm.events.custom_special_price_2(frm);
-      });
-    }
   },
 
   issue_date: function(frm) {
