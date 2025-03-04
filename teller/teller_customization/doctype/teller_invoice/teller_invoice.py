@@ -755,11 +755,18 @@ class TellerInvoice(Document):
                 try:
                     account = frappe.get_doc("Account", row.account)
                     current_balance = get_balance_on(account=row.account)
+                    
+                    # For sales (Teller Invoice), we subtract the quantity since we're selling
+                    # The current_balance is negative (credit) when we have currency to sell
+                    # So we add the quantity (making it less negative) to simulate selling
                     row.balance_after = flt(current_balance) + flt(row.get('quantity', 0))
                     
-                    if row.balance_after < 0:
-                        frappe.throw(_("Insufficient balance in account {0} in row {1}").format(
-                            row.account, idx
+                    # For sales, we check if the absolute value of current_balance is enough to cover the sale
+                    if abs(current_balance) < abs(row.get('quantity', 0)):
+                        frappe.throw(_("Insufficient balance in account {0}. Available: {1}, Trying to sell: {2}").format(
+                            row.account, 
+                            abs(current_balance), 
+                            abs(row.get('quantity', 0))
                         ))
                 except Exception as acc_error:
                     frappe.log_error(
@@ -1479,48 +1486,49 @@ def get_account_permission_query_conditions(user=None):
     """
 
 @frappe.whitelist()
-def search_client_by_id(search_id):
+def search_client_by_id(search_id, client_type=None):
     """
-    Search for a customer by various identifiers:
+    Search for a customer by various identifiers based on client type:
     - National ID for Egyptian customers
     - Commercial Number for Companies
     - Passport Number for Foreigners
     Returns dict with customer name and type if found
     """
-    if not search_id:
+    if not search_id or not client_type:
         return None
         
     # Clean the search input
     search_id = search_id.strip()
     
-    # Search in Customer doctype
+    # Search in Customer doctype based on client type
     customer = None
     
-    # Try to find by National ID (Egyptian)
-    customer = frappe.db.get_value('Customer', 
-        {'custom_national_id': search_id, 'custom_type': 'Egyptian'}, 
-        ['name', 'custom_type'], as_dict=1
-    )
-    if customer:
-        return customer
+    if client_type == 'Egyptian':
+        # For Egyptian, search by National ID
+        customer = frappe.db.get_value('Customer', 
+            {'custom_national_id': search_id, 'custom_type': 'Egyptian'}, 
+            ['name', 'custom_type'], as_dict=1
+        )
+    elif client_type == 'Company':
+        # For Company, search by Commercial Number
+        customer = frappe.db.get_value('Customer', 
+            {'custom_commercial_no': search_id, 'custom_type': 'Company'}, 
+            ['name', 'custom_type'], as_dict=1
+        )
+    elif client_type == 'Foreigner':
+        # For Foreigner, search by Passport Number
+        customer = frappe.db.get_value('Customer', 
+            {'custom_passport_number': search_id, 'custom_type': 'Foreigner'}, 
+            ['name', 'custom_type'], as_dict=1
+        )
+    elif client_type == 'Interbank':
+        # For Interbank, search by Commercial Number
+        customer = frappe.db.get_value('Customer', 
+            {'custom_commercial_no': search_id, 'custom_type': 'Interbank'}, 
+            ['name', 'custom_type'], as_dict=1
+        )
         
-    # Try to find by Commercial Number (Company)
-    customer = frappe.db.get_value('Customer', 
-        {'custom_commercial_no': search_id, 'custom_type': 'Company'}, 
-        ['name', 'custom_type'], as_dict=1
-    )
-    if customer:
-        return customer
-        
-    # Try to find by Passport Number (Foreigner)
-    customer = frappe.db.get_value('Customer', 
-        {'custom_passport_number': search_id, 'custom_type': 'Foreigner'}, 
-        ['name', 'custom_type'], as_dict=1
-    )
-    if customer:
-        return customer
-        
-    return None
+    return customer
 
 @frappe.whitelist()
 def get_treasury_accounts(doctype=None, txt=None, searchfield=None, start=None, page_len=None, filters=None):

@@ -3,71 +3,108 @@
 
 frappe.ui.form.on("Teller Invoice", {
   client_type(frm) {
-    // First clear all individual fields
-    if(frm.doc.client_type !== "Egyptian" && frm.doc.client_type !== "Foreigner") {
-      const individualFields = [
-        'customer_name', 'national_id', 'gender', 'nationality',
-        'mobile_number', 'work_for', 'phone', 'place_of_birth',
-        'date_of_birth', 'job_title', 'address', 'passport_number',
-        'military_number'
-      ];
-      individualFields.forEach(field => frm.set_value(field, ''));
+    // First clear all ID fields
+    frm.set_value('national_id', '');
+    frm.set_value('passport_number', '');
+    frm.set_value('military_number', '');
+    
+    // Set appropriate card type based on category
+    if (frm.doc.client_type == "Foreigner") {
+        frm.set_value("card_type", "Passport");
+    } else if (frm.doc.client_type == "Egyptian") {
+        frm.set_value("card_type", "National ID");
     }
     
-    // Clear all company fields
-    const companyFields = [
-      'company_name', 'company_activity', 'company_commercial_no',
-      'company_num', 'end_registration_date', 'start_registration_date',
-      'comoany_address', 'is_expired1', 'interbank', 'company_legal_form'
-    ];
-    companyFields.forEach(field => frm.set_value(field, ''));
-    
-    // Set appropriate card type based on client type
-    if (frm.doc.client_type === "Foreigner") {
-      frm.set_value("card_type", "Passport");
-    } else if (frm.doc.client_type === "Egyptian") {
-      frm.set_value("card_type", "National ID");
-    }
-
-    // Show/hide ID fields based on card type
-    showIdentificationFields(frm);
-    
-    // Get and set the central bank number based on client type
-    let settingField = '';
-    if (frm.doc.client_type === 'Egyptian') {
-      settingField = 'sales_egyptian_number';
-    } else if (frm.doc.client_type === 'Foreigner') {
-      settingField = 'sales_foreigner_number';
-    } else if (frm.doc.client_type === 'Company') {
-      settingField = 'sales_company_number';
-    } else if (frm.doc.client_type === 'Interbank') {
-      settingField = 'sales_interbank_number';
-      
-      // For Interbank, automatically set the customer to "البنك الاهلي"
-      frappe.db.get_value('Customer', {customer_name: 'البنك الاهلي'}, 'name')
-        .then(r => {
-          if (r && r.message && r.message.name) {
-            frm.set_value('client', r.message.name);
-          } else {
-            frappe.msgprint(__('Customer "البنك الاهلي" not found. Please create this customer first.'));
-          }
-        });
-    }
-
-    if (settingField) {
-      frappe.db.get_single_value('Teller Setting', settingField)
-        .then(value => {
-          frm.set_value('central_bank_number', value);
-        })
-        .catch(err => {
-          console.log("Error fetching central bank number:", err);
-          frm.set_value('central_bank_number', '');
+    // Handle commissar section visibility
+    if (frm.doc.client_type === "Company") {
+        // Show/enable commissar section for Company
+        frm.set_df_property('commissar_section', 'hidden', 0);
+        frm.set_df_property('commissar', 'read_only', 0);
+        frm.set_df_property('commissar', 'reqd', 0);
+        
+        // Enable commissar fields
+        ['commissar', 'com_name', 'com_national_id', 
+         'com_address', 'com_gender', 'com_phone',
+         'com_mobile_number', 'com_job_title'].forEach(field => {
+            frm.set_df_property(field, 'read_only', 0);
         });
     } else {
-      frm.set_value('central_bank_number', '');
+        // Hide/disable commissar section for all other types
+        frm.set_df_property('commissar_section', 'hidden', 1);
+        frm.set_df_property('commissar', 'reqd', 0);
+        frm.set_df_property('commissar', 'read_only', 1);
+        
+        // Clear and disable commissar fields
+        ['commissar', 'com_name', 'com_national_id', 
+         'com_address', 'com_gender', 'com_phone',
+         'com_mobile_number', 'com_job_title'].forEach(field => {
+            frm.set_value(field, '');
+            frm.set_df_property(field, 'read_only', 1);
+        });
     }
     
-    frm.refresh_fields();
+    // Handle Interbank specific settings
+    if (frm.doc.client_type === "Interbank") {
+        // Clear and disable exceed
+        frm.set_value('exceed', 0);
+        frm.set_df_property('exceed', 'read_only', 1);
+        frm.set_df_property('exceed', 'hidden', 1);
+        
+        // For Interbank, automatically set the client to "البنك الاهلي"
+        frappe.db.get_value('Customer', {customer_name: 'البنك الاهلي'}, 'name')
+          .then(r => {
+            if (r && r.message && r.message.name) {
+              frm.set_value('client', r.message.name);
+            } else {
+              frappe.msgprint(__('Customer "البنك الاهلي" not found. Please create this customer first.'));
+            }
+          });
+    } else {
+        // Enable exceed for non-Interbank
+        frm.set_df_property('exceed', 'read_only', 1);
+        frm.set_df_property('exceed', 'hidden', 0);
+    }
+    
+    // Clear fields based on type
+    clearFieldsBasedOnType(frm);
+    
+    // Get and set the central bank number based on type
+    if (frm.doc.client_type) {
+        let field_name;
+        switch(frm.doc.client_type) {
+            case 'Egyptian':
+                field_name = 'egyptian_number';
+                break;
+            case 'Foreigner':
+                field_name = 'foreigner_number';
+                break;
+            case 'Company':
+                field_name = 'company_number';
+                break;
+            case 'Interbank':
+                field_name = 'interbank_number';
+                break;
+            default:
+                field_name = null;
+        }
+        
+        if (field_name) {
+            frappe.db.get_single_value('Teller Setting', field_name)
+                .then(value => {
+                    frm.set_value('central_bank_number', value);
+                });
+        }
+    }
+
+    // Show/hide identification fields based on type
+    showIdentificationFields(frm);
+
+    // If there's already a search ID, trigger the search after a short delay
+    if (frm.doc.client_search_id) {
+        setTimeout(() => {
+            frm.trigger('client_search_id');
+        }, 100);
+    }
   },
 
   card_type: function(frm) {
@@ -286,19 +323,23 @@ frappe.ui.form.on("Teller Invoice", {
             };
         },
         action(selections, args) {
-            // Clear console for debugging
-            console.clear();
-            console.log("Selected bookings:", selections);
-            console.log("Args:", args);
-            
             if (!selections || selections.length === 0) {
                 frappe.msgprint(__("No bookings selected"));
                 return;
             }
             
+            // Check for existing bookings in the current document
+            let existingBookings = new Set(frm.doc.teller_invoice_details.map(detail => detail.booking_interbank).filter(Boolean));
+            
             // Process each selected booking
             selections.forEach(function(booking_ib) {
                 if (booking_ib) {
+                    // Skip if this booking is already used
+                    if (existingBookings.has(booking_ib)) {
+                        frappe.msgprint(__("Booking {0} has already been added to this invoice", [booking_ib]));
+                        return;
+                    }
+
                     frappe.call({
                         method: "frappe.client.get",
                         args: {
@@ -306,34 +347,25 @@ frappe.ui.form.on("Teller Invoice", {
                             name: booking_ib
                         },
                         callback: function(response) {
-                            console.log("Booking response:", response);
-                            
                             if (response && response.message) {
                                 let booking = response.message;
                                 
-                                // Check if booked_currency exists and has items
                                 if (booking.booked_currency && booking.booked_currency.length > 0) {
-                                    console.log("Processing booked currencies:", booking.booked_currency);
-                                    
-                                    // Filter to get only items with status "Not Billed" or "Partial Billed"
                                     let availableItems = booking.booked_currency.filter(item => 
-                                        item.status === "Not Billed" || item.status === "Partial Billed");
-                                    
-                                    console.log("Available items:", availableItems);
+                                        item.status === "Not Billed" || item.status === "Partial Billed"
+                                    );
                                     
                                     if (availableItems.length === 0) {
                                         frappe.msgprint(__("No available currencies in booking {0}", [booking_ib]));
                                         return;
                                     }
                                     
-                                    // Process filtered items
                                     availableItems.forEach(function(item) {
-                                        // Calculate available quantity based on status
                                         let availableQty = 0;
                                         if (item.status === "Not Billed") {
-                                            availableQty = item.qty; // Full quantity available
+                                            availableQty = item.qty;
+                                            addTransactionRow(frm, item, availableQty, booking_ib);
                                         } else if (item.status === "Partial Billed") {
-                                            // Get the billed amount from transactions
                                             frappe.call({
                                                 method: 'frappe.client.get_list',
                                                 args: {
@@ -354,34 +386,17 @@ frappe.ui.form.on("Teller Invoice", {
                                                     }
                                                     availableQty = flt(item.qty) - totalBilled;
                                                     
-                                                    if (availableQty <= 0) {
-                                                        console.log("No available quantity after billing check:", item);
-                                                        return;
+                                                    if (availableQty > 0) {
+                                                        addTransactionRow(frm, item, availableQty, booking_ib);
                                                     }
-                                                    
-                                                    addTransactionRow(frm, item, availableQty, booking_ib);
                                                 }
                                             });
-                                            return; // Skip the rest for Partial Billed items as we're handling them in the callback
                                         }
-                                        
-                                        if (availableQty <= 0) {
-                                            console.log("Item has no available quantity:", item);
-                                            return;
-                                        }
-                                        
-                                        addTransactionRow(frm, item, availableQty, booking_ib);
                                     });
                                 } else {
                                     frappe.msgprint(__("No booked currencies found in booking {0}", [booking_ib]));
                                 }
-                            } else {
-                                frappe.msgprint(__("Could not retrieve booking {0}", [booking_ib]));
                             }
-                        },
-                        error: function(err) {
-                            console.error("Error fetching booking:", err);
-                            frappe.msgprint(__("Error fetching booking details"));
                         }
                     });
                 }
@@ -965,7 +980,8 @@ frappe.ui.form.on("Teller Invoice", {
     frappe.call({
       method: 'teller.teller_customization.doctype.teller_invoice.teller_invoice.search_client_by_id',
       args: {
-        search_id: frm.doc.client_search_id
+        search_id: frm.doc.client_search_id,
+        client_type: frm.doc.client_type
       },
       callback: function(r) {
         if (r.message) {
@@ -975,72 +991,61 @@ frappe.ui.form.on("Teller Invoice", {
           if (frm.doc.docstatus === 1) {
             frm.doc.client = customer.name;
           } else {
-          frm.set_value('client', customer.name);
+            frm.set_value('client', customer.name);
           }
           
           // Get full customer details
           frappe.db.get_doc('Customer', customer.name)
             .then(customer_doc => {
               if (customer_doc.custom_type === 'Company' || customer_doc.custom_type === 'Interbank') {
-                // For submitted docs, only update display without triggering form changes
-                if (frm.doc.docstatus === 1) {
-                  // Don't update registration dates for submitted docs
-                  frm.doc.company_name = customer_doc.customer_name;
-                  frm.doc.company_activity = customer_doc.custom_company_activity;
-                  frm.doc.company_commercial_no = customer_doc.custom_commercial_no;
-                  frm.doc.comoany_address = customer_doc.custom_comany_address1;
-                  frm.doc.is_expired1 = customer_doc.custom_is_expired;
-                  frm.doc.interbank = customer_doc.custom_interbank;
-                  frm.doc.company_legal_form = customer_doc.custom_legal_form;
-                  frm.refresh_fields();
-                } else {
-                  // For non-submitted docs, use set_value
+                // Set company fields
                 frm.set_value('company_name', customer_doc.customer_name);
                 frm.set_value('company_activity', customer_doc.custom_company_activity);
                 frm.set_value('company_commercial_no', customer_doc.custom_commercial_no);
-                frm.set_value('start_registration_date', customer_doc.custom_start_registration_date);
-                frm.set_value('end_registration_date', customer_doc.custom_end_registration_date);
+                frm.set_value('company_num', customer_doc.custom_company_no);
                 frm.set_value('comoany_address', customer_doc.custom_comany_address1);
                 frm.set_value('is_expired1', customer_doc.custom_is_expired);
                 frm.set_value('interbank', customer_doc.custom_interbank);
                 frm.set_value('company_legal_form', customer_doc.custom_legal_form);
-                }
               } else {
                 // Set individual fields
-                frm.set_value('card_type', customer_doc.custom_card_type);
-                frm.set_value('customer_name', customer_doc.customer_name);
+                frm.set_value('client_name', customer_doc.customer_name);
+                frm.set_value('client_gender', customer_doc.custom_gender);
+                frm.set_value('client_nationality', customer_doc.custom_nationality);
+                frm.set_value('client_work_for', customer_doc.custom_work_for);
+                frm.set_value('client_phone', customer_doc.custom_phone);
+                frm.set_value('client_place_of_birth', customer_doc.custom_place_of_birth);
+                frm.set_value('client_date_of_birth', customer_doc.custom_date_of_birth);
+                frm.set_value('client_job_title', customer_doc.custom_job_title);
+                frm.set_value('client_address', customer_doc.custom_address);
+                frm.set_value('client_expired', customer_doc.custom_expired);
+                frm.set_value('client_issue_date', customer_doc.custom_issue_date);
                 
-                // Set the appropriate ID based on card type
-                if (customer_doc.custom_card_type === 'Passport') {
-                  frm.set_value('passport_number', customer_doc.custom_passport_number);
-                } else if (customer_doc.custom_card_type === 'National ID') {
-                  frm.set_value('national_id', customer_doc.custom_national_id);
-                } else if (customer_doc.custom_card_type === 'Military Card') {
-                  frm.set_value('military_number', customer_doc.custom_military_number);
+                // Set ID fields based on client type
+                if (frm.doc.client_type === 'Egyptian') {
+                  frm.set_value('client_national_id', customer_doc.custom_national_id);
+                } else if (frm.doc.client_type === 'Foreigner') {
+                  frm.set_value('client_passport_number', customer_doc.custom_passport_number);
                 }
               }
               
+              // Refresh all fields
               frm.refresh_fields();
+              
+              frappe.show_alert({
+                message: __('Customer found and details populated'),
+                indicator: 'green'
+              });
             });
         } else {
-          // No existing customer found - handle based on client type
-          if (frm.doc.client_type === "Company" || frm.doc.client_type === "Interbank") {
-            // For company/interbank, set the commercial number
-            frm.set_value('company_commercial_no', frm.doc.client_search_id);
-            
-            // Set default dates if not set
-            if (!frm.doc.start_registration_date) {
-              frm.set_value('start_registration_date', frappe.datetime.get_today());
-            }
-            if (!frm.doc.end_registration_date) {
-              // Set end date to 1 year from today by default
-              let end_date = frappe.datetime.add_days(frappe.datetime.get_today(), 365);
-              frm.set_value('end_registration_date', end_date);
-            }
-          } else if (frm.doc.card_type === "National ID" && 
-              (frm.doc.client_type === "Egyptian" || frm.doc.client_type === "Foreigner")) {
-            frm.set_value('national_id', frm.doc.client_search_id);
+          // If no customer found, preserve the search ID in the appropriate field
+          if (frm.doc.client_type === 'Foreigner') {
+            frm.set_value('client_passport_number', frm.doc.client_search_id);
           }
+          frappe.show_alert({
+            message: __('No customer found with ID: {0}', [frm.doc.client_search_id]),
+            indicator: 'red'
+          });
         }
       }
     });
@@ -1824,7 +1829,7 @@ function showIdentificationFields(frm) {
         } else if (frm.doc.card_type === "Passport") {
             frm.set_df_property('passport_number', 'hidden', 0);
             frm.set_df_property('passport_number', 'reqd', 1);
-        } else if (frm.doc.card_type === "Military Card") {
+        } else if (frm.doc.card_type === "Military ID") {
             frm.set_df_property('military_number', 'hidden', 0);
             frm.set_df_property('military_number', 'reqd', 1);
         }

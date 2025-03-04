@@ -1175,16 +1175,16 @@ def has_permission(doc, ptype="read", user=None):
         return False
 
 @frappe.whitelist()
-def search_buyer_by_id(search_id):
+def search_buyer_by_id(search_id, category_of_buyer=None):
     """
-    Search for a customer by various identifiers:
+    Search for a customer by various identifiers based on category:
     - National ID for Egyptian customers
     - Commercial Number for Companies
-    - Passport Number for Foreigners and Egyptians
+    - Passport Number for Foreigners
     - Military Number for Military personnel
     Returns customer details if found
     """
-    if not search_id:
+    if not search_id or not category_of_buyer:
         return None
         
     # Clean the search input
@@ -1203,30 +1203,31 @@ def search_buyer_by_id(search_id):
         "custom_interbank"
     ]
     
-    # Try to find by National ID (Egyptian)
-    customer = frappe.db.get_value('Customer',
-        {'custom_national_id': search_id, 'custom_type': 'Egyptian'},
-        fields, as_dict=1
-    )
+    # Search based on category
+    customer = None
     
-    # Try to find by Passport Number (Egyptian or Foreigner)
-    if not customer:
+    if category_of_buyer == 'Egyptian':
+        # For Egyptian, search by National ID
         customer = frappe.db.get_value('Customer',
-            {'custom_passport_number': search_id, 'custom_type': ['in', ['Egyptian', 'Foreigner']]},
+            {'custom_national_id': search_id, 'custom_type': 'Egyptian'},
             fields, as_dict=1
         )
-    
-    # Try to find by Commercial Number (Company)
-    if not customer:
+    elif category_of_buyer == 'Foreigner':
+        # For Foreigner, search by Passport Number
+        customer = frappe.db.get_value('Customer',
+            {'custom_passport_number': search_id, 'custom_type': 'Foreigner'},
+            fields, as_dict=1
+        )
+    elif category_of_buyer == 'Company':
+        # For Company, search by Commercial Number
         customer = frappe.db.get_value('Customer',
             {'custom_commercial_no': search_id, 'custom_type': 'Company'},
             fields, as_dict=1
         )
-    
-    # Try to find by Military Number
-    if not customer:
+    elif category_of_buyer == 'Interbank':
+        # For Interbank, search by Commercial Number
         customer = frappe.db.get_value('Customer',
-            {'custom_military_number': search_id},
+            {'custom_commercial_no': search_id, 'custom_type': 'Interbank'},
             fields, as_dict=1
         )
     
