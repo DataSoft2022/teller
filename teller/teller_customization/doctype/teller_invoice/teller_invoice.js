@@ -8,17 +8,27 @@ frappe.ui.form.on("Teller Invoice", {
     frm.set_value('passport_number', '');
     frm.set_value('military_number', '');
     
-    // Set appropriate card type based on category
-    if (frm.doc.client_type == "Foreigner") {
-        frm.set_value("card_type", "Passport");
-    } else if (frm.doc.client_type == "Egyptian") {
+    // Handle individual section for Egyptian/Foreigner
+    if (frm.doc.client_type == "Egyptian" || frm.doc.client_type == "Foreigner") {
+      frm.set_df_property('individual_section', 'hidden', 0);
+      
+      if (frm.doc.client_type == "Egyptian") {
         frm.set_value("card_type", "National ID");
+        frm.set_df_property('national_id', 'hidden', 0);
+        frm.set_df_property('passport_number', 'hidden', 1);
+      } else {
+        frm.set_value("card_type", "Passport"); 
+        frm.set_df_property('passport_number', 'hidden', 0);
+        frm.set_df_property('national_id', 'hidden', 1);
+      }
+    } else {
+      frm.set_df_property('individual_section', 'hidden', 1);
     }
     
     // Handle commissar section visibility
     if (frm.doc.client_type === "Company") {
         // Show/enable commissar section for Company
-        frm.set_df_property('commissar_section', 'hidden', 0);
+        frm.set_df_property('commissar_info_section', 'hidden', 0);
         frm.set_df_property('commissar', 'read_only', 0);
         frm.set_df_property('commissar', 'reqd', 0);
         
@@ -28,9 +38,21 @@ frappe.ui.form.on("Teller Invoice", {
          'com_mobile_number', 'com_job_title'].forEach(field => {
             frm.set_df_property(field, 'read_only', 0);
         });
+    } else if (frm.doc.client_type === "Interbank") {
+        // Show but make read-only for Interbank
+        frm.set_df_property('commissar_info_section', 'hidden', 0);
+        frm.set_df_property('commissar', 'read_only', 1);
+        frm.set_df_property('commissar', 'reqd', 0);
+        
+        // Make commissar fields read-only
+        ['commissar', 'com_name', 'com_national_id', 
+         'com_address', 'com_gender', 'com_phone',
+         'com_mobile_number', 'com_job_title'].forEach(field => {
+            frm.set_df_property(field, 'read_only', 1);
+        });
     } else {
         // Hide/disable commissar section for all other types
-        frm.set_df_property('commissar_section', 'hidden', 1);
+        frm.set_df_property('commissar_info_section', 'hidden', 1);
         frm.set_df_property('commissar', 'reqd', 0);
         frm.set_df_property('commissar', 'read_only', 1);
         
@@ -981,59 +1003,59 @@ frappe.ui.form.on("Teller Invoice", {
         },
         callback: function(r) {
             if (r.message) {
-                const customer = r.message;
+                const result = r.message;
                 
-                if (frm.doc.docstatus === 1) {
-                    frm.doc.client = customer.name;
+                if (result.not_found) {
+                    // Handle case when customer is not found
+                    if (frm.doc.client_type === 'Egyptian') {
+                        frm.set_value('national_id', result.national_id);
+                        frm.set_value('card_type', 'National ID');
+                    } else if (frm.doc.client_type === 'Foreigner') {
+                        frm.set_value('passport_number', result.passport_number);
+                        frm.set_value('card_type', 'Passport');
+                    } else if (frm.doc.client_type === 'Company' || frm.doc.client_type === 'Interbank') {
+                        frm.set_value('company_commercial_no', result.custom_commercial_no);
+                    }
+                    // Clear the client field since no customer was found
+                    frm.set_value('client', '');
                 } else {
-                    frm.set_value('client', customer.name);
-                }
-                
-                frappe.db.get_doc('Customer', customer.name)
-                    .then(customer_doc => {
-                        if (customer_doc.custom_type === 'Company' || customer_doc.custom_type === 'Interbank') {
-                            frm.set_value('company_name', customer_doc.customer_name);
-                            frm.set_value('company_activity', customer_doc.custom_company_activity);
-                            frm.set_value('company_commercial_no', customer_doc.custom_commercial_no);
-                            frm.set_value('company_num', customer_doc.custom_company_no);
-                            frm.set_value('comoany_address', customer_doc.custom_comany_address1);
-                            frm.set_value('is_expired1', customer_doc.custom_is_expired);
-                            frm.set_value('interbank', customer_doc.custom_interbank);
-                            frm.set_value('company_legal_form', customer_doc.custom_legal_form);
-                        } else {
-                            frm.set_value('customer_name', customer_doc.customer_name);
-                            frm.set_value('gender', customer_doc.custom_gender);
-                            frm.set_value('nationality', customer_doc.custom_nationality);
-                            frm.set_value('work_for', customer_doc.custom_work_for);
-                            frm.set_value('phone', customer_doc.custom_phone);
-                            frm.set_value('place_of_birth', customer_doc.custom_place_of_birth);
-                            frm.set_value('date_of_birth', customer_doc.custom_date_of_birth);
-                            frm.set_value('job_title', customer_doc.custom_job_title);
-                            frm.set_value('address', customer_doc.custom_address);
-                            frm.set_value('expired', customer_doc.custom_expired);
-                            frm.set_value('issue_date', customer_doc.custom_issue_date);
-                            
-                            if (customer_doc.custom_card_type) {
-                                frm.set_value('card_type', customer_doc.custom_card_type);
+                    // Customer found - set the client and populate fields
+                    if (frm.doc.docstatus === 1) {
+                        frm.doc.client = result.name;
+                    } else {
+                        frm.set_value('client', result.name);
+                    }
+                    
+                    frappe.db.get_doc('Customer', result.name)
+                        .then(customer_doc => {
+                            if (customer_doc.custom_type === 'Company' || customer_doc.custom_type === 'Interbank') {
+                                frm.set_value('company_name', customer_doc.customer_name);
+                                frm.set_value('company_activity', customer_doc.custom_company_activity);
+                                frm.set_value('company_commercial_no', customer_doc.custom_commercial_no);
+                                frm.set_value('company_num', customer_doc.custom_company_no);
+                                frm.set_value('comoany_address', customer_doc.custom_comany_address1);
+                                frm.set_value('is_expired1', customer_doc.custom_is_expired);
+                                frm.set_value('interbank', customer_doc.custom_interbank);
+                                frm.set_value('company_legal_form', customer_doc.custom_legal_form);
+                            } else {
+                                // For individual customers (Egyptian or Foreigner)
+                                if (customer_doc.custom_type === 'Egyptian') {
+                                    frm.set_value('card_type', 'National ID');
+                                    frm.set_value('national_id', customer_doc.custom_national_id);
+                                } else if (customer_doc.custom_type === 'Foreigner') {
+                                    frm.set_value('card_type', 'Passport');
+                                    frm.set_value('passport_number', customer_doc.custom_passport_number);
+                                }
+                                frm.set_value('customer_name', customer_doc.customer_name);
+                                frm.set_value('nationality', customer_doc.custom_nationality);
+                                frm.set_value('mobile_number', customer_doc.custom_mobile);
+                                frm.set_value('work_for', customer_doc.custom_work_for);
+                                frm.set_value('phone', customer_doc.custom_phone);
+                                frm.set_value('job_title', customer_doc.custom_job_title);
+                                frm.set_value('address', customer_doc.custom_address);
+                                frm.set_value('place_of_birth', customer_doc.custom_place_of_birth);
                             }
-                            
-                            if (customer_doc.custom_card_type === 'National ID') {
-                                frm.set_value('national_id', customer_doc.custom_national_id);
-                            } else if (customer_doc.custom_card_type === 'Passport') {
-                                frm.set_value('passport_number', customer_doc.custom_passport_number);
-                            } else if (customer_doc.custom_card_type === 'Military Card') {
-                                frm.set_value('military_number', customer_doc.custom_military_number);
-                            }
-                        }
-                        
-                        showIdentificationFields(frm);
-                        frm.refresh_fields();
-                    });
-            } else {
-                if (frm.doc.client_type === 'Foreigner') {
-                    frm.set_value('passport_number', frm.doc.client_search_id);
-                } else if (frm.doc.client_type === 'Egyptian') {
-                    frm.set_value('national_id', frm.doc.client_search_id);
+                        });
                 }
             }
         }

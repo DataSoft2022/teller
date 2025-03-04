@@ -303,11 +303,11 @@
    "mandatory_depends_on": "eval:(doc.category_of_buyer === \"Egyptian\" || doc.category_of_buyer === \"Foreigner\")"
   },
   {
-   "depends_on": "eval:(doc.category_of_buyer==\"Egyptian\"||doc.category_of_buyer==\"Foreigner\")&&doc.exceed==1",
+   "depends_on": "eval:(doc.category_of_buyer==\"Egyptian\"||doc.category_of_buyer==\"Foreigner\")&&doc.exceed==1&&doc.category_of_buyer!=\"Interbank\"",
    "fieldname": "buyer_nationality",
    "fieldtype": "Data",
    "label": "Nationality",
-   "mandatory_depends_on": "eval:doc.exceed == 1 && (doc.category_of_buyer === \"Egyptian\" || doc.category_of_buyer === \"Foreigner\")"
+   "mandatory_depends_on": "eval:doc.exceed == 1 && (doc.category_of_buyer === \"Egyptian\" || doc.category_of_buyer === \"Foreigner\") && doc.category_of_buyer !== \"Interbank\""
   },
   {
    "depends_on": "eval:(doc.category_of_buyer==\"Egyptian\"||doc.category_of_buyer==\"Foreigner\")&&doc.exceed==1",

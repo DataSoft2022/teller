@@ -123,7 +123,8 @@ class TellerPurchase(Document):
             # Validate mobile number is provided when exceed is checked
             if self.exceed and not self.buyer_name:
                 frappe.throw(_("Buyer Name is required"))
-            if self.exceed and not self.buyer_nationality:
+            # Only check nationality for non-Interbank clients when exceed is true
+            if self.exceed and not self.buyer_nationality and self.category_of_buyer != "Interbank":
                 frappe.throw(_("Buyer Nationality is required"))
             if self.exceed and not self.buyer_phone:
                 frappe.throw(_("Buyer Phone is required"))

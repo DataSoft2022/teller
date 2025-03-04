@@ -661,7 +661,7 @@
    "fieldname": "com_national_id",
    "fieldtype": "Data",
    "label": " National ID",
-   "mandatory_depends_on": "eval:doc.client && (doc.client_type === \"Company\" || doc.client_type === \"Interbank\")"
+   "mandatory_depends_on": "eval:doc.client && doc.client_type === \"Company\""
   },
   {
    "fieldname": "com_name",
@@ -672,33 +672,26 @@
    "fieldname": "com_gender",
    "fieldtype": "Select",
    "label": "Gender",
-   "mandatory_depends_on": "eval:doc.exceed == 1 && (doc.client_type === \"Company\" || doc.client_type === \"Interbank\")",
+   "mandatory_depends_on": "eval:doc.exceed == 1 && doc.client_type === \"Company\"",
    "options": "Male\nFemale"
   },
   {
    "fieldname": "com_address",
    "fieldtype": "Data",
    "label": "Address",
-   "mandatory_depends_on": "eval:doc.exceed == 1 && (doc.client_type === \"Company\" || doc.client_type === \"Interbank\")"
+   "mandatory_depends_on": "eval:doc.exceed == 1 && doc.client_type === \"Company\""
   },
   {
    "fieldname": "com_phone",
    "fieldtype": "Data",
    "label": " Phone",
-   "mandatory_depends_on": "eval:doc.exceed == 1 && (doc.client_type === \"Company\" || doc.client_type === \"Interbank\")"
-  },
-  {
-   "default": "0",
-   "fieldname": "test_button",
-   "fieldtype": "Check",
-   "hidden": 1,
-   "label": "test button"
+   "mandatory_depends_on": "eval:doc.exceed == 1 && doc.client_type === \"Company\""
   },
   {
    "fieldname": "com_job_title",
    "fieldtype": "Data",
    "label": "Job Title",
-   "mandatory_depends_on": "eval:doc.exceed == 1 && (doc.client_type === \"Company\" || doc.client_type === \"Interbank\")"
+   "mandatory_depends_on": "eval:doc.exceed == 1 && doc.client_type === \"Company\""
   },
   {
    "fieldname": "com_mobile_number",

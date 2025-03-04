@@ -8,8 +8,9 @@ frappe.ui.form.on("Printing Roll", {
     // Set up branch field filtering based on user's branch
     frm.set_query("branch", function() {
       return {
-        query: "frappe.client.get_list",
-        filters: [["Branch", "name", "!=", ""]] // Default show all branches
+        filters: {
+          name: ["!=", ""]  // Default show all branches
+        }
       };
     });
 
