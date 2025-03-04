@@ -180,9 +180,9 @@ frappe.ui.form.on("Teller Purchase", {
         frm.set_df_property('purchase_commissar', 'reqd', 0);
         
         // Enable commissar fields
-        ['purchase_commissar', 'purchase_com_name', 'purchase_com_national_id', 
-         'purchase_com_address', 'purchase_com_gender', 'purchase_com_phone',
-         'purchase_com_mobile_number', 'purchase_com_job_title'].forEach(field => {
+        ['purchase_commissar', 'com_name', 'com_national_id', 
+         'com_address', 'com_gender', 'com_phone',
+         'com_mobile_number', 'com_job_title'].forEach(field => {
             frm.set_df_property(field, 'read_only', 0);
         });
     } else {
@@ -192,9 +192,9 @@ frappe.ui.form.on("Teller Purchase", {
         frm.set_df_property('purchase_commissar', 'read_only', 1);
         
         // Clear and disable commissar fields
-        ['purchase_commissar', 'purchase_com_name', 'purchase_com_national_id', 
-         'purchase_com_address', 'purchase_com_gender', 'purchase_com_phone',
-         'purchase_com_mobile_number', 'purchase_com_job_title'].forEach(field => {
+        ['purchase_commissar', 'com_name', 'com_national_id', 
+         'com_address', 'com_gender', 'com_phone',
+         'com_mobile_number', 'com_job_title'].forEach(field => {
             frm.set_value(field, '');
             frm.set_df_property(field, 'read_only', 1);
         });

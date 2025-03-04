@@ -1522,8 +1522,8 @@ def search_client_by_id(search_id, client_type=None):
     elif client_type == 'Foreigner':
         # For Foreigner, search by Passport Number
         customer = frappe.db.get_value('Customer', 
-            {'custom_passport_no': search_id, 'custom_type': 'Foreigner'}, 
-            ['name', 'custom_type', 'custom_passport_no', 'custom_gender', 'custom_nationality',
+            {'custom_passport_number': search_id, 'custom_type': 'Foreigner'}, 
+            ['name', 'custom_type', 'custom_passport_number', 'custom_gender', 'custom_nationality',
              'custom_mobile_number', 'custom_work_for', 'custom_phone', 'custom_job_title',
              'custom_address', 'custom_place_of_birth'], as_dict=1
         )
