@@ -1508,7 +1508,7 @@ def search_client_by_id(search_id, client_type=None):
         customer = frappe.db.get_value('Customer', 
             {'custom_national_id': search_id, 'custom_type': 'Egyptian'}, 
             ['name', 'custom_type', 'custom_national_id', 'customer_name', 'custom_nationality',
-             'custom_mobile', 'custom_work', 'custom_phone', 'custom_job',
+             'custom_mobile', 'custom_work_for', 'custom_phone', 'custom_job_title',
              'custom_address', 'custom_place_of_birth'], as_dict=1
         )
         if not customer:
@@ -1540,7 +1540,7 @@ def search_client_by_id(search_id, client_type=None):
         customer = frappe.db.get_value('Customer', 
             {'custom_passport_number': search_id, 'custom_type': 'Foreigner'}, 
             ['name', 'custom_type', 'custom_passport_number', 'customer_name', 'custom_nationality',
-             'custom_mobile', 'custom_work', 'custom_phone', 'custom_job',
+             'custom_mobile', 'custom_work_for', 'custom_phone', 'custom_job_title',
              'custom_address', 'custom_place_of_birth'], as_dict=1
         )
         if not customer:
