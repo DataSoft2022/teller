@@ -958,24 +958,24 @@ frappe.ui.form.on("Teller Purchase", {
           },
           callback: function (r) {
             // set the fields with r.message.fieldname
-            frm.set_value("purchase_com_name", r.message.first_name + ' ' + r.message.last_name);
-            frm.set_value("purchase_com_national_id", r.message.custom_national_id);
-            frm.set_value("purchase_com_address", r.message.address);
-            frm.set_value("purchase_com_gender", r.message.gender);
-            frm.set_value("purchase_com_phone", r.message.phone);
-            frm.set_value("purchase_com_mobile_number", r.message.mobile_no);
-            frm.set_value("purchase_com_job_title", r.message.job_title);
+            frm.set_value("com_name", r.message.first_name + ' ' + r.message.last_name);
+            frm.set_value("com_national_id", r.message.custom_national_id);
+            frm.set_value("com_address", r.message.address);
+            frm.set_value("com_gender", r.message.gender);
+            frm.set_value("com_phone", r.message.phone);
+            frm.set_value("com_mobile_number", r.message.mobile_no);
+            frm.set_value("com_job_title", r.message.job_title);
           },
         });
       } else {
         // clear the fields
-        frm.set_value("purchase_com_name", "");
-        frm.set_value("purchase_com_national_id", "");
-        frm.set_value("purchase_com_address", "");
-        frm.set_value("purchase_com_gender", "");
-        frm.set_value("purchase_com_phone", "");
-        frm.set_value("purchase_com_mobile_number", "");
-        frm.set_value("purchase_com_job_title", "");
+        frm.set_value("com_name", "");
+        frm.set_value("com_national_id", "");
+        frm.set_value("com_address", "");
+        frm.set_value("com_gender", "");
+        frm.set_value("com_phone", "");
+        frm.set_value("com_mobile_number", "");
+        frm.set_value("com_job_title", "");
       }
     } else {
       __("Please select Company Name Before add Commissar");
@@ -1301,11 +1301,26 @@ frappe.ui.form.on("Teller Purchase", {
         },
         callback: function(r) {
           if (r.message) {
-            // Set contact related fields if needed
-            frm.refresh_field("purchase_commissar");
+            // Set contact related fields with correct field names
+            frm.set_value("com_name", r.message.first_name + ' ' + r.message.last_name);
+            frm.set_value("com_national_id", r.message.custom_national_id);
+            frm.set_value("com_address", r.message.address);
+            frm.set_value("com_gender", r.message.gender);
+            frm.set_value("com_phone", r.message.phone);
+            frm.set_value("com_mobile_number", r.message.mobile_no);
+            frm.set_value("com_job_title", r.message.job_title);
           }
         }
       });
+    } else {
+      // Clear the fields with correct field names
+      frm.set_value("com_name", "");
+      frm.set_value("com_national_id", "");
+      frm.set_value("com_address", "");
+      frm.set_value("com_gender", "");
+      frm.set_value("com_phone", "");
+      frm.set_value("com_mobile_number", "");
+      frm.set_value("com_job_title", "");
     }
   },
   special_price: function(frm) {

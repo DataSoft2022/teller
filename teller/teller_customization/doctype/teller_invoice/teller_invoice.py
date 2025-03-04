@@ -1507,25 +1507,33 @@ def search_client_by_id(search_id, client_type=None):
         # For Egyptian, search by National ID
         customer = frappe.db.get_value('Customer', 
             {'custom_national_id': search_id, 'custom_type': 'Egyptian'}, 
-            ['name', 'custom_type'], as_dict=1
+            ['name', 'custom_type', 'custom_national_id', 'custom_gender', 'custom_nationality',
+             'custom_mobile_number', 'custom_work_for', 'custom_phone', 'custom_job_title',
+             'custom_address', 'custom_place_of_birth'], as_dict=1
         )
     elif client_type == 'Company':
         # For Company, search by Commercial Number
         customer = frappe.db.get_value('Customer', 
             {'custom_commercial_no': search_id, 'custom_type': 'Company'}, 
-            ['name', 'custom_type'], as_dict=1
+            ['name', 'custom_type', 'custom_commercial_no', 'custom_company_activity',
+             'custom_company_address', 'custom_company_legal_form', 'custom_start_registration_date',
+             'custom_end_registration_date'], as_dict=1
         )
     elif client_type == 'Foreigner':
         # For Foreigner, search by Passport Number
         customer = frappe.db.get_value('Customer', 
-            {'custom_passport_number': search_id, 'custom_type': 'Foreigner'}, 
-            ['name', 'custom_type'], as_dict=1
+            {'custom_passport_no': search_id, 'custom_type': 'Foreigner'}, 
+            ['name', 'custom_type', 'custom_passport_no', 'custom_gender', 'custom_nationality',
+             'custom_mobile_number', 'custom_work_for', 'custom_phone', 'custom_job_title',
+             'custom_address', 'custom_place_of_birth'], as_dict=1
         )
     elif client_type == 'Interbank':
         # For Interbank, search by Commercial Number
         customer = frappe.db.get_value('Customer', 
             {'custom_commercial_no': search_id, 'custom_type': 'Interbank'}, 
-            ['name', 'custom_type'], as_dict=1
+            ['name', 'custom_type', 'custom_commercial_no', 'custom_company_activity',
+             'custom_company_address', 'custom_company_legal_form', 'custom_start_registration_date',
+             'custom_end_registration_date'], as_dict=1
         )
         
     return customer
