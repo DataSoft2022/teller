@@ -258,81 +258,157 @@ frappe.ui.form.on("Teller Invoice", {
     validateIdExpiration(frm);
   },
 
-  custom_special_price_2(frm) {
-    // Log the current branch for debugging
-    console.log("Current branch:", frm.doc.branch_no);
-    
-    // Check if there are any Booking Interbank records at all
-    frappe.db.get_list('Booking Interbank', {
-      fields: ['name', 'transaction', 'branch'],
-      limit: 10
-    }).then(records => {
-      console.log("All Booking Interbank records:", records);
-      
-      // Check if there are any records matching our criteria
-      frappe.db.get_list('Booking Interbank', {
-        fields: ['name', 'transaction', 'branch'],
-        filters: {
-          'transaction': 'Selling'
+  special_price: function(frm) {
+    if (!frm.doc.client_type || frm.doc.client_type !== 'Interbank') {
+        frappe.msgprint({
+            title: __('Invalid Category'),
+            message: __('Special price is only available for Interbank category'),
+            indicator: 'red'
+        });
+        return;
+    }
+
+    new frappe.ui.form.MultiSelectDialog({
+        doctype: "Booking Interbank",
+        target: frm,
+        setters: {
+            status: null,
         },
-        limit: 10
-      }).then(filtered_records => {
-        console.log("Filtered Booking Interbank records by transaction:", filtered_records);
-      });
-    });
-    
-    var d = new frappe.ui.Dialog({
-      title: "Select Booking Interbank",
-      fields: [
-        {
-          label: "Booking Interbank",
-          fieldname: "name",
-          fieldtype: "Link",
-          options: "Booking Interbank",
-          get_query: function() {
-            // Get the current branch from the form
-            console.log("Dialog filter - branch_no:", frm.doc.branch_no);
-            
-            // Only filter by transaction type, not by branch
-            let filters = {
-              'transaction': 'Selling'
-            };
-            console.log("Dialog filters:", filters);
-            
+        add_filters_group: 1,
+        date_field: "date",
+        get_query() {
             return {
-                filters: filters
+                filters: {
+                    status: ["in", ["Partial Billed", "Not Billed"]],
+                    docstatus: ["in", [0, 1]],
+                    transaction: "Selling"
+                }
             };
-          }
         },
-      ],
-      size: "small", // small, large, extra-large
-      primary_action_label: "Submit",
-      primary_action: async function (values) {
-        if (!values.name) {
-          frappe.msgprint("Please select a Booking Interbank record");
-          return;
+        action(selections, args) {
+            // Clear console for debugging
+            console.clear();
+            console.log("Selected bookings:", selections);
+            console.log("Args:", args);
+            
+            if (!selections || selections.length === 0) {
+                frappe.msgprint(__("No bookings selected"));
+                return;
+            }
+            
+            // Process each selected booking
+            selections.forEach(function(booking_ib) {
+                if (booking_ib) {
+                    frappe.call({
+                        method: "frappe.client.get",
+                        args: {
+                            doctype: "Booking Interbank",
+                            name: booking_ib
+                        },
+                        callback: function(response) {
+                            console.log("Booking response:", response);
+                            
+                            if (response && response.message) {
+                                let booking = response.message;
+                                
+                                // Check if booked_currency exists and has items
+                                if (booking.booked_currency && booking.booked_currency.length > 0) {
+                                    console.log("Processing booked currencies:", booking.booked_currency);
+                                    
+                                    // Filter to get only items with status "Not Billed" or "Partial Billed"
+                                    let availableItems = booking.booked_currency.filter(item => 
+                                        item.status === "Not Billed" || item.status === "Partial Billed");
+                                    
+                                    console.log("Available items:", availableItems);
+                                    
+                                    if (availableItems.length === 0) {
+                                        frappe.msgprint(__("No available currencies in booking {0}", [booking_ib]));
+                                        return;
+                                    }
+                                    
+                                    // Process filtered items
+                                    availableItems.forEach(function(item) {
+                                        // Calculate available quantity
+                                        let availableQty = item.qty;
+                                        if (item.booking_qty) {
+                                            availableQty -= item.booking_qty;
+                                        }
+                                        
+                                        if (availableQty <= 0) {
+                                            console.log("Item has no available quantity:", item);
+                                            return; // Skip items with no available quantity
+                                        }
+                                        
+                                        console.log("Adding item with available qty:", availableQty, item);
+                                        
+                                        // Add to teller_invoice_details
+                                        let child = frm.add_child("teller_invoice_details");
+                                        
+                                        // Set all required fields
+                                        child.currency_code = item.currency_code;
+                                        child.currency = item.currency;
+                                        child.quantity = availableQty;
+                                        child.exchange_rate = item.rate;
+                                        child.booking_interbank = booking_ib;
+                                        child.amount = availableQty;
+                                        child.egy_amount = availableQty * item.rate;
+                                        
+                                        // If there's an account field that needs to be set based on currency
+                                        if (item.currency) {
+                                            // Find the appropriate account for this currency
+                                            frappe.call({
+                                                method: 'frappe.client.get_list',
+                                                args: {
+                                                    doctype: 'Account',
+                                                    filters: {
+                                                        'account_currency': item.currency,
+                                                        'account_type': ['in', ['Bank', 'Cash']],
+                                                        'custom_teller_treasury': frm.doc.treasury_code
+                                                    },
+                                                    fields: ['name'],
+                                                    limit: 1
+                                                },
+                                                callback: function(account_response) {
+                                                    if (account_response.message && account_response.message.length > 0) {
+                                                        child.account = account_response.message[0].name;
+                                                        frm.refresh_field("teller_invoice_details");
+                                                    }
+                                                }
+                                            });
+                                        }
+                                    });
+                                    
+                                    // Refresh the child table
+                                    frm.refresh_field("teller_invoice_details");
+                                    
+                                    // Update total
+                                    let total = 0;
+                                    frm.doc.teller_invoice_details.forEach((item) => {
+                                        total += flt(item.egy_amount || 0);
+                                    });
+                                    frm.set_value("total", total);
+                                    frm.refresh_field("total");
+                                    
+                                    frappe.show_alert({
+                                        message: __('Successfully added currencies from booking {0}', [booking_ib]),
+                                        indicator: 'green'
+                                    });
+                                } else {
+                                    frappe.msgprint(__("No booked currencies found in booking {0}", [booking_ib]));
+                                }
+                            } else {
+                                frappe.msgprint(__("Could not retrieve booking {0}", [booking_ib]));
+                            }
+                        },
+                        error: function(err) {
+                            console.error("Error fetching booking:", err);
+                            frappe.msgprint(__("Error fetching booking details"));
+                        }
+                    });
+                }
+            });
         }
-        
-        console.log(values.name);
-        let doc = await frappe.db.get_doc(
-          "Booking Interbank",
-          values.name
-        );
-        console.log(doc.booked_currency);
-        let book_table = doc.booked_currency;
-        for (let item of book_table) {
-          console.log(item.currency);
-          let child = frm.add_child("teller_invoice_details");
-          child.currency = item.currency;
-          child.currency_code = item.currency_code;
-          child.rate = item.rate;
-          child.qty = item.booking_qty || item.qty;
-        }
-        frm.refresh_field("teller_invoice_details");
-        d.hide();
-      },
     });
-    d.show();
   },
   show_general_ledger: function (frm) {
     if (frm.doc.docstatus > 0) {
@@ -1558,148 +1634,146 @@ frappe.ui.form.on('Teller Invoice', {
       return;
     }
 
-    // Clear console for debugging
-    console.clear();
-    console.log("Opening special price dialog for Teller Invoice");
-    
     new frappe.ui.form.MultiSelectDialog({
-      doctype: "Booking Interbank",
-      target: frm,
-      setters: {
-        status: null,
-      },
-      add_filters_group: 1,
-      date_field: "date",
-      get_query() {
-        return {
-          filters: {
-            status: ["in", ["Partial Billed", "Not Billed"]],
-            docstatus: ["in", [0, 1]],
-            transaction: "Selling"
-          }
-        };
-      },
-      action(selections, args) {
-        console.log("Selected bookings:", selections);
-        console.log("Args:", args);
-        
-        if (!selections || selections.length === 0) {
-          frappe.msgprint(__("No bookings selected"));
-          return;
-        }
-        
-        // Process each selected booking
-        selections.forEach(function(booking_ib) {
-          if (booking_ib) {
-            frappe.call({
-              method: "frappe.client.get",
-              args: {
-                doctype: "Booking Interbank",
-                name: booking_ib
-              },
-              callback: function(response) {
-                console.log("Booking response:", response);
-                
-                if (response && response.message) {
-                  let booking = response.message;
-                  
-                  // Check if booked_currency exists and has items
-                  if (booking.booked_currency && booking.booked_currency.length > 0) {
-                    console.log("Processing booked currencies:", booking.booked_currency);
-                    
-                    // Filter to get only items with status "Not Billed" or "Partial Billed"
-                    let availableItems = booking.booked_currency.filter(item => 
-                      item.status === "Not Billed" || item.status === "Partial Billed");
-                    
-                    console.log("Available items:", availableItems);
-                    
-                    if (availableItems.length === 0) {
-                      frappe.msgprint(__("No available currencies in booking {0}", [booking_ib]));
-                      return;
-                    }
-                    
-                    // Process filtered items
-                    availableItems.forEach(function(item) {
-                      // Calculate available quantity
-                      let availableQty = item.qty;
-                      if (item.booking_qty) {
-                        availableQty -= item.booking_qty;
-                      }
-                      
-                      if (availableQty <= 0) {
-                        console.log("Item has no available quantity:", item);
-                        return; // Skip items with no available quantity
-                      }
-                      
-                      console.log("Adding item with available qty:", availableQty, item);
-                      
-                      // Add to teller_invoice_details
-                      let child = frm.add_child("teller_invoice_details");
-                      
-                      // Set all required fields
-                      child.currency_code = item.currency_code;
-                      child.currency = item.currency;
-                      child.quantity = availableQty;
-                      child.exchange_rate = item.rate;
-                      child.booking_interbank = booking_ib;
-                      child.amount = availableQty;
-                      child.egy_amount = availableQty * item.rate;
-                      
-                      // If there's an account field that needs to be set based on currency
-                      if (item.currency) {
-                        // Find the appropriate account for this currency
-                        frappe.call({
-                          method: 'frappe.client.get_list',
-                          args: {
-                            doctype: 'Account',
-                            filters: {
-                              'account_currency': item.currency,
-                              'account_type': ['in', ['Bank', 'Cash']],
-                              'custom_teller_treasury': frm.doc.treasury_code
-                            },
-                            fields: ['name'],
-                            limit: 1
-                          },
-                          callback: function(account_response) {
-                            if (account_response.message && account_response.message.length > 0) {
-                              child.account = account_response.message[0].name;
-                              frm.refresh_field("teller_invoice_details");
-                            }
-                          }
-                        });
-                      }
-                    });
-                    
-                    // Refresh the child table
-                    frm.refresh_field("teller_invoice_details");
-                    
-                    // Update total
-                    let total = 0;
-                    frm.doc.teller_invoice_details.forEach((item) => {
-                      total += flt(item.egy_amount || 0);
-                    });
-                    frm.set_value("total", total);
-                    frm.refresh_field("total");
-                    
-                    frappe.show_alert({
-                      message: __('Successfully added currencies from booking {0}', [booking_ib]),
-                      indicator: 'green'
-                    });
-                  } else {
-                    frappe.msgprint(__("No booked currencies found in booking {0}", [booking_ib]));
-                  }
-                } else {
-                  frappe.msgprint(__("Could not retrieve booking {0}", [booking_ib]));
+        doctype: "Booking Interbank",
+        target: frm,
+        setters: {
+            status: null,
+        },
+        add_filters_group: 1,
+        date_field: "date",
+        get_query() {
+            return {
+                filters: {
+                    status: ["in", ["Partial Billed", "Not Billed"]],
+                    docstatus: ["in", [0, 1]],
+                    transaction: "Selling"
                 }
-              },
-              error: function(err) {
-                console.error("Error fetching booking:", err);
-                frappe.msgprint(__("Error fetching booking details"));
-              }
+            };
+        },
+        action(selections, args) {
+            // Clear console for debugging
+            console.clear();
+            console.log("Selected bookings:", selections);
+            console.log("Args:", args);
+            
+            if (!selections || selections.length === 0) {
+                frappe.msgprint(__("No bookings selected"));
+                return;
+            }
+            
+            // Process each selected booking
+            selections.forEach(function(booking_ib) {
+                if (booking_ib) {
+                    frappe.call({
+                        method: "frappe.client.get",
+                        args: {
+                            doctype: "Booking Interbank",
+                            name: booking_ib
+                        },
+                        callback: function(response) {
+                            console.log("Booking response:", response);
+                            
+                            if (response && response.message) {
+                                let booking = response.message;
+                                
+                                // Check if booked_currency exists and has items
+                                if (booking.booked_currency && booking.booked_currency.length > 0) {
+                                    console.log("Processing booked currencies:", booking.booked_currency);
+                                    
+                                    // Filter to get only items with status "Not Billed" or "Partial Billed"
+                                    let availableItems = booking.booked_currency.filter(item => 
+                                        item.status === "Not Billed" || item.status === "Partial Billed");
+                                    
+                                    console.log("Available items:", availableItems);
+                                    
+                                    if (availableItems.length === 0) {
+                                        frappe.msgprint(__("No available currencies in booking {0}", [booking_ib]));
+                                        return;
+                                    }
+                                    
+                                    // Process filtered items
+                                    availableItems.forEach(function(item) {
+                                        // Calculate available quantity
+                                        let availableQty = item.qty;
+                                        if (item.booking_qty) {
+                                            availableQty -= item.booking_qty;
+                                        }
+                                        
+                                        if (availableQty <= 0) {
+                                            console.log("Item has no available quantity:", item);
+                                            return; // Skip items with no available quantity
+                                        }
+                                        
+                                        console.log("Adding item with available qty:", availableQty, item);
+                                        
+                                        // Add to teller_invoice_details
+                                        let child = frm.add_child("teller_invoice_details");
+                                        
+                                        // Set all required fields
+                                        child.currency_code = item.currency_code;
+                                        child.currency = item.currency;
+                                        child.quantity = availableQty;
+                                        child.exchange_rate = item.rate;
+                                        child.booking_interbank = booking_ib;
+                                        child.amount = availableQty;
+                                        child.egy_amount = availableQty * item.rate;
+                                        
+                                        // If there's an account field that needs to be set based on currency
+                                        if (item.currency) {
+                                            // Find the appropriate account for this currency
+                                            frappe.call({
+                                                method: 'frappe.client.get_list',
+                                                args: {
+                                                    doctype: 'Account',
+                                                    filters: {
+                                                        'account_currency': item.currency,
+                                                        'account_type': ['in', ['Bank', 'Cash']],
+                                                        'custom_teller_treasury': frm.doc.treasury_code
+                                                    },
+                                                    fields: ['name'],
+                                                    limit: 1
+                                                },
+                                                callback: function(account_response) {
+                                                    if (account_response.message && account_response.message.length > 0) {
+                                                        child.account = account_response.message[0].name;
+                                                        frm.refresh_field("teller_invoice_details");
+                                                    }
+                                                }
+                                            });
+                                        }
+                                    });
+                                    
+                                    // Refresh the child table
+                                    frm.refresh_field("teller_invoice_details");
+                                    
+                                    // Update total
+                                    let total = 0;
+                                    frm.doc.teller_invoice_details.forEach((item) => {
+                                        total += flt(item.egy_amount || 0);
+                                    });
+                                    frm.set_value("total", total);
+                                    frm.refresh_field("total");
+                                    
+                                    frappe.show_alert({
+                                        message: __('Successfully added currencies from booking {0}', [booking_ib]),
+                                        indicator: 'green'
+                                    });
+                                } else {
+                                    frappe.msgprint(__("No booked currencies found in booking {0}", [booking_ib]));
+                                }
+                            } else {
+                                frappe.msgprint(__("Could not retrieve booking {0}", [booking_ib]));
+                            }
+                        },
+                        error: function(err) {
+                            console.error("Error fetching booking:", err);
+                            frappe.msgprint(__("Error fetching booking details"));
+                        }
+                    });
+                }
             });
-          }
-        });
-      }
+        }
     });
   }
 });
