@@ -1890,3 +1890,18 @@ function addTransactionRow(frm, item, availableQty, booking_ib) {
         indicator: 'green'
     });
 }
+
+// Add list indicator color
+frappe.listview_settings['Teller Invoice'] = {
+	get_indicator: function(doc) {
+		if (doc.is_returned) {
+			return [__("Returned"), "grey", "is_returned,=,1"];
+		} else if (doc.docstatus == 0) {
+			return [__("Draft"), "red", "docstatus,=,0"];
+		} else if (doc.docstatus == 1) {
+			return [__("Submitted"), "blue", "docstatus,=,1"];
+		} else if (doc.docstatus == 2) {
+			return [__("Cancelled"), "grey", "docstatus,=,2"];
+		}
+	}
+};
