@@ -1186,96 +1186,155 @@ def search_buyer_by_id(search_id, category_of_buyer=None):
     - Military Number for Military personnel
     Returns customer details if found
     """
-    if not search_id or not category_of_buyer:
+    try:
+        # Log input parameters for debugging
+        frappe.logger().debug(f"search_buyer_by_id called with: search_id={search_id}, category_of_buyer={category_of_buyer}")
+        
+        if not search_id or not category_of_buyer:
+            frappe.logger().debug("search_buyer_by_id: Missing required parameters")
+            return None
+            
+        # Clean the search input
+        search_id = search_id.strip()
+        frappe.logger().debug(f"search_buyer_by_id: Cleaned search_id={search_id}")
+        
+        # Search based on category
+        customer = None
+        
+        if category_of_buyer == 'Egyptian':
+            # For Egyptian, search by National ID
+            frappe.logger().debug(f"search_buyer_by_id: Searching for Egyptian customer with National ID={search_id}")
+            customer = frappe.db.get_value('Customer', 
+                {'custom_national_id': search_id, 'custom_type': 'Egyptian'}, 
+                ['name', 'customer_name', 'custom_type', 'custom_is_exceed',
+                 'custom_phone', 'custom_mobile_number', 'custom_work_for',
+                 'custom_address', 'custom_national_id', 'custom_nationality', 
+                 'custom_issue_date', 'custom_expired', 'custom_place_of_birth', 
+                 'custom_date_of_birth', 'custom_job_title', 'custom_card_type'], as_dict=1
+            )
+            frappe.logger().debug(f"search_buyer_by_id: Egyptian customer search result={customer}")
+            if not customer:
+                # Return search info for creating new Egyptian customer
+                frappe.logger().debug("search_buyer_by_id: Egyptian customer not found, returning not_found response")
+                return {
+                    "not_found": True,
+                    "category_of_buyer": "Egyptian",
+                    "buyer_national_id": search_id
+                }
+                
+        elif category_of_buyer == 'Foreigner':
+            # For Foreigner, search by Passport Number
+            frappe.logger().debug(f"search_buyer_by_id: Searching for Foreigner customer with Passport Number={search_id}")
+            customer = frappe.db.get_value('Customer', 
+                {'custom_passport_number': search_id, 'custom_type': 'Foreigner'}, 
+                ['name', 'customer_name', 'custom_type', 'custom_is_exceed',
+                 'custom_phone', 'custom_mobile_number', 'custom_work_for',
+                 'custom_address', 'custom_passport_number', 'custom_nationality', 
+                 'custom_issue_date', 'custom_expired', 'custom_place_of_birth', 
+                 'custom_date_of_birth', 'custom_job_title', 'custom_card_type'], as_dict=1
+            )
+            frappe.logger().debug(f"search_buyer_by_id: Foreigner customer search result={customer}")
+            if not customer:
+                # Return search info for creating new Foreigner customer
+                frappe.logger().debug("search_buyer_by_id: Foreigner customer not found, returning not_found response")
+                return {
+                    "not_found": True,
+                    "category_of_buyer": "Foreigner",
+                    "buyer_passport_number": search_id
+                }
+                
+        elif category_of_buyer == 'Company':
+            # For Company, search by Commercial Number
+            frappe.logger().debug(f"search_buyer_by_id: Searching for Company customer with Commercial Number={search_id}")
+            customer = frappe.db.get_value('Customer', 
+                {'custom_commercial_no': search_id, 'custom_type': 'Company'}, 
+                ['name', 'customer_name', 'custom_type', 'custom_is_exceed',
+                 'custom_commercial_no', 'custom_company_activity',
+                 'custom_address', 'custom_legal_form', 'custom_start_registration_date',
+                 'custom_end_registration_date', 'custom_is_expired', 'custom_interbank'], as_dict=1
+            )
+            frappe.logger().debug(f"search_buyer_by_id: Company customer search result={customer}")
+            if not customer:
+                # Return search info for creating new Company customer
+                frappe.logger().debug("search_buyer_by_id: Company customer not found, returning not_found response")
+                return {
+                    "not_found": True,
+                    "category_of_buyer": "Company",
+                    "buyer_company_commercial_no": search_id
+                }
+                
+        elif category_of_buyer == 'Interbank':
+            # For Interbank, search by Commercial Number
+            frappe.logger().debug(f"search_buyer_by_id: Searching for Interbank customer with Commercial Number={search_id}")
+            customer = frappe.db.get_value('Customer', 
+                {'custom_commercial_no': search_id, 'custom_type': 'Interbank'}, 
+                ['name', 'customer_name', 'custom_type', 'custom_is_exceed',
+                 'custom_commercial_no', 'custom_company_activity',
+                 'custom_address', 'custom_legal_form', 'custom_start_registration_date',
+                 'custom_end_registration_date', 'custom_is_expired', 'custom_interbank'], as_dict=1
+            )
+            frappe.logger().debug(f"search_buyer_by_id: Interbank customer search result={customer}")
+            if not customer:
+                # Return search info for creating new Interbank customer
+                frappe.logger().debug("search_buyer_by_id: Interbank customer not found, returning not_found response")
+                return {
+                    "not_found": True,
+                    "category_of_buyer": "Interbank",
+                    "buyer_company_commercial_no": search_id
+                }
+        
+        # If customer found, prepare the response
+        if customer:
+            frappe.logger().debug(f"search_buyer_by_id: Customer found, preparing response for type={customer.get('custom_type')}")
+            # For Egyptian or Foreigner
+            if customer.get("custom_type") in ["Egyptian", "Foreigner"]:
+                response = {
+                    "buyer": customer.get("name"),
+                    "buyer_name": customer.get("customer_name"),
+                    "category_of_buyer": customer.get("custom_type"),
+                    "exceed": customer.get("custom_is_exceed"),
+                    "buyer_phone": customer.get("custom_phone"),
+                    "buyer_work_for": customer.get("custom_work_for"),
+                    "buyer_address": customer.get("custom_address"),
+                    "buyer_national_id": customer.get("custom_national_id"),
+                    "buyer_passport_number": customer.get("custom_passport_number"),
+                    "buyer_nationality": customer.get("custom_nationality"),
+                    "buyer_issue_date": customer.get("custom_issue_date"),
+                    "buyer_expired": customer.get("custom_expired"),
+                    "buyer_place_of_birth": customer.get("custom_place_of_birth"),
+                    "buyer_date_of_birth": customer.get("custom_date_of_birth"),
+                    "buyer_job_title": customer.get("custom_job_title"),
+                    "buyer_card_type": customer.get("custom_card_type")
+                }
+                frappe.logger().debug(f"search_buyer_by_id: Individual response={response}")
+                return response
+            # For Company or Interbank
+            elif customer.get("custom_type") in ["Company", "Interbank"]:
+                response = {
+                    "buyer": customer.get("name"),
+                    "buyer_name": customer.get("customer_name"),
+                    "category_of_buyer": customer.get("custom_type"),
+                    "exceed": customer.get("custom_is_exceed"),
+                    "buyer_company_name": customer.get("customer_name"),
+                    "buyer_company_commercial_no": customer.get("custom_commercial_no"),
+                    "buyer_company_activity": customer.get("custom_company_activity"),
+                    "buyer_company_address": customer.get("custom_address"),
+                    "buyer_company_legal_form": customer.get("custom_legal_form"),
+                    "buyer_company_start_date": customer.get("custom_start_registration_date"),
+                    "buyer_company_end_date": customer.get("custom_end_registration_date"),
+                    "is_expired1": customer.get("custom_is_expired"),
+                    "interbank": customer.get("custom_interbank")
+                }
+                frappe.logger().debug(f"search_buyer_by_id: Company/Interbank response={response}")
+                return response
+        
+        frappe.logger().debug("search_buyer_by_id: No customer found and no not_found response generated, returning None")
         return None
         
-    # Clean the search input
-    search_id = search_id.strip()
-    
-    # Define fields to fetch
-    fields = [
-        "name", "customer_name", "custom_type", "custom_is_exceed",
-        "custom_phone", "custom_mobile_number", "custom_work_for",
-        "custom_address", "custom_national_id", "custom_passport_number",
-        "custom_military_number", "custom_nationality", "custom_issue_date",
-        "custom_expired", "custom_place_of_birth", "custom_date_of_birth",
-        "custom_job_title", "custom_card_type", "custom_commercial_no",
-        "custom_start_registration_date", "custom_end_registration_date",
-        "custom_legal_form", "custom_company_activity", "custom_is_expired",
-        "custom_interbank"
-    ]
-    
-    # Search based on category
-    customer = None
-    
-    if category_of_buyer == 'Egyptian':
-        # For Egyptian, search by National ID
-        customer = frappe.db.get_value('Customer',
-            {'custom_national_id': search_id, 'custom_type': 'Egyptian'},
-            fields, as_dict=1
-        )
-    elif category_of_buyer == 'Foreigner':
-        # For Foreigner, search by Passport Number
-        customer = frappe.db.get_value('Customer',
-            {'custom_passport_number': search_id, 'custom_type': 'Foreigner'},
-            fields, as_dict=1
-        )
-    elif category_of_buyer == 'Company':
-        # For Company, search by Commercial Number
-        customer = frappe.db.get_value('Customer',
-            {'custom_commercial_no': search_id, 'custom_type': 'Company'},
-            fields, as_dict=1
-        )
-    elif category_of_buyer == 'Interbank':
-        # For Interbank, search by Commercial Number
-        customer = frappe.db.get_value('Customer',
-            {'custom_commercial_no': search_id, 'custom_type': 'Interbank'},
-            fields, as_dict=1
-        )
-    
-    if not customer:
-        return None
-        
-    # Prepare response based on customer type
-    response = {
-        "buyer": customer.name,
-        "buyer_name": customer.customer_name,
-        "category_of_buyer": customer.custom_type,
-        "exceed": customer.custom_is_exceed,
-        "buyer_phone": customer.custom_phone,
-        "buyer_work_for": customer.custom_work_for,
-        "buyer_address": customer.custom_address,
-        # Always include all ID fields, they will be populated based on the match
-        "buyer_national_id": customer.custom_national_id,
-        "buyer_passport_number": customer.custom_passport_number,
-        "buyer_military_number": customer.custom_military_number
-    }
-    
-    # Add type-specific fields
-    if customer.custom_type in ["Egyptian", "Foreigner"]:
-        response.update({
-            "buyer_card_type": customer.custom_card_type,
-            "buyer_nationality": customer.custom_nationality,
-            "buyer_issue_date": customer.custom_issue_date,
-            "buyer_expired": customer.custom_expired,
-            "buyer_place_of_birth": customer.custom_place_of_birth,
-            "buyer_date_of_birth": customer.custom_date_of_birth,
-            "buyer_job_title": customer.custom_job_title
-        })
-    elif customer.custom_type == "Company":
-        response.update({
-            "buyer_company_name": customer.customer_name,
-            "buyer_company_commercial_no": customer.custom_commercial_no,
-            "buyer_company_start_date": customer.custom_start_registration_date,
-            "buyer_company_end_date": customer.custom_end_registration_date,
-            "buyer_company_address": customer.custom_address,
-            "buyer_company_legal_form": customer.custom_legal_form,
-            "buyer_company_activity": customer.custom_company_activity,
-            "is_expired1": customer.custom_is_expired,
-            "interbank": customer.custom_interbank
-        })
-    
-    return response
+    except Exception as e:
+        # Log any exceptions that occur
+        frappe.logger().error(f"Error in search_buyer_by_id: {str(e)}\n{frappe.get_traceback()}")
+        return {"error": str(e)}
 
 @frappe.whitelist()
 def get_treasury_accounts(doctype, txt, searchfield, start, page_len, filters):

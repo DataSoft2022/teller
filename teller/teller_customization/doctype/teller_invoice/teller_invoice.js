@@ -1,6 +1,58 @@
 // Copyright (c) 2024, Mohamed AbdElsabour and contributors
 // For license information, please see license.txt
 
+// Function to clear customer data fields
+function clear_customer_data(frm) {
+  // Clear client field
+  frm.set_value('client', '');
+  frm.set_value('client_search_id', '');
+  
+  // Clear Egyptian fields
+  frm.set_value('national_id', '');
+  frm.set_value('customer_name', '');
+  frm.set_value('nationality', '');
+  frm.set_value('mobile_number', '');
+  frm.set_value('phone', '');
+  frm.set_value('work_for', '');
+  frm.set_value('address', '');
+  frm.set_value('place_of_birth', '');
+  frm.set_value('date_of_birth', '');
+  frm.set_value('job_title', '');
+  
+  // Clear Foreigner fields
+  frm.set_value('passport_number', '');
+  frm.set_value('military_number', '');
+  
+  // Clear Company fields
+  frm.set_value('company_name', '');
+  frm.set_value('company_activity', '');
+  frm.set_value('company_commercial_no', '');
+  frm.set_value('company_num', '');
+  frm.set_value('comoany_address', '');
+  frm.set_value('company_legal_form', '');
+  frm.set_value('is_expired1', 0);
+  frm.set_value('interbank', 0);
+  
+  // Clear commissar fields if any
+  frm.set_value('commissar', '');
+  frm.set_value('com_name', '');
+  frm.set_value('com_national_id', '');
+  frm.set_value('com_address', '');
+  frm.set_value('com_gender', '');
+  frm.set_value('com_phone', '');
+  frm.set_value('com_mobile_number', '');
+  frm.set_value('com_job_title', '');
+  
+  // Refresh all fields
+  frm.refresh_fields();
+  
+  // Show a success message
+  frappe.show_alert({
+    message: __('Customer data has been cleared'),
+    indicator: 'green'
+  }, 3);
+}
+
 frappe.ui.form.on("Teller Invoice", {
   client_type(frm) {
     // First clear all ID fields
@@ -72,6 +124,33 @@ frappe.ui.form.on("Teller Invoice", {
         frm.set_df_property('exceed', 'read_only', 1);
         frm.set_df_property('exceed', 'hidden', 1);
         
+        // Hide company section completely
+        frm.set_df_property('companies_section', 'hidden', 1);
+        
+        // Hide company fields for Interbank and make them not mandatory
+        const companyFields = [
+            'company_name', 'company_activity', 'company_commercial_no',
+            'company_num', 'start_registration_date', 'end_registration_date',
+            'company_legal_form'
+        ];
+        
+        companyFields.forEach(field => {
+            frm.set_df_property(field, 'hidden', 1);
+            frm.set_df_property(field, 'reqd', 0);
+        });
+        
+        // Pre-fill company data for Interbank to avoid validation errors
+        frm.set_value('company_name', 'البنك الاهلي');
+        frm.set_value('company_activity', 'بنك');
+        frm.set_value('company_commercial_no', '12345');
+        frm.set_value('company_legal_form', 'بنك');
+        
+        // Set dates if they're required
+        const today = frappe.datetime.get_today();
+        const futureDate = frappe.datetime.add_days(today, 365);
+        frm.set_value('start_registration_date', today);
+        frm.set_value('end_registration_date', futureDate);
+        
         // For Interbank, automatically set the client to "البنك الاهلي"
         frappe.db.get_value('Customer', {customer_name: 'البنك الاهلي'}, 'name')
           .then(r => {
@@ -85,6 +164,26 @@ frappe.ui.form.on("Teller Invoice", {
         // Enable exceed for non-Interbank
         frm.set_df_property('exceed', 'read_only', 1);
         frm.set_df_property('exceed', 'hidden', 0);
+        
+        // Show company section for Company type
+        if (frm.doc.client_type === "Company") {
+            frm.set_df_property('companies_section', 'hidden', 0);
+            
+            // Show company fields and make them required for Company type
+            const companyFields = [
+                'company_name', 'company_activity', 'company_commercial_no',
+                'company_num', 'start_registration_date', 'end_registration_date',
+                'company_legal_form'
+            ];
+            
+            companyFields.forEach(field => {
+                frm.set_df_property(field, 'hidden', 0);
+                frm.set_df_property(field, 'reqd', 1);
+            });
+        } else {
+            // Hide company section for other types (Egyptian, Foreigner)
+            frm.set_df_property('companies_section', 'hidden', 1);
+        }
     }
     
     // Clear fields based on type
@@ -142,6 +241,13 @@ frappe.ui.form.on("Teller Invoice", {
           clientField.$input.focus();
         }
       }, 100);
+    }
+    
+    // Add 'Clear Customer Data' button for draft documents
+    if (frm.doc.docstatus === 0) {
+      frm.add_custom_button(__('Clear Customer Data'), function() {
+        clear_customer_data(frm);
+      }).addClass('btn-warning');
     }
 
     // Keep total field hidden
@@ -940,6 +1046,11 @@ frappe.ui.form.on("Teller Invoice", {
   //validate if national id is valid
 
   validate: function (frm) {
+    // Skip validation for Interbank customers
+    if (frm.doc.client_type === "Interbank") {
+      return;
+    }
+    
     // validate individual client national id
     if (
       (frm.doc.client_type == "Egyptian" ||
@@ -950,10 +1061,8 @@ frappe.ui.form.on("Teller Invoice", {
     }
 
     // validate commissar national id
-
     if (
-      (frm.doc.client_type == "Company" ||
-        frm.doc.client_type == "Interbank") &&
+      frm.doc.client_type == "Company" &&
       frm.doc.commissar &&
       frm.doc.com_national_id
     ) {
@@ -961,8 +1070,7 @@ frappe.ui.form.on("Teller Invoice", {
     }
 
     if (
-      (frm.doc.client_type == "Company" ||
-        frm.doc.client_type == "Interbank") &&
+      frm.doc.client_type == "Company" &&
       frm.doc.client
     ) {
       validateRegistrationDate(
@@ -1315,6 +1423,13 @@ function set_branch_and_shift(frm) {
 //  check if the if the current invioce or customer total invoices  exceeds the limit
 
 async function isExceededLimit(frm, clientName, invoiceTotal) {
+  // Skip exceed check for Interbank customers
+  if (frm.doc.client_type === "Interbank") {
+    frm.set_value("exceed", 0);
+    frm.refresh_field("exceed");
+    return;
+  }
+  
   let allowedAmount = await fetchAllowedAmount();
   console.log("the allowed amount is", allowedAmount);
 
