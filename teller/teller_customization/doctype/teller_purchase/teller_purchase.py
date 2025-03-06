@@ -180,7 +180,7 @@ class TellerPurchase(Document):
             frappe.throw(_("Error before saving: {0}").format(str(e)))
 
     def on_submit(self):
-        """Create GL entries when document is submitted"""
+        """Handle submission"""
         try:
             # Create GL entries
             self.make_gl_entries()
@@ -191,7 +191,8 @@ class TellerPurchase(Document):
                 printing_roll.last_printed_number = self.next_receipt_number
                 printing_roll.save()
             
-            # Don't commit here - let Frappe handle the transaction
+            # Update booking interbank status
+            self.update_status()
             
         except Exception as e:
             frappe.db.rollback()
@@ -200,6 +201,65 @@ class TellerPurchase(Document):
                 title="Submit Error"
             )
             frappe.throw(_("Error during submission: {0}").format(str(e)))
+
+    def update_status(self):
+        """Update the status of booking interbank items"""
+        purchase_table = self.purchase_transactions
+        for row in purchase_table:
+            booking_ib = row.booking_interbank
+            if booking_ib:
+                currency = row.currency_code
+                booked_details = frappe.get_all("Booked Currency",
+                    filters={"parent": booking_ib, "currency_code": currency},
+                    fields=["name", "status", "qty"])
+                
+                for item in booked_details:
+                    row_name = item.name
+                    currency_book = frappe.get_doc("Booked Currency", row_name)
+                    
+                    # Get all purchases for this booking interbank and currency
+                    purchases = frappe.get_all("Teller Purchase",
+                        filters={
+                            "docstatus": 1,
+                            "purchase_transactions.booking_interbank": booking_ib,
+                            "purchase_transactions.currency_code": currency
+                        },
+                        fields=["purchase_transactions.quantity as billed_qty"])
+                    
+                    total_billed = 0
+                    for purchase in purchases:
+                        total_billed += flt(purchase.billed_qty)
+                    
+                    # Include current purchase
+                    total_billed += flt(row.quantity)
+                    
+                    # Update status based on total billed quantity
+                    if total_billed >= flt(item.qty):
+                        currency_book.db_set("status", "Billed")
+                    else:
+                        currency_book.db_set("status", "Partial Billed")
+                
+                # Update parent booking interbank status
+                booked_details = frappe.get_all("Booked Currency",
+                    filters={"parent": booking_ib},
+                    fields=["name", "status", "parent"])
+                
+                all_billed = True
+                all_not_billed = True
+                
+                for booked in booked_details:
+                    if booked.status != "Billed":
+                        all_billed = False
+                    if booked.status != "Not Billed":
+                        all_not_billed = False
+                
+                book_doc = frappe.get_doc("Booking Interbank", booking_ib)
+                if all_billed:
+                    book_doc.db_set("status", "Billed")
+                elif all_not_billed:
+                    book_doc.db_set("status", "Not Billed")
+                else:
+                    book_doc.db_set("status", "Partial Billed")
 
     def set_customer_invoices(self):
         """Set customer invoice history"""

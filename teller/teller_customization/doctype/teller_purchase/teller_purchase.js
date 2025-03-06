@@ -454,9 +454,10 @@ frappe.ui.form.on("Teller Purchase", {
             // Get the current branch from the form
             console.log("Dialog filter - branch_no:", frm.doc.branch_no);
             
-            // Only filter by transaction type, not by branch
+            // Filter by transaction type AND branch
             let filters = {
-              'transaction': 'Purchasing'
+              'transaction': 'Purchasing',
+              'branch': frm.doc.branch_no
             };
             console.log("Dialog filters:", filters);
             
@@ -1409,7 +1410,8 @@ frappe.ui.form.on("Teller Purchase", {
                 filters: {
                     status: ["in", ["Partial Billed", "Not Billed"]],
                     docstatus: ["in", [0, 1]],
-                    transaction: "Purchasing"
+                    transaction: "Purchasing",
+                    branch: frm.doc.branch_no // Filter by the user's branch
                 }
             };
         },

@@ -442,7 +442,8 @@ frappe.ui.form.on("Teller Invoice", {
                 filters: {
                     status: ["in", ["Partial Billed", "Not Billed"]],
                     docstatus: ["in", [0, 1]],
-                    transaction: "Selling"
+                    transaction: "Selling",
+                    branch: frm.doc.branch_no // Filter by the user's branch
                 }
             };
         },

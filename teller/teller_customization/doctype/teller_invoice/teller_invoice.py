@@ -492,35 +492,60 @@ class TellerInvoice(Document):
     def update_status(self):
         inv_table = self.teller_invoice_details
         for row in inv_table:
-            booking_ib =row.booking_interbank
+            booking_ib = row.booking_interbank
             if booking_ib:
-              currency = row.currency_code
-              booked_details = frappe.get_all("Booked Currency",
-                  filters={"parent":booking_ib,"currency":currency},fields=["name","status"])
-              for item in booked_details:
-                  print("\n\n\n\n item",item)
-                  row_name = item.name
-                  currency_book = frappe.get_doc("Booked Currency",row_name)
-                  currency_book.db_set("status","Billed")
-              booked_details = frappe.get_all("Booked Currency",
-                  filters={"parent":booking_ib},fields=["name","status","parent"])
-              # all_booked = False
-              print("\n\n\n\n booked_details ..",booked_details)
-              all_billed = True
-              all_not_billed = True
-              for booked in booked_details:
-                  if booked.status != "Billed":
-                      all_billed = False
-                  if booked.status != "Not Billed":
-                      all_not_billed = False  
-              book_doc = frappe.get_doc("Booking Interbank", booked.parent) 
-              if all_billed:
-                  book_doc.db_set("status", "Billed")  
-              elif all_not_billed:
-                  book_doc.db_set("status", "Not Billed")  
-              else:
-                  book_doc.db_set("status", "Partial Billed")            
-                  
+                currency = row.currency_code
+                booked_details = frappe.get_all("Booked Currency",
+                    filters={"parent": booking_ib, "currency_code": currency},
+                    fields=["name", "status", "qty"])
+                
+                for item in booked_details:
+                    row_name = item.name
+                    currency_book = frappe.get_doc("Booked Currency", row_name)
+                    
+                    # Get all invoices for this booking interbank and currency
+                    invoices = frappe.get_all("Teller Invoice",
+                        filters={
+                            "docstatus": 1,
+                            "teller_invoice_details.booking_interbank": booking_ib,
+                            "teller_invoice_details.currency_code": currency
+                        },
+                        fields=["teller_invoice_details.quantity as billed_qty"])
+                    
+                    total_billed = 0
+                    for invoice in invoices:
+                        total_billed += flt(invoice.billed_qty)
+                    
+                    # Include current invoice
+                    total_billed += flt(row.quantity)
+                    
+                    # Update status based on total billed quantity
+                    if total_billed >= flt(item.qty):
+                        currency_book.db_set("status", "Billed")
+                    else:
+                        currency_book.db_set("status", "Partial Billed")
+                
+                # Update parent booking interbank status
+                booked_details = frappe.get_all("Booked Currency",
+                    filters={"parent": booking_ib},
+                    fields=["name", "status", "parent"])
+                
+                all_billed = True
+                all_not_billed = True
+                
+                for booked in booked_details:
+                    if booked.status != "Billed":
+                        all_billed = False
+                    if booked.status != "Not Billed":
+                        all_not_billed = False
+                
+                book_doc = frappe.get_doc("Booking Interbank", booked.parent)
+                if all_billed:
+                    book_doc.db_set("status", "Billed")
+                elif all_not_billed:
+                    book_doc.db_set("status", "Not Billed")
+                else:
+                    book_doc.db_set("status", "Partial Billed")
 
     def delete_gl_entries(self):
         """Safely delete GL entries for this document"""
