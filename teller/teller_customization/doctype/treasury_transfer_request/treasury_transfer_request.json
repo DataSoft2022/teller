@@ -17,9 +17,14 @@
   "currency_transfers",
   "section_break_total",
   "total_amount",
+  "status_message",
   "section_break_status",
   "status",
+  "relationship_type",
   "master_approval",
+  "recipient_approval",
+  "recipient_approval_date",
+  "rejection_reason",
   "amended_from"
  ],
  "fields": [
@@ -98,6 +103,12 @@
    "hidden": 1
   },
   {
+   "fieldname": "status_message",
+   "fieldtype": "HTML",
+   "label": "Status Message",
+   "read_only": 1
+  },
+  {
    "fieldname": "section_break_status",
    "fieldtype": "Section Break",
    "label": "Status",
@@ -107,10 +118,19 @@
    "fieldname": "status",
    "fieldtype": "Select",
    "label": "Status",
-   "options": "Draft\nPending Manager Approval\nApproved\nRejected",
+   "options": "Draft\nPending Manager Approval\nPending Recipient Approval\nApproved\nRejected",
    "default": "Draft",
    "allow_on_submit": 1,
    "hidden": 1
+  },
+  {
+   "fieldname": "relationship_type",
+   "fieldtype": "Select",
+   "label": "Relationship Type",
+   "options": "Teller to Teller\nTeller to Manager\nManager to Teller",
+   "read_only": 1,
+   "hidden": 1,
+   "allow_on_submit": 1
   },
   {
    "fieldname": "master_approval",
@@ -119,6 +139,31 @@
    "read_only": 1,
    "hidden": 1,
    "allow_on_submit": 1
+  },
+  {
+   "fieldname": "recipient_approval",
+   "fieldtype": "Data",
+   "label": "Recipient Approval",
+   "read_only": 1,
+   "hidden": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "recipient_approval_date",
+   "fieldtype": "Datetime",
+   "label": "Recipient Approval Date",
+   "read_only": 1,
+   "hidden": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "rejection_reason",
+   "fieldtype": "Small Text",
+   "label": "Rejection Reason",
+   "read_only": 1,
+   "hidden": 0,
+   "allow_on_submit": 1,
+   "depends_on": "eval:doc.status === 'Rejected'"
   },
   {
    "fieldname": "amended_from",

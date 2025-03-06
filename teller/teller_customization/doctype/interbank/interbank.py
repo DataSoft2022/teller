@@ -14,6 +14,76 @@ class InterBank(Document):
           if self.to_date < self.from_date:
             frappe.throw(f" To Date field Should be Greater than From Date")
     
+    def after_insert(self):
+        pass
+    
+    def notify_branch_managers(self):
+        """Send notification to all users with the 'Branch Manager' role"""
+        try:
+            # Get all users with the Branch Manager role
+            branch_managers = frappe.get_all(
+                "Has Role",
+                filters={
+                    "role": "Branch Manager",
+                    "parenttype": "User"
+                },
+                fields=["parent"]
+            )
+            
+            # Extract user IDs
+            branch_manager_users = [bm.parent for bm in branch_managers if bm.parent]
+            
+            if not branch_manager_users:
+                frappe.log_error("No Branch Managers found to notify", "Interbank Notification Error")
+                return
+            
+            # Create notification message
+            message = f"""New Interbank {self.name} has been opened.
+Type: {self.type}
+Transaction: {self.transaction}
+Date: {self.date}
+"""
+            
+            # Add currency details if available
+            if hasattr(self, 'interbank') and self.interbank:
+                message += "\nCurrencies included:\n"
+                for row in self.interbank:
+                    message += f"- {row.currency}: Rate {row.rate}\n"
+            
+            # Send notification to each Branch Manager
+            for user in branch_manager_users:
+                notification = frappe.get_doc({
+                    "doctype": "Notification Log",
+                    "subject": f"New Interbank has been opened: {self.name}",
+                    "for_user": user,
+                    "type": "Alert",
+                    "document_type": self.doctype,
+                    "document_name": self.name,
+                    "email_content": message
+                })
+                notification.insert(ignore_permissions=True)
+                
+                # Share the document with the Branch Manager
+                if not frappe.db.exists("DocShare", {
+                    "share_doctype": self.doctype,
+                    "share_name": self.name,
+                    "user": user
+                }):
+                    frappe.share.add(
+                        self.doctype, 
+                        self.name, 
+                        user, 
+                        read=1, 
+                        write=0, 
+                        share=0,
+                        notify=1
+                    )
+            
+            frappe.log_error(f"Notified {len(branch_manager_users)} Branch Managers about submitted Interbank document {self.name}", "Interbank Notification")
+            
+        except Exception as e:
+            frappe.log_error(f"Error notifying Branch Managers about submitted Interbank document {self.name}: {str(e)}", "Interbank Notification Error")
+    
     def on_submit(self):
         if not self.interbank:
             frappe.throw("Table is Empty")
@@ -22,6 +92,10 @@ class InterBank(Document):
                 frappe.throw(f" Row {row.idx}# can't be rate {row.rate}")
         self.status = 'Deal'
         self.save()
+        
+        # Notify branch managers on submission
+        self.notify_branch_managers()
+        
         table = self.interbank
         for row in table:
           currency = row.currency
@@ -310,4 +384,3 @@ def create_queue_request(currency, purpose):
           """
     ri = frappe.db.sql(sql,(currency , purpose), as_dict=True)
     return ri
-

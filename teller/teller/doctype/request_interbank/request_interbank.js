@@ -484,13 +484,35 @@ frappe.ui.form.on('Request interbank', {
 /////////////////////////////////////////////////////////////////////////////////////////////
 frappe.ui.form.on('Request interbank', {
 	refresh(frm) {
-		// your code here
-			// your code here
-		
+		// Set default customer
 		cur_frm.set_value('customer','البنك الاهلي');
+		
+		// Set current user
     	let currentUser = frappe.session.logged_in_user;
-    // 	let user = frappe.user_info().email;
-			cur_frm.set_value('user',currentUser);
+		cur_frm.set_value('user', currentUser);
+		
+		// Fetch branch from employee record
+		if (frm.doc.__islocal) {
+			frappe.call({
+				method: "frappe.client.get_value",
+				args: {
+					doctype: "Employee",
+					filters: { user_id: currentUser },
+					fieldname: ["branch"]
+				},
+				callback: function(r) {
+					if (r.message && r.message.branch) {
+						cur_frm.set_value('branch', r.message.branch);
+						
+					} else {
+						frappe.show_alert({
+							message: __("Could not determine your branch. Please select it manually."),
+							indicator: 'orange'
+						}, 5);
+					}
+				}
+			});
+		}
 	}
 })
 

@@ -19,46 +19,59 @@
   {
    "fieldname": "currency",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "currency",
-   "options": "Currency"
+   "options": "Currency",
+   "read_only": 1
   },
   {
    "fieldname": "rate",
    "fieldtype": "Float",
-   "label": "Rate"
+   "in_list_view": 1,
+   "label": "Rate",
+   "read_only": 1
   },
   {
    "fieldname": "booking_qty",
    "fieldtype": "Float",
-   "label": "Booking Qty"
+   "label": "Booking Qty",
+   "read_only": 1
   },
   {
    "fieldname": "currency_code",
    "fieldtype": "Data",
-   "label": "Currency Code"
+   "in_list_view": 1,
+   "label": "Currency Code",
+   "read_only": 1
   },
   {
    "fieldname": "qty",
    "fieldtype": "Float",
-   "label": "QTY"
+   "in_list_view": 1,
+   "label": "QTY",
+   "read_only": 1
   },
   {
    "fieldname": "interbank_reference",
    "fieldtype": "Link",
    "label": "interbank Reference",
-   "options": "InterBank"
+   "options": "InterBank",
+   "read_only": 1
   },
   {
    "fieldname": "request_reference",
    "fieldtype": "Link",
    "label": "Request reference",
-   "options": "Request interbank"
+   "options": "Request interbank",
+   "read_only": 1
   },
   {
    "fieldname": "status",
    "fieldtype": "Select",
+   "in_list_view": 1,
    "label": "Status",
-   "options": "Not Billed\nBilled"
+   "options": "Not Billed\nBilled",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,

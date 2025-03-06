@@ -27,17 +27,30 @@ class TreasuryTransfer(Document):
 			frappe.throw("Source and destination treasuries must be different")
 			
 	def validate_accounts(self):
-		"""Validate accounts belong to respective treasuries and match currency"""
+		"""Validate that all accounts belong to the correct treasuries and have the same currency"""
+		if not self.currency_transfers:
+			frappe.throw("No currency transfers specified")
+			
+		# Get EGP accounts for both treasuries for special handling
+		source_egy_account = frappe.db.get_value("Teller Treasury", self.from_treasury, "egy_account")
+		dest_egy_account = frappe.db.get_value("Teller Treasury", self.to_treasury, "egy_account")
+		
 		for row in self.currency_transfers:
-			# Check source account
-			if not frappe.db.exists("Account", {
+			# Check source account - special handling for EGP account
+			if row.from_account == source_egy_account:
+				# This is the special EGP account, already verified
+				pass
+			elif not frappe.db.exists("Account", {
 				"name": row.from_account,
 				"custom_teller_treasury": self.from_treasury
 			}):
 				frappe.throw(f"Account {row.from_account} does not belong to treasury {self.from_treasury}")
 				
-			# Check destination account
-			if not frappe.db.exists("Account", {
+			# Check destination account - special handling for EGP account
+			if row.to_account == dest_egy_account:
+				# This is the special EGP account, already verified
+				pass
+			elif not frappe.db.exists("Account", {
 				"name": row.to_account,
 				"custom_teller_treasury": self.to_treasury
 			}):
@@ -47,7 +60,7 @@ class TreasuryTransfer(Document):
 			from_currency = frappe.db.get_value("Account", row.from_account, "account_currency")
 			to_currency = frappe.db.get_value("Account", row.to_account, "account_currency")
 			if from_currency != to_currency:
-				frappe.throw(f"Currency mismatch for accounts {row.from_account} and {row.to_account}")
+				frappe.throw(f"Currency mismatch between accounts: {row.from_account} ({from_currency}) and {row.to_account} ({to_currency})")
 			
 	def validate_balances(self):
 		"""Check if source accounts have sufficient balance"""
@@ -101,6 +114,10 @@ class TreasuryTransfer(Document):
 @frappe.whitelist()
 def get_available_currencies(from_treasury):
 	"""Get all currencies available in the source treasury with positive balance"""
+	# First, get the special EGP account from the Teller Treasury doctype
+	egy_account = frappe.db.get_value("Teller Treasury", from_treasury, "egy_account")
+	
+	# Get all accounts linked to this treasury
 	accounts = frappe.get_all(
 		"Account",
 		filters={
@@ -113,18 +130,42 @@ def get_available_currencies(from_treasury):
 	)
 	
 	currencies = []
+	
+	# Add the EGP account if it exists and has a positive balance
+	if egy_account:
+		balance = get_balance_on(account=egy_account)
+		if flt(balance) > 0:
+			# Get the account details
+			account_currency = frappe.db.get_value("Account", egy_account, "account_currency") or "EGP"
+			
+			currencies.append({
+				"currency_code": "EGP",
+				"currency_name": account_currency,
+				"account": egy_account,
+				"balance": balance,
+				"is_egy_account": 1
+			})
+	
+	# Process other accounts
 	for account in accounts:
-		if not account.custom_currency_code:
+		# Skip if this is the EGP account we already added
+		if egy_account and account.name == egy_account:
 			continue
 			
+		# Get the balance for this account
 		balance = get_balance_on(account=account.name)
+		
 		# Only add currencies with positive balance
 		if flt(balance) > 0:
+			# Use custom_currency_code if available, otherwise use a default value
+			currency_code = account.custom_currency_code or account.account_currency
+			
 			currencies.append({
-				"currency_code": account.custom_currency_code,
+				"currency_code": currency_code,
 				"currency_name": account.account_currency,
 				"account": account.name,
-				"balance": balance
+				"balance": balance,
+				"is_egy_account": 0
 			})
 	
 	return currencies

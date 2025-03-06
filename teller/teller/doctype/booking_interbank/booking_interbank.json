@@ -24,13 +24,15 @@
    "fieldname": "booked_currency",
    "fieldtype": "Table",
    "label": "Booked Currency",
-   "options": "Booked Currency"
+   "options": "Booked Currency",
+   "read_only": 1
   },
   {
    "fieldname": "customer",
    "fieldtype": "Link",
    "label": "Customer",
-   "options": "Customer"
+   "options": "Customer",
+   "read_only": 1
   },
   {
    "fieldname": "amended_from",
@@ -63,7 +65,8 @@
    "fieldname": "user",
    "fieldtype": "Link",
    "label": "User",
-   "options": "User"
+   "options": "User",
+   "read_only": 1
   },
   {
    "fieldname": "branch",
@@ -74,7 +77,8 @@
    "in_preview": 1,
    "in_standard_filter": 1,
    "label": "Branch",
-   "options": "Branch"
+   "options": "Branch",
+   "read_only": 1
   },
   {
    "fieldname": "column_break_mu49",
