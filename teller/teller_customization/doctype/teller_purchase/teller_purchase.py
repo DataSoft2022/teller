@@ -204,14 +204,20 @@ class TellerPurchase(Document):
 
     def update_status(self):
         """Update the status of booking interbank items"""
+        print(f"Starting update_status for Teller Purchase {self.name}")
+        
         purchase_table = self.purchase_transactions
         for row in purchase_table:
             booking_ib = row.booking_interbank
             if booking_ib:
                 currency = row.currency_code
+                print(f"Processing booking_ib: {booking_ib}, currency: {currency}")
+                
                 booked_details = frappe.get_all("Booked Currency",
-                    filters={"parent": booking_ib, "currency_code": currency},
+                    filters={"parent": booking_ib, "currency": currency},
                     fields=["name", "status", "qty"])
+                
+                print(f"Found booked_details: {booked_details}")
                 
                 for item in booked_details:
                     row_name = item.name
@@ -221,22 +227,34 @@ class TellerPurchase(Document):
                     purchases = frappe.get_all("Teller Purchase",
                         filters={
                             "docstatus": 1,
-                            "purchase_transactions.booking_interbank": booking_ib,
-                            "purchase_transactions.currency_code": currency
                         },
-                        fields=["purchase_transactions.quantity as billed_qty"])
+                        fields=["name"])
                     
                     total_billed = 0
                     for purchase in purchases:
-                        total_billed += flt(purchase.billed_qty)
+                        # Get the child table entries for this purchase
+                        purchase_details = frappe.get_all("Teller Purchase Child",
+                            filters={
+                                "parent": purchase.name,
+                                "booking_interbank": booking_ib,
+                                "currency_code": currency
+                            },
+                            fields=["quantity as billed_qty"])
+                        
+                        for detail in purchase_details:
+                            total_billed += flt(detail.billed_qty)
                     
-                    # Include current purchase
+                    # Include current purchase's quantity
                     total_billed += flt(row.quantity)
+                    
+                    print(f"Total billed: {total_billed}, Original qty: {item.qty}")
                     
                     # Update status based on total billed quantity
                     if total_billed >= flt(item.qty):
+                        print(f"Setting status to Billed for {row_name}")
                         currency_book.db_set("status", "Billed")
                     else:
+                        print(f"Setting status to Partial Billed for {row_name}")
                         currency_book.db_set("status", "Partial Billed")
                 
                 # Update parent booking interbank status
@@ -255,10 +273,13 @@ class TellerPurchase(Document):
                 
                 book_doc = frappe.get_doc("Booking Interbank", booking_ib)
                 if all_billed:
+                    print(f"Setting parent status to Billed for {booking_ib}")
                     book_doc.db_set("status", "Billed")
                 elif all_not_billed:
+                    print(f"Setting parent status to Not Billed for {booking_ib}")
                     book_doc.db_set("status", "Not Billed")
                 else:
+                    print(f"Setting parent status to Partial Billed for {booking_ib}")
                     book_doc.db_set("status", "Partial Billed")
 
     def set_customer_invoices(self):

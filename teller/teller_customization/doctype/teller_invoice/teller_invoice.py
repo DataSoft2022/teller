@@ -16,6 +16,7 @@ from frappe.utils import (
     getdate,
     nowdate,
 )
+
 from frappe import get_doc
 from frappe.model.document import Document
 from frappe.utils import nowdate
@@ -478,6 +479,9 @@ class TellerInvoice(Document):
                 printing_roll.last_printed_number = self.next_receipt_number
                 printing_roll.save()
             
+            # Update booking interbank status
+            self.update_status()
+            
             # Commit the transaction
             frappe.db.commit()
             
@@ -490,14 +494,21 @@ class TellerInvoice(Document):
             frappe.throw(_("Error during submission: {0}").format(str(e)))
 
     def update_status(self):
+        """Update the status of booking interbank items"""
+        print(f"Starting update_status for Teller Invoice {self.name}")
+        
         inv_table = self.teller_invoice_details
         for row in inv_table:
             booking_ib = row.booking_interbank
             if booking_ib:
                 currency = row.currency_code
+                print(f"Processing booking_ib: {booking_ib}, currency: {currency}")
+                
                 booked_details = frappe.get_all("Booked Currency",
-                    filters={"parent": booking_ib, "currency_code": currency},
+                    filters={"parent": booking_ib, "currency": currency},
                     fields=["name", "status", "qty"])
+                
+                print(f"Found booked_details: {booked_details}")
                 
                 for item in booked_details:
                     row_name = item.name
@@ -507,22 +518,34 @@ class TellerInvoice(Document):
                     invoices = frappe.get_all("Teller Invoice",
                         filters={
                             "docstatus": 1,
-                            "teller_invoice_details.booking_interbank": booking_ib,
-                            "teller_invoice_details.currency_code": currency
                         },
-                        fields=["teller_invoice_details.quantity as billed_qty"])
+                        fields=["name"])
                     
                     total_billed = 0
                     for invoice in invoices:
-                        total_billed += flt(invoice.billed_qty)
+                        # Get the child table entries for this invoice
+                        invoice_details = frappe.get_all("Teller Invoice Details",
+                            filters={
+                                "parent": invoice.name,
+                                "booking_interbank": booking_ib,
+                                "currency_code": currency
+                            },
+                            fields=["quantity as billed_qty"])
+                        
+                        for detail in invoice_details:
+                            total_billed += flt(detail.billed_qty)
                     
-                    # Include current invoice
+                    # Include current invoice's quantity
                     total_billed += flt(row.quantity)
+                    
+                    print(f"Total billed: {total_billed}, Original qty: {item.qty}")
                     
                     # Update status based on total billed quantity
                     if total_billed >= flt(item.qty):
+                        print(f"Setting status to Billed for {row_name}")
                         currency_book.db_set("status", "Billed")
                     else:
+                        print(f"Setting status to Partial Billed for {row_name}")
                         currency_book.db_set("status", "Partial Billed")
                 
                 # Update parent booking interbank status
@@ -539,12 +562,15 @@ class TellerInvoice(Document):
                     if booked.status != "Not Billed":
                         all_not_billed = False
                 
-                book_doc = frappe.get_doc("Booking Interbank", booked.parent)
+                book_doc = frappe.get_doc("Booking Interbank", booking_ib)
                 if all_billed:
+                    print(f"Setting parent status to Billed for {booking_ib}")
                     book_doc.db_set("status", "Billed")
                 elif all_not_billed:
+                    print(f"Setting parent status to Not Billed for {booking_ib}")
                     book_doc.db_set("status", "Not Billed")
                 else:
+                    print(f"Setting parent status to Partial Billed for {booking_ib}")
                     book_doc.db_set("status", "Partial Billed")
 
     def delete_gl_entries(self):
@@ -1392,7 +1418,6 @@ def make_sales_return(doc):
         teller_invoice.save()
         
         # Reverse GL Entries
-        from erpnext.accounts.general_ledger import make_reverse_gl_entries
         make_reverse_gl_entries(voucher_type=teller_invoice.doctype, voucher_no=teller_invoice.name)
         
         frappe.db.commit()

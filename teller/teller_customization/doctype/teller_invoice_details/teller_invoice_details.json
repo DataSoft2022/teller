@@ -12,6 +12,7 @@
   "currency_code",
   "currency",
   "account",
+  "booking_interbank",
   "column_break_1",
   "balance_after",
   "transaction_section",
@@ -51,6 +52,12 @@
    "options": "Account",
    "bold": 1,
    "in_list_view": 0
+  },
+  {
+   "fieldname": "booking_interbank",
+   "fieldtype": "Link",
+   "label": "Booking Interbank",
+   "options": "Booking Interbank"
   },
   {
    "fieldname": "column_break_1",
