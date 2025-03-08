@@ -118,7 +118,7 @@ frappe.ui.form.on("Open Shift for Branch", {
 //////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////  indecators status  //////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////
-frappe.listview_settings["Open Shift For Branch"]= {
+frappe.listview_settings["Open Shift for Branch"] = {
   add_fields: ["shift_status"],
   
   get_indicator: function (doc) {
@@ -136,7 +136,7 @@ frappe.listview_settings["Open Shift For Branch"]= {
       show_bulk_shift_dialog();
     });
   }
-}
+};
 
 // Function to show the bulk shift dialog
 function show_bulk_shift_dialog() {

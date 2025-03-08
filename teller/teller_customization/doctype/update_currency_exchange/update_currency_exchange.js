@@ -185,13 +185,11 @@ frappe.ui.form.on("Exchange Records", {
     var row = locals[cdt][cdn];
     // Flag to indicate this row has changes
     row.purchase_flag = true;
-    frappe.msgprint("Purchase exchange rate changed.");
   },
 
   selling_exchange_rate: function (frm, cdt, cdn) {
     var row = locals[cdt][cdn];
     // Flag to indicate this row has changes
     row.sell_flag = true;
-    frappe.msgprint("Selling exchange rate changed.");
   },
 });
