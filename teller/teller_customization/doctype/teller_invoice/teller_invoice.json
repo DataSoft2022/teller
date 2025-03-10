@@ -109,7 +109,12 @@
   "naming_series",
   "posting_date",
   "total_amount",
-  "total_egy"
+  "total_egy",
+  "reason_for_transaction",
+  "other_reason",
+  "work_address",
+  "profession",
+  "company_attachment"
  ],
  "fields": [
   {
@@ -769,6 +774,42 @@
    "label": "Total (EGY)",
    "read_only": 1,
    "hidden": 1
+  },
+  {
+   "depends_on": "eval:(doc.client_type==\"Egyptian\"||doc.client_type==\"Foreigner\")&&doc.exceed==1",
+   "fieldname": "reason_for_transaction",
+   "fieldtype": "Select",
+   "label": "Reason for Selling",
+   "options": "Tourism\nBusiness\nInvestment\nFamily Support\nEducation\nMedical\nOther",
+   "mandatory_depends_on": "eval:doc.exceed == 1 && (doc.client_type === \"Egyptian\" || doc.client_type === \"Foreigner\")"
+  },
+  {
+   "depends_on": "eval:doc.reason_for_transaction==\"Other\" && (doc.client_type==\"Egyptian\"||doc.client_type==\"Foreigner\")&&doc.exceed==1",
+   "fieldname": "other_reason",
+   "fieldtype": "Data",
+   "label": "Other Reason",
+   "mandatory_depends_on": "eval:doc.reason_for_transaction==\"Other\" && doc.exceed == 1 && (doc.client_type === \"Egyptian\" || doc.client_type === \"Foreigner\")"
+  },
+  {
+   "depends_on": "eval:(doc.client_type==\"Egyptian\"||doc.client_type==\"Foreigner\")&&doc.exceed==1",
+   "fieldname": "work_address",
+   "fieldtype": "Small Text",
+   "label": "Work Address",
+   "mandatory_depends_on": "eval:doc.exceed == 1 && (doc.client_type === \"Egyptian\" || doc.client_type === \"Foreigner\")"
+  },
+  {
+   "depends_on": "eval:(doc.client_type==\"Egyptian\"||doc.client_type==\"Foreigner\")&&doc.exceed==1",
+   "fieldname": "profession",
+   "fieldtype": "Data",
+   "label": "Profession",
+   "mandatory_depends_on": "eval:doc.exceed == 1 && (doc.client_type === \"Egyptian\" || doc.client_type === \"Foreigner\")"
+  },
+  {
+   "depends_on": "eval:doc.client_type==\"Company\"",
+   "fieldname": "company_attachment",
+   "fieldtype": "Attach",
+   "label": "Company Document",
+   "description": "Attach company registration document or other relevant files"
   }
  ],
  "index_web_pages_for_search": 1,
