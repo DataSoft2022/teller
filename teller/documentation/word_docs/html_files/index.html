@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Multi-Branch Banking System Documentation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            line-height: 1.5;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+            text-align: center;
+        }
+        .card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .card h2 {
+            color: #3498db;
+            margin-top: 0;
+        }
+        .card p {
+            color: #555;
+        }
+        .buttons {
+            display: flex;
+            gap: 10px;
+        }
+        .button {
+            display: inline-block;
+            background-color: #3498db;
+            color: white;
+            padding: 10px 15px;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .button:hover {
+            background-color: #2980b9;
+        }
+        .word-button {
+            background-color: #2ecc71;
+        }
+        .word-button:hover {
+            background-color: #27ae60;
+        }
+        .note {
+            background-color: #f8f9fa;
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            margin-top: 30px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Multi-Branch Banking System Documentation</h1>
+    
+    <div class="card">
+        <h2>Implementation Guide</h2>
+        <p>Comprehensive implementation guidelines for the multi-branch banking system built on ERPNext.</p>
+        <div class="buttons">
+            <a href="Multi_Branch_Banking_System.html" class="button">View HTML</a>
+            <a href="javascript:openInWord('Multi_Branch_Banking_System.html');" class="button word-button">Open in Word</a>
+        </div>
+    </div>
+    
+    <div class="card">
+        <h2>Database Schema</h2>
+        <p>Detailed database schema documentation including data classification, replication configuration, and synchronization mechanisms.</p>
+        <div class="buttons">
+            <a href="Database_Schema.html" class="button">View HTML</a>
+            <a href="javascript:openInWord('Database_Schema.html');" class="button word-button">Open in Word</a>
+        </div>
+    </div>
+    
+    <div class="card">
+        <h2>Network Architecture</h2>
+        <p>Network architecture diagrams and explanations for headquarters and branch connectivity.</p>
+        <div class="buttons">
+            <a href="Network_Architecture.html" class="button">View HTML</a>
+            <a href="javascript:openInWord('Network_Architecture.html');" class="button word-button">Open in Word</a>
+        </div>
+    </div>
+    
+    <div class="card">
+        <h2>Synchronization Flow</h2>
+        <p>Data synchronization flow diagrams and explanations for branch-to-HQ, HQ-to-branch, and branch-to-branch communication.</p>
+        <div class="buttons">
+            <a href="Synchronization_Flow.html" class="button">View HTML</a>
+            <a href="javascript:openInWord('Synchronization_Flow.html');" class="button word-button">Open in Word</a>
+        </div>
+    </div>
+    
+    <div class="note">
+        <h3>Note for Management</h3>
+        <p>To save these documents as Word files:</p>
+        <ol>
+            <li>Click the "Open in Word" button</li>
+            <li>When the document opens in Word, click "File" → "Save As"</li>
+            <li>Choose "Word Document (*.docx)" as the file type</li>
+            <li>Click "Save"</li>
+        </ol>
+    </div>
+    
+    <script>
+        function openInWord(htmlFile) {
+            try {
+                // Try to open in Word via ActiveX (works in IE)
+                var word = new ActiveXObject("Word.Application");
+                word.Visible = true;
+                var doc = word.Documents.Open(window.location.href.replace("index.html", htmlFile));
+            } catch (e) {
+                // Fallback to just opening the HTML file
+                window.open(htmlFile, "_blank");
+                alert("Please open this file in Microsoft Word and use 'Save As' to save as a Word document.");
+            }
+        }
+    </script>
+</body>
+</html>
