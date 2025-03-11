@@ -281,6 +281,10 @@ class TellerInvoice(Document):
             if self.docstatus == 0 and self.is_new():  # Only for draft documents
                 self.generate_receipt_number()
             
+            # Ensure customer history is populated when exceed is true
+            if self.exceed and (self.client_type == "Egyptian" or self.client_type == "Foreigner"):
+                self.populate_customer_history()
+            
         except Exception as e:
             frappe.log_error(
                 message=f"Validation error: {str(e)}\nTraceback: {frappe.get_traceback()}",
@@ -429,6 +433,30 @@ class TellerInvoice(Document):
                 if self.end_registration_date:
                     customer.custom_end_registration_date = self.end_registration_date
                     
+                # Add the company attachment to the customer document
+                if self.company_attachment:
+                    # Check if we need to create a new attachment or update existing one
+                    existing_attachment = frappe.db.exists("File", {
+                        "attached_to_doctype": "Customer",
+                        "attached_to_name": customer.name,
+                        "file_name": self.company_attachment.split("/")[-1]
+                    })
+                    
+                    if not existing_attachment:
+                        # Create a new file attachment
+                        file_doc = frappe.get_doc({
+                            "doctype": "File",
+                            "file_url": self.company_attachment,
+                            "attached_to_doctype": "Customer",
+                            "attached_to_name": customer.name,
+                            "folder": "Home/Attachments",
+                            "is_private": 1
+                        })
+                        file_doc.insert(ignore_permissions=True)
+                    
+                    # Store the attachment URL in a custom field
+                    customer.custom_company_attachment = self.company_attachment
+                
                 # Update commissar details if provided
                 if self.com_name:
                     customer.custom_commissar_name = self.com_name
@@ -1093,6 +1121,53 @@ class TellerInvoice(Document):
         doc_before_save = self.get_doc_before_save()
         if doc_before_save and self.egy_balance != doc_before_save.egy_balance:
             self.db_set('egy_balance', doc_before_save.egy_balance)
+
+    def populate_customer_history(self):
+        """Populate customer history table with relevant data"""
+        # Clear existing rows to avoid duplicates
+        self.customer_history = []
+        
+        # Get customer's transaction history
+        if self.national_id or self.passport_number or self.military_number:
+            # Determine which ID field to use
+            id_field = None
+            id_value = None
+            
+            if self.card_type == "National ID" and self.national_id:
+                id_field = "national_id"
+                id_value = self.national_id
+            elif self.card_type == "Passport" and self.passport_number:
+                id_field = "passport_number"
+                id_value = self.passport_number
+            elif self.card_type == "Military Card" and self.military_number:
+                id_field = "military_number"
+                id_value = self.military_number
+            
+            if id_field and id_value:
+                # Get previous transactions
+                transactions = frappe.get_all(
+                    "Teller Invoice",
+                    filters={
+                        id_field: id_value,
+                        "name": ["!=", self.name],  # Exclude current document
+                        "docstatus": 1  # Only submitted documents
+                    },
+                    fields=["name", "posting_date", "total_amount", "reason_for_transaction"],
+                    order_by="posting_date desc",
+                    limit=10  # Get last 10 transactions
+                )
+                
+                # Add transactions to history table
+                for t in transactions:
+                    self.append("customer_history", {
+                        "transaction_id": t.name,
+                        "transaction_date": t.posting_date,
+                        "amount": t.total_amount,
+                        "reason": t.reason_for_transaction or "Not specified"
+                    })
+                
+        # Log that we've populated the history
+        frappe.msgprint("Customer history populated with previous transactions")
 
 
 # get currency and exchange rate associated with each account

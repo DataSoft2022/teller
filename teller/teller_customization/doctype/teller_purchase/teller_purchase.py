@@ -149,6 +149,37 @@ class TellerPurchase(Document):
             if self.is_new() and not self.purchase_receipt_number:
                 self.generate_receipt_number()
             
+            # Ensure purchase history is populated when exceed is true
+            if self.exceed and (self.category_of_buyer == "Egyptian" or self.category_of_buyer == "Foreigner"):
+                self.populate_purchase_history()
+            
+            # Handle company attachment if this is a company buyer
+            if self.category_of_buyer == "Company" and self.company_attachment and self.buyer:
+                customer = frappe.get_doc("Customer", self.buyer)
+                
+                # Check if we need to create a new attachment or update existing one
+                existing_attachment = frappe.db.exists("File", {
+                    "attached_to_doctype": "Customer",
+                    "attached_to_name": customer.name,
+                    "file_name": self.company_attachment.split("/")[-1]
+                })
+                
+                if not existing_attachment:
+                    # Create a new file attachment
+                    file_doc = frappe.get_doc({
+                        "doctype": "File",
+                        "file_url": self.company_attachment,
+                        "attached_to_doctype": "Customer",
+                        "attached_to_name": customer.name,
+                        "folder": "Home/Attachments",
+                        "is_private": 1
+                    })
+                    file_doc.insert(ignore_permissions=True)
+                
+                # Store the attachment URL in a custom field
+                customer.custom_company_attachment = self.company_attachment
+                customer.save(ignore_permissions=True)
+            
         except Exception as e:
             frappe.log_error(
                 message=f"Validation error: {str(e)}\nTraceback: {frappe.get_traceback()}",
@@ -949,6 +980,53 @@ class TellerPurchase(Document):
                 title="Receipt Number Error"
             )
             raise  # Let the caller handle the exception
+
+    def populate_purchase_history(self):
+        """Populate purchase history table with relevant data"""
+        # Clear existing rows to avoid duplicates
+        self.purchase_history = []
+        
+        # Get buyer's transaction history
+        if self.buyer_national_id or self.buyer_passport_number or self.buyer_military_number:
+            # Determine which ID field to use
+            id_field = None
+            id_value = None
+            
+            if self.buyer_card_type == "National ID" and self.buyer_national_id:
+                id_field = "buyer_national_id"
+                id_value = self.buyer_national_id
+            elif self.buyer_card_type == "Passport" and self.buyer_passport_number:
+                id_field = "buyer_passport_number"
+                id_value = self.buyer_passport_number
+            elif self.buyer_card_type == "Military Card" and self.buyer_military_number:
+                id_field = "buyer_military_number"
+                id_value = self.buyer_military_number
+                
+            if id_field and id_value:
+                # Get previous transactions
+                transactions = frappe.get_all(
+                    "Teller Purchase",
+                    filters={
+                        id_field: id_value,
+                        "name": ["!=", self.name],  # Exclude current document
+                        "docstatus": 1  # Only submitted documents
+                    },
+                    fields=["name", "posting_date", "total_amount", "reason_for_transaction"],
+                    order_by="posting_date desc",
+                    limit=10  # Get last 10 transactions
+                )
+                
+                # Add transactions to history table
+                for t in transactions:
+                    self.append("purchase_history", {
+                        "transaction_id": t.name,
+                        "transaction_date": t.posting_date,
+                        "amount": t.total_amount,
+                        "reason": t.reason_for_transaction or "Not specified"
+                    })
+                
+        # Log that we've populated the history
+        frappe.msgprint("Purchase history populated with previous transactions")
 
 
 # get currency and currency rate from each account

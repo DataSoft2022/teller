@@ -41,6 +41,10 @@
   "buyer_gender",
   "buyer_phone",
   "buyer_job_title",
+  "reason_for_transaction",
+  "other_reason",
+  "work_address",
+  "profession",
   "column_break_vdaf",
   "buyer_card_type",
   "buyer_issue_date",
@@ -65,6 +69,7 @@
   "buyer_company_name",
   "buyer_company_address",
   "buyer_company_activity",
+  "company_attachment",
   "column_break_nqxf",
   "buyer_company_commercial_no",
   "buyer_company_start_date",
@@ -332,6 +337,35 @@
    "mandatory_depends_on": "eval:doc.exceed == 1 && (doc.category_of_buyer === \"Egyptian\" || doc.category_of_buyer === \"Foreigner\")"
   },
   {
+   "depends_on": "eval:(doc.category_of_buyer==\"Egyptian\"||doc.category_of_buyer==\"Foreigner\")&&doc.exceed==1",
+   "fieldname": "reason_for_transaction",
+   "fieldtype": "Select",
+   "label": "Reason for Buying",
+   "options": "Tourism\nBusiness\nInvestment\nFamily Support\nEducation\nMedical\nOther",
+   "mandatory_depends_on": "eval:doc.exceed == 1 && (doc.category_of_buyer === \"Egyptian\" || doc.category_of_buyer === \"Foreigner\")"
+  },
+  {
+   "depends_on": "eval:doc.reason_for_transaction==\"Other\" && (doc.category_of_buyer==\"Egyptian\"||doc.category_of_buyer==\"Foreigner\")&&doc.exceed==1",
+   "fieldname": "other_reason",
+   "fieldtype": "Data",
+   "label": "Other Reason",
+   "mandatory_depends_on": "eval:doc.reason_for_transaction==\"Other\" && doc.exceed == 1 && (doc.category_of_buyer === \"Egyptian\" || doc.category_of_buyer === \"Foreigner\")"
+  },
+  {
+   "depends_on": "eval:(doc.category_of_buyer==\"Egyptian\"||doc.category_of_buyer==\"Foreigner\")&&doc.exceed==1",
+   "fieldname": "work_address",
+   "fieldtype": "Small Text",
+   "label": "Work Address",
+   "mandatory_depends_on": "eval:doc.exceed == 1 && (doc.category_of_buyer === \"Egyptian\" || doc.category_of_buyer === \"Foreigner\")"
+  },
+  {
+   "depends_on": "eval:(doc.category_of_buyer==\"Egyptian\"||doc.category_of_buyer==\"Foreigner\")&&doc.exceed==1",
+   "fieldname": "profession",
+   "fieldtype": "Data",
+   "label": "Profession",
+   "mandatory_depends_on": "eval:doc.exceed == 1 && (doc.category_of_buyer === \"Egyptian\" || doc.category_of_buyer === \"Foreigner\")"
+  },
+  {
    "fieldname": "column_break_vdaf",
    "fieldtype": "Column Break"
   },
@@ -475,6 +509,13 @@
    "fieldtype": "Data",
    "label": "Company Activity",
    "mandatory_depends_on": "eval: (doc.category_of_buyer === \"Company\" || doc.category_of_buyer === \"Interbank\")"
+  },
+  {
+   "depends_on": "eval:doc.category_of_buyer==\"Company\"",
+   "fieldname": "company_attachment",
+   "fieldtype": "Attach",
+   "label": "Company Document",
+   "description": "Attach company registration document or other relevant files"
   },
   {
    "fieldname": "column_break_nqxf",
