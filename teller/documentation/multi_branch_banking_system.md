@@ -123,6 +123,49 @@ The system uses a hub-and-spoke network topology with HQ as the central hub and 
 - **Firewall**: Configured to allow only necessary traffic
 - **Redundancy**: Secondary internet connection where possible
 
+### Alternative Connectivity Options
+
+#### Branches Without Leased Lines
+For branches without dedicated leased lines but with static IP addresses and server firewalls:
+
+1. **Connection Method**: 
+   - Use secure site-to-site VPN over public internet
+   - Implement aggressive reconnection policies
+   - Configure automatic failover to cellular backup where available
+
+2. **Security Requirements**:
+   - Dedicated hardware firewall with IPS/IDS capabilities
+   - Strict outbound connection rules (whitelist approach)
+   - Regular security audits and penetration testing
+   - VPN traffic inspection and anomaly detection
+
+3. **Configuration Example**:
+```bash
+# Branch Firewall Configuration (Example for pfSense/OPNsense)
+# Allow only specific outbound connections
+pass out quick from $BRANCH_LAN to $HQ_VPN_ENDPOINT port 51820 keep state
+pass out quick from $BRANCH_LAN to $HQ_BACKUP_ENDPOINT port 51820 keep state
+block out all
+
+# Rate limiting for VPN connections
+table <vpn_abusers> persist
+block quick from <vpn_abusers>
+pass in on $WAN_INTERFACE proto udp from any to ($WAN_INTERFACE) port 51820 flags S/SA keep state \
+    (max-src-conn 10, max-src-conn-rate 3/5, overload <vpn_abusers> flush global)
+```
+
+4. **Synchronization Adjustments**:
+   - Implement store-and-forward mechanism for transactions
+   - Schedule synchronization during off-peak hours
+   - Compress data before transmission
+   - Implement bandwidth throttling during business hours
+
+5. **Monitoring Requirements**:
+   - Real-time connection status monitoring
+   - Bandwidth utilization tracking
+   - Latency and packet loss measurements
+   - Automated alerts for connection issues
+
 ### VPN Configuration
 WireGuard VPN will be configured with the following parameters:
 
