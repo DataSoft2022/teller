@@ -152,10 +152,64 @@ CREATE TABLE IF NOT EXISTS currency_exchange (
     date DATE
 );
 
+CREATE TABLE IF NOT EXISTS teller_invoice_details (
+    name VARCHAR(140) PRIMARY KEY,
+    creation TIMESTAMP,
+    modified TIMESTAMP,
+    modified_by VARCHAR(140),
+    owner VARCHAR(140),
+    docstatus INT,
+    parent VARCHAR(140),
+    total DECIMAL(18,6),
+    status VARCHAR(140)
+);
+
+CREATE TABLE IF NOT EXISTS booking_interbank (
+    name VARCHAR(140) PRIMARY KEY,
+    creation TIMESTAMP,
+    modified TIMESTAMP,
+    owner VARCHAR(140),
+    docstatus INT,
+    status VARCHAR(140)
+);
+
+CREATE TABLE IF NOT EXISTS booked_currency (
+    name VARCHAR(140) PRIMARY KEY,
+    creation TIMESTAMP,
+    modified TIMESTAMP,
+    owner VARCHAR(140),
+    docstatus INT,
+    parent VARCHAR(140),
+    status VARCHAR(140)
+);
+
+CREATE TABLE IF NOT EXISTS branch_interbank_request (
+    name VARCHAR(140) PRIMARY KEY,
+    creation TIMESTAMP,
+    modified TIMESTAMP,
+    owner VARCHAR(140),
+    docstatus INT,
+    status VARCHAR(140)
+);
+
+CREATE TABLE IF NOT EXISTS branch_request_details (
+    name VARCHAR(140) PRIMARY KEY,
+    creation TIMESTAMP,
+    modified TIMESTAMP,
+    owner VARCHAR(140),
+    docstatus INT,
+    parent VARCHAR(140)
+);
+
 -- Create publications for tables to be replicated to HQ
 CREATE PUBLICATION branch_to_hq_pub FOR TABLE 
-    teller_invoice, 
-    update_currency_exchange;
+    teller_invoice,
+    teller_invoice_details,
+    update_currency_exchange,
+    booking_interbank,
+    booked_currency,
+    branch_interbank_request,
+    branch_request_details;
 
 -- Create subscription to HQ (will be executed only if HQ_IP is provided)
 CREATE SUBSCRIPTION hq_to_${BRANCH_ID,,}_sub 

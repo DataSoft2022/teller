@@ -11,8 +11,9 @@ This guide explains how to use the automated setup scripts to deploy the multi-b
 5. [Setting Up Branches](#setting-up-branches)
 6. [Connecting HQ and Branches](#connecting-hq-and-branches)
 7. [Testing the System](#testing-the-system)
-8. [Troubleshooting](#troubleshooting)
-9. [Working with Private Repositories](#working-with-private-repositories)
+8. [Verifying Complete Data Synchronization](#verifying-complete-data-synchronization)
+9. [Troubleshooting](#troubleshooting)
+10. [Working with Private Repositories](#working-with-private-repositories)
 
 ## Overview
 
@@ -180,6 +181,91 @@ docker exec -it postgres-br01 psql -U postgres -d erpnext_br01 -c "INSERT INTO t
 # On HQ
 docker exec -it postgres-hq psql -U postgres -d erpnext_hq -c "SELECT * FROM teller_invoice WHERE name = 'TEST-BRANCH-TO-HQ';"
 ```
+
+## Verifying Complete Data Synchronization
+
+To ensure all transactions and data are correctly transmitted between HQ and branches, follow these steps:
+
+### 1. Verify Publication Tables
+
+The scripts have been updated to include all critical tables in the replication publications:
+
+**From HQ to Branches:**
+- currency_exchange
+- update_currency_exchange
+- booking_interbank
+- booked_currency
+- branch_interbank_request
+
+**From Branches to HQ:**
+- teller_invoice
+- teller_invoice_details
+- update_currency_exchange
+- booking_interbank
+- booked_currency
+- branch_interbank_request
+- branch_request_details
+
+### 2. Check Replication Status
+
+To check if replication is active and working:
+
+```bash
+# On HQ - check all subscriptions to branches
+docker exec -it postgres-hq psql -U postgres -d erpnext_hq -c "SELECT * FROM pg_stat_replication;"
+docker exec -it postgres-hq psql -U postgres -d erpnext_hq -c "SELECT * FROM pg_replication_slots;"
+docker exec -it postgres-hq psql -U postgres -d erpnext_hq -c "SELECT * FROM pg_stat_subscription;"
+
+# On Branch - check subscription to HQ
+docker exec -it postgres-br01 psql -U postgres -d erpnext_br01 -c "SELECT * FROM pg_stat_subscription;"
+```
+
+### 3. Verify Table Structure Across Branches
+
+Ensure tables have the same structure between HQ and branches:
+
+```bash
+# On HQ
+docker exec -it postgres-hq psql -U postgres -d erpnext_hq -c "\d teller_invoice"
+
+# On Branch
+docker exec -it postgres-br01 psql -U postgres -d erpnext_br01 -c "\d teller_invoice"
+```
+
+### 4. Create Real Test Transactions
+
+For a more comprehensive test, create actual transactions using the Teller app:
+
+1. Log into the Teller app on a branch (e.g., http://BRANCH1_IP:8000)
+2. Create a new invoice or currency exchange transaction
+3. Check that it appears in the HQ database:
+   ```bash
+   # On HQ - list the most recent teller invoices
+   docker exec -it postgres-hq psql -U postgres -d erpnext_hq -c "SELECT name, creation, total, status FROM teller_invoice ORDER BY creation DESC LIMIT 5;"
+   ```
+
+### 5. Monitoring Ongoing Synchronization
+
+For continuous monitoring of replication:
+
+```bash
+# Create a monitoring script on HQ
+cat > monitor_replication.sh << 'EOF'
+#!/bin/bash
+echo "===== Replication Status Report ====="
+echo "Time: $(date)"
+echo "===== Slots ====="
+docker exec -it postgres-hq psql -U postgres -d erpnext_hq -c "SELECT slot_name, plugin, active FROM pg_replication_slots;"
+echo "===== Subscriptions ====="
+docker exec -it postgres-hq psql -U postgres -d erpnext_hq -c "SELECT subname, subenabled, subconninfo FROM pg_subscription;"
+echo "===== Latest Transactions ====="
+docker exec -it postgres-hq psql -U postgres -d erpnext_hq -c "SELECT name, creation, status FROM teller_invoice ORDER BY creation DESC LIMIT 3;"
+echo "================================="
+EOF
+chmod +x monitor_replication.sh
+```
+
+Run this script periodically to check replication health.
 
 ## Troubleshooting
 
