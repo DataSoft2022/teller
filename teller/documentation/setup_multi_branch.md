@@ -12,6 +12,7 @@ This guide explains how to use the automated setup scripts to deploy the multi-b
 6. [Connecting HQ and Branches](#connecting-hq-and-branches)
 7. [Testing the System](#testing-the-system)
 8. [Troubleshooting](#troubleshooting)
+9. [Working with Private Repositories](#working-with-private-repositories)
 
 ## Overview
 
@@ -31,6 +32,7 @@ Before using these scripts, ensure each machine has:
 3. **Sudo access** (for firewall configuration)
 4. **Network connectivity** between all machines
 5. **Sufficient disk space** (at least 20GB recommended)
+6. **Git authentication configured** (if using a private repository)
 
 ## Scripts Overview
 
@@ -54,30 +56,39 @@ The HQ should be set up first, as branches need to connect to it.
    chmod +x setup_hq.sh
    ```
 
-2. **Run the setup script**:
+2. **Customize the script** (optional):
+   ```bash
+   # Edit the script to change configuration variables if needed
+   nano setup_hq.sh
+   
+   # Particularly, update the TELLER_REPO variable with the correct URL
+   # If using a private repository, see the "Working with Private Repositories" section
+   ```
+
+3. **Run the setup script**:
    ```bash
    ./setup_hq.sh
    ```
    This creates all necessary configuration files and scripts.
 
-3. **Configure firewall** (if needed):
+4. **Configure firewall** (if needed):
    ```bash
    cd banking-prototype
    ./scripts/configure_firewall.sh
    ```
 
-4. **Start HQ services**:
+5. **Start HQ services**:
    ```bash
    ./start_hq.sh
    ```
    Wait for containers to be fully running (about 30-60 seconds).
 
-5. **Initialize ERPNext and install apps**:
+6. **Initialize ERPNext and install apps**:
    ```bash
    ./post_setup_hq.sh
    ```
 
-6. **Record the HQ IP address**:
+7. **Record the HQ IP address**:
    The script saves the HQ IP to `hq_ip.txt`, which you'll need to provide to all branch setups.
 
 ## Setting Up Branches
@@ -90,30 +101,38 @@ For each branch, perform these steps on a separate physical machine:
    chmod +x setup_branch.sh
    ```
 
-2. **Run the setup script with branch ID and HQ IP**:
+2. **Customize the script** (optional):
+   ```bash
+   # Edit the script to change configuration variables if needed
+   nano setup_branch.sh
+   
+   # Particularly, update the TELLER_REPO variable to match what you used for HQ
+   ```
+
+3. **Run the setup script with branch ID and HQ IP**:
    ```bash
    ./setup_branch.sh BR01 192.168.1.100
    ```
    Replace `BR01` with your branch ID and `192.168.1.100` with your actual HQ IP address.
 
-3. **Configure firewall** (if needed):
+4. **Configure firewall** (if needed):
    ```bash
    cd banking-prototype
    ./scripts/configure_firewall.sh
    ```
 
-4. **Start branch services**:
+5. **Start branch services**:
    ```bash
    ./start_branch.sh
    ```
    Wait for containers to be fully running (about 30-60 seconds).
 
-5. **Initialize ERPNext and install apps**:
+6. **Initialize ERPNext and install apps**:
    ```bash
    ./post_setup_branch.sh
    ```
 
-6. **Record the branch IP address**:
+7. **Record the branch IP address**:
    The script saves the branch IP to `branch_brXX_ip.txt`.
 
 ## Connecting HQ and Branches
@@ -203,6 +222,69 @@ docker logs erpnext-hq
 docker exec -it erpnext-hq bench --site hq.banking.local migrate
 docker exec -it erpnext-hq bench --site hq.banking.local clear-cache
 ```
+
+## Working with Private Repositories
+
+If your Teller app is in a private repository, you have two options for authentication:
+
+### Option 1: SSH Keys (Most Secure)
+
+1. **Generate an SSH key** on each machine where you'll run the setup scripts:
+   ```bash
+   ssh-keygen -t ed25519 -C "your_email@example.com"
+   ```
+
+2. **Add the SSH key to your GitHub account** as a deploy key:
+   - Copy the public key: `cat ~/.ssh/id_ed25519.pub`
+   - Go to your GitHub repository → Settings → Deploy keys → Add deploy key
+   - Paste the public key and enable write access if needed
+
+3. **Update the repository URL** in both setup scripts:
+   ```bash
+   # Edit the scripts and change
+   TELLER_REPO="https://github.com/yourusername/teller.git"
+   # to
+   TELLER_REPO="git@github.com:yourusername/teller.git"
+   ```
+
+4. **Ensure the SSH agent is running** before executing the setup scripts:
+   ```bash
+   eval "$(ssh-agent -s)"
+   ssh-add ~/.ssh/id_ed25519
+   ```
+
+### Option 2: Personal Access Token (Simpler)
+
+1. **Create a Personal Access Token (PAT)** in GitHub:
+   - Go to GitHub → Settings → Developer settings → Personal access tokens
+   - Generate a new token with `repo` scope
+   - Copy the token
+
+2. **Update the repository URL** in both setup scripts:
+   ```bash
+   # Edit the scripts and change
+   TELLER_REPO="https://github.com/yourusername/teller.git"
+   # to
+   TELLER_REPO="https://username:your_token_here@github.com/yourusername/teller.git"
+   ```
+   Replace `username` with your GitHub username and `your_token_here` with the token you generated.
+
+3. **Keep your tokens secure** - do not share the modified scripts with the token included.
+
+### Troubleshooting Repository Access
+
+If you encounter issues cloning the repository:
+
+1. **Test authentication** before running the setup scripts:
+   ```bash
+   # For SSH
+   ssh -T git@github.com
+   
+   # For HTTPS with token
+   git clone https://username:your_token_here@github.com/yourusername/teller.git test-repo
+   ```
+
+2. **Manual cloning** - The scripts now include a fallback option where you can manually clone the repository if automatic cloning fails.
 
 ## Customizing the Scripts
 

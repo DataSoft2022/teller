@@ -281,16 +281,36 @@ docker exec -it erpnext-${BRANCH_ID,,} bench --site ${BRANCH_SITE_NAME} install-
 echo "[5/5] Installing Teller app..."
 if [ ! -d "./teller-app" ]; then
     echo "Cloning Teller app repository..."
-    git clone ${TELLER_REPO} ./teller-app
+    # Try cloning the repository
+    if ! git clone ${TELLER_REPO} ./teller-app; then
+        echo "Failed to clone repository automatically."
+        echo "This might be because the repository is private."
+        echo ""
+        echo "Options:"
+        echo "1. If using SSH key authentication, ensure your SSH key is set up properly."
+        echo "2. If using HTTPS, make sure your token is included in the repository URL."
+        echo "3. You can manually clone the repository and continue:"
+        echo "   git clone <your-repo-url> ./teller-app"
+        echo ""
+        read -p "Press enter to continue once you've manually cloned the repository, or Ctrl+C to cancel..." dummy
+        
+        if [ ! -d "./teller-app" ]; then
+            echo "Teller app directory still not found. Cannot proceed."
+            exit 1
+        fi
+    fi
 fi
 
 # Copy the Teller app to the container
+echo "Copying Teller app to container..."
 docker cp ./teller-app erpnext-${BRANCH_ID,,}:/home/frappe/frappe-bench/apps/teller
 
 # Install the app's dependencies
+echo "Installing Teller app dependencies..."
 docker exec -it erpnext-${BRANCH_ID,,} bash -c "cd /home/frappe/frappe-bench/apps/teller && pip install -e ."
 
 # Install the app to the site
+echo "Installing Teller app to site..."
 docker exec -it erpnext-${BRANCH_ID,,} bench --site ${BRANCH_SITE_NAME} install-app teller
 
 # Configure Branch-specific settings
