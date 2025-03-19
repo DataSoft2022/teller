@@ -13,84 +13,87 @@ Let's create some test data to verify the synchronization:
 cat > hq/create_test_data.sql << 'EOF'
 -- Insert test data for HQ
 INSERT INTO teller_invoice (
-    invoice_number, customer_name, amount, currency, branch_code, 
-    status, created_by, modified_by
+    name, docstatus, creation, modified, modified_by, owner,
+    treasury_code, branch_name, date, client, client_type, 
+    customer_name, total, status, branch_no
 )
 VALUES 
-('HQ-INV-001', 'John Doe', 1000.00, 'USD', 'HQ', 'completed', 'admin', 'admin'),
-('HQ-INV-002', 'Jane Smith', 1500.00, 'EUR', 'HQ', 'pending', 'admin', 'admin');
+('HQ-INV-001', 1, NOW(), NOW(), 'Administrator', 'Administrator',
+ 'HQ-TREAS', 'Headquarters', CURRENT_DATE, 'John Doe', 'Individual', 
+ 'John Doe', 1000.00, 'Completed', 'HQ');
+
+INSERT INTO update_currency_exchange (
+    name, docstatus, creation, modified, modified_by, owner,
+    date, time, user, notes
+)
+VALUES 
+('HQ-UCE-001', 1, NOW(), NOW(), 'Administrator', 'Administrator',
+ CURRENT_DATE, CURRENT_TIME, 'Administrator', 'Regular update');
 
 INSERT INTO currency_exchange (
-    from_currency, to_currency, exchange_rate, branch_code, 
-    created_by, modified_by
+    name, docstatus, creation, modified, modified_by, owner,
+    from_currency, to_currency, exchange_rate, custom_selling_exchange_rate, date
 )
 VALUES 
-('USD', 'EUR', 0.85, 'HQ', 'admin', 'admin'),
-('EUR', 'USD', 1.18, 'HQ', 'admin', 'admin');
-
-INSERT INTO teller_treasury (
-    treasury_code, currency, opening_balance, current_balance, 
-    branch_code, status, created_by, modified_by
-)
-VALUES 
-('HQ-TREAS-USD', 'USD', 10000.00, 9000.00, 'HQ', 'active', 'admin', 'admin'),
-('HQ-TREAS-EUR', 'EUR', 8000.00, 7500.00, 'HQ', 'active', 'admin', 'admin');
+('HQ-CE-USD-EUR', 1, NOW(), NOW(), 'Administrator', 'Administrator',
+ 'USD', 'EUR', 0.85, 0.87, CURRENT_DATE),
+('HQ-CE-EUR-USD', 1, NOW(), NOW(), 'Administrator', 'Administrator',
+ 'EUR', 'USD', 1.18, 1.16, CURRENT_DATE);
 EOF
 
 # Create a test script for Branch 1
 cat > branch1/create_test_data.sql << 'EOF'
 -- Insert test data for Branch 1
 INSERT INTO teller_invoice (
-    invoice_number, customer_name, amount, currency, branch_code, 
-    status, created_by, modified_by
+    name, docstatus, creation, modified, modified_by, owner,
+    treasury_code, branch_name, date, client, client_type, 
+    customer_name, total, status, branch_no
 )
 VALUES 
-('BR1-INV-001', 'Alice Johnson', 800.00, 'USD', 'BR001', 'completed', 'admin', 'admin'),
-('BR1-INV-002', 'Bob Williams', 1200.00, 'EUR', 'BR001', 'pending', 'admin', 'admin');
+('BR1-INV-001', 1, NOW(), NOW(), 'Administrator', 'Administrator',
+ 'BR1-TREAS', 'Branch 1', CURRENT_DATE, 'Alice Johnson', 'Individual', 
+ 'Alice Johnson', 800.00, 'Completed', 'BR1');
 
-INSERT INTO currency_exchange (
-    from_currency, to_currency, exchange_rate, branch_code, 
-    created_by, modified_by
+INSERT INTO booking_interbank (
+    name, docstatus, creation, modified, modified_by, owner,
+    date, time, customer, user, branch, status, transaction
 )
 VALUES 
-('USD', 'GBP', 0.75, 'BR001', 'admin', 'admin'),
-('GBP', 'USD', 1.33, 'BR001', 'admin', 'admin');
-
-INSERT INTO teller_treasury (
-    treasury_code, currency, opening_balance, current_balance, 
-    branch_code, status, created_by, modified_by
-)
-VALUES 
-('BR1-TREAS-USD', 'USD', 5000.00, 4200.00, 'BR001', 'active', 'admin', 'admin'),
-('BR1-TREAS-EUR', 'EUR', 4000.00, 3800.00, 'BR001', 'active', 'admin', 'admin');
+('BR1-BIB-001', 1, NOW(), NOW(), 'Administrator', 'Administrator',
+ CURRENT_DATE, CURRENT_TIME, 'Bob Smith', 'Administrator', 'BR1', 'Completed', 'Deposit');
 EOF
 
 # Create a test script for Branch 2
 cat > branch2/create_test_data.sql << 'EOF'
 -- Insert test data for Branch 2
 INSERT INTO teller_invoice (
-    invoice_number, customer_name, amount, currency, branch_code, 
-    status, created_by, modified_by
+    name, docstatus, creation, modified, modified_by, owner,
+    treasury_code, branch_name, date, client, client_type, 
+    customer_name, total, status, branch_no
 )
 VALUES 
-('BR2-INV-001', 'Charlie Brown', 600.00, 'USD', 'BR002', 'completed', 'admin', 'admin'),
-('BR2-INV-002', 'Diana Prince', 900.00, 'EUR', 'BR002', 'pending', 'admin', 'admin');
+('BR2-INV-001', 1, NOW(), NOW(), 'Administrator', 'Administrator',
+ 'BR2-TREAS', 'Branch 2', CURRENT_DATE, 'Charlie Brown', 'Individual', 
+ 'Charlie Brown', 600.00, 'Completed', 'BR2');
 
-INSERT INTO currency_exchange (
-    from_currency, to_currency, exchange_rate, branch_code, 
-    created_by, modified_by
+INSERT INTO branch_interbank_request (
+    name, docstatus, creation, modified, modified_by, owner,
+    date, time, user, branch, status, transaction, describtion
 )
 VALUES 
-('EUR', 'JPY', 130.25, 'BR002', 'admin', 'admin'),
-('JPY', 'EUR', 0.0077, 'BR002', 'admin', 'admin');
+('BR2-BIR-001', 1, NOW(), NOW(), 'Administrator', 'Administrator',
+ CURRENT_DATE, CURRENT_TIME, 'Administrator', 'BR2', 'Pending', 'Currency Request',
+ 'Need additional USD currency');
 
-INSERT INTO teller_treasury (
-    treasury_code, currency, opening_balance, current_balance, 
-    branch_code, status, created_by, modified_by
+INSERT INTO branch_request_details (
+    name, docstatus, creation, modified, modified_by, owner,
+    parent, parentfield, parenttype, idx, currency, currency_code,
+    interbank_balance, rate, qty, remaining
 )
 VALUES 
-('BR2-TREAS-USD', 'USD', 3000.00, 2400.00, 'BR002', 'active', 'admin', 'admin'),
-('BR2-TREAS-EUR', 'EUR', 2500.00, 2200.00, 'BR002', 'active', 'admin', 'admin');
+('BR2-BRD-001', 1, NOW(), NOW(), 'Administrator', 'Administrator',
+ 'BR2-BIR-001', 'details', 'Branch Interbank Request', 1, 'USD', 'USD',
+ 5000.00, 1.0, 1000.00, 1000.00);
 EOF
 ```
 
@@ -833,6 +836,130 @@ Access the monitoring dashboards:
 - Prometheus: http://localhost:9090
 - Grafana: http://localhost:3000 (username: admin, password: admin)
 
-## Next Steps
+## Troubleshooting Guide
 
-After testing and setting up monitoring for the multi-branch banking system, proceed to [Part 6: Backup and Recovery](setup_guide_part6_backup.md) to set up backup and recovery procedures. 
+This section covers common issues you may encounter during the setup and operation of the multi-branch banking system with the Teller app.
+
+### Database Replication Issues
+
+#### Subscription Not Working
+
+**Issue**: Data is not replicating between HQ and branches.
+
+**Solution**:
+1. Check the replication status:
+   ```bash
+   # On HQ
+   docker exec -it postgres-hq psql -U postgres -d erpnext_hq -c "SELECT * FROM pg_stat_replication;"
+   
+   # Check subscription status
+   docker exec -it postgres-hq psql -U postgres -d erpnext_hq -c "SELECT * FROM pg_stat_subscription;"
+   ```
+
+2. Ensure the tables are properly included in the publication:
+   ```bash
+   docker exec -it postgres-hq psql -U postgres -d erpnext_hq -c "SELECT * FROM pg_publication_tables WHERE pubname = 'branch_to_hq_pub';"
+   ```
+
+3. If necessary, recreate the subscription:
+   ```bash
+   # Drop the existing subscription
+   docker exec -it postgres-hq psql -U postgres -d erpnext_hq -c "DROP SUBSCRIPTION branch1_to_hq_sub;"
+   
+   # Recreate the subscription
+   docker exec -it postgres-hq psql -U postgres -d erpnext_hq -c "CREATE SUBSCRIPTION branch1_to_hq_sub CONNECTION 'host=postgres-branch1 port=5432 user=postgres password=postgres_branch1_password dbname=erpnext_branch1' PUBLICATION branch1_to_hq_pub;"
+   ```
+
+### ERPNext Issues
+
+#### Site Not Loading
+
+**Issue**: The ERPNext site is not loading or showing errors.
+
+**Solution**:
+1. Check the ERPNext logs:
+   ```bash
+   docker logs erpnext-hq
+   ```
+
+2. Reset the site cache:
+   ```bash
+   docker exec -it erpnext-hq bench --site hq.banking.local clear-cache
+   ```
+
+3. Restart the ERPNext service:
+   ```bash
+   docker restart erpnext-hq
+   ```
+
+#### Teller App Not Working
+
+**Issue**: Teller app features are not working correctly.
+
+**Solution**:
+1. Verify the app is properly installed:
+   ```bash
+   docker exec -it erpnext-hq bench --site hq.banking.local list-apps
+   ```
+
+2. Check for errors in the ERPNext logs:
+   ```bash
+   docker exec -it erpnext-hq cat /home/frappe/frappe-bench/logs/error.log
+   ```
+
+3. Reinstall the app if necessary:
+   ```bash
+   docker exec -it erpnext-hq bench --site hq.banking.local uninstall-app teller
+   docker exec -it erpnext-hq bench --site hq.banking.local install-app teller
+   ```
+
+### Currency Exchange Issues
+
+**Issue**: Currency exchange rates are not syncing between HQ and branches.
+
+**Solution**:
+1. Verify the `update_currency_exchange` table is included in the replication:
+   ```bash
+   docker exec -it postgres-hq psql -U postgres -d erpnext_hq -c "SELECT * FROM pg_publication_tables WHERE pubname = 'branch_to_hq_pub' AND tablename = 'update_currency_exchange';"
+   ```
+
+2. Manually update a currency exchange record at HQ to trigger replication:
+   ```bash
+   docker exec -it erpnext-hq bench --site hq.banking.local console
+   ```
+   
+   In the console:
+   ```python
+   doc = frappe.get_doc("Update Currency Exchange", "your-document-id")
+   doc.save()
+   ```
+
+3. Check if the update is reflected in the branch databases:
+   ```bash
+   docker exec -it postgres-branch1 psql -U postgres -d erpnext_branch1 -c "SELECT * FROM update_currency_exchange LIMIT 5;"
+   ```
+
+### Docker Network Issues
+
+**Issue**: Containers cannot communicate with each other.
+
+**Solution**:
+1. Verify the network exists:
+   ```bash
+   docker network ls | grep banking-prototype-network
+   ```
+
+2. Check container connectivity:
+   ```bash
+   docker exec -it erpnext-hq ping postgres-hq
+   ```
+
+3. Recreate the network if necessary:
+   ```bash
+   docker network rm banking-prototype-network
+   docker network create banking-prototype-network
+   ```
+
+## Conclusion
+
+After testing and setting up monitoring for the multi-branch banking system, proceed to [Part 6: Backup and Recovery](setup_guide_part6_backup.md) to set up backup and recovery procedures.

@@ -529,6 +529,31 @@ networks:
     external: true
 EOF
 
+# Create shared app directory (use Teller app instead of banking_app)
+echo "Note: Use your existing Teller app instead of creating a new banking app"
+echo "If you don't have the Teller app, clone it from your repository"
+echo "Example: git clone https://github.com/yourusername/teller.git shared/teller"
+
+# Install Teller app on ERPNext instances
+echo "Installing Teller app on ERPNext instances..."
+echo "# Copy Teller app to HQ container"
+echo "docker cp shared/teller erpnext-hq:/home/frappe/frappe-bench/apps/"
+echo "# Install Teller app on HQ"
+echo "docker exec -it erpnext-hq bash -c \"cd /home/frappe/frappe-bench/apps/teller && pip install -e .\""
+echo "docker exec -it erpnext-hq bench --site hq.banking.local install-app teller"
+echo ""
+echo "# Copy Teller app to Branch 1 container"
+echo "docker cp shared/teller erpnext-branch1:/home/frappe/frappe-bench/apps/"
+echo "# Install Teller app on Branch 1"
+echo "docker exec -it erpnext-branch1 bash -c \"cd /home/frappe/frappe-bench/apps/teller && pip install -e .\""
+echo "docker exec -it erpnext-branch1 bench --site branch1.banking.local install-app teller"
+echo ""
+echo "# Copy Teller app to Branch 2 container"
+echo "docker cp shared/teller erpnext-branch2:/home/frappe/frappe-bench/apps/"
+echo "# Install Teller app on Branch 2"
+echo "docker exec -it erpnext-branch2 bash -c \"cd /home/frappe/frappe-bench/apps/teller && pip install -e .\""
+echo "docker exec -it erpnext-branch2 bench --site branch2.banking.local install-app teller"
+
 # Create startup script
 cat > start-prototype.sh << 'EOF'
 #!/bin/bash

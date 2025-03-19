@@ -563,6 +563,125 @@ mkdir -p /backup/postgres /backup/erpnext
 # ./backup/restore_erpnext.sh /backup/erpnext/hq_20230101_120000 hq
 ```
 
+## 4. Backup and Restore File Attachments
+
+## 5. Teller App Specific Backup Considerations
+
+When backing up a system with the Teller app, there are some specific considerations to keep in mind:
+
+### 5.1 Teller App Data Backup
+
+The Teller app stores its data primarily in the PostgreSQL database. The following tables contain critical data that must be included in any backup:
+
+- `teller_invoice` and `teller_invoice_details`
+- `update_currency_exchange`
+- `currency_exchange`
+- `booking_interbank` and `booked_currency`
+- `branch_interbank_request` and `branch_request_details`
+
+The database backup scripts above will include these tables automatically.
+
+### 5.2 Teller App Configuration Backup
+
+In addition to database data, make sure to back up Teller app configuration files:
+
+```bash
+# Create a backup script for Teller app configuration
+cat > config/backup/backup-teller-config.sh << 'EOF'
+#!/bin/bash
+
+# Define target containers
+HQ_CONTAINER="erpnext-hq"
+BRANCH1_CONTAINER="erpnext-branch1"
+BRANCH2_CONTAINER="erpnext-branch2"
+
+# Define backup directory
+BACKUP_DIR="/backup/teller-config/$(date +%Y%m%d_%H%M%S)"
+mkdir -p $BACKUP_DIR
+
+# Backup Teller configuration from each container
+echo "Backing up Teller app configuration from HQ..."
+docker exec $HQ_CONTAINER bash -c "cd /home/frappe/frappe-bench/sites/hq.banking.local && tar -czf /tmp/teller-config-hq.tar.gz site_config.json private/files/teller*"
+docker cp $HQ_CONTAINER:/tmp/teller-config-hq.tar.gz $BACKUP_DIR/
+
+echo "Backing up Teller app configuration from Branch 1..."
+docker exec $BRANCH1_CONTAINER bash -c "cd /home/frappe/frappe-bench/sites/branch1.banking.local && tar -czf /tmp/teller-config-branch1.tar.gz site_config.json private/files/teller*"
+docker cp $BRANCH1_CONTAINER:/tmp/teller-config-branch1.tar.gz $BACKUP_DIR/
+
+echo "Backing up Teller app configuration from Branch 2..."
+docker exec $BRANCH2_CONTAINER bash -c "cd /home/frappe/frappe-bench/sites/branch2.banking.local && tar -czf /tmp/teller-config-branch2.tar.gz site_config.json private/files/teller*"
+docker cp $BRANCH2_CONTAINER:/tmp/teller-config-branch2.tar.gz $BACKUP_DIR/
+
+echo "Teller app configuration backed up to $BACKUP_DIR"
+EOF
+
+chmod +x config/backup/backup-teller-config.sh
+```
+
+### 5.3 Restoring Teller App Configuration
+
+To restore Teller app configuration:
+
+```bash
+# Create a restore script for Teller app configuration
+cat > config/backup/restore-teller-config.sh << 'EOF'
+#!/bin/bash
+
+if [ $# -ne 2 ]; then
+    echo "Usage: $0 <backup_file> <target>"
+    echo "Example: $0 /backup/teller-config/20230101_120000/teller-config-hq.tar.gz hq"
+    exit 1
+fi
+
+BACKUP_FILE=$1
+TARGET=$2
+
+# Validate target
+if [[ "$TARGET" != "hq" && "$TARGET" != "branch1" && "$TARGET" != "branch2" ]]; then
+    echo "Invalid target. Must be one of: hq, branch1, branch2"
+    exit 1
+fi
+
+# Validate backup file exists
+if [ ! -f "$BACKUP_FILE" ]; then
+    echo "Backup file not found: $BACKUP_FILE"
+    exit 1
+fi
+
+# Determine target container
+case "$TARGET" in
+    "hq")
+        CONTAINER="erpnext-hq"
+        SITE="hq.banking.local"
+        ;;
+    "branch1")
+        CONTAINER="erpnext-branch1"
+        SITE="branch1.banking.local"
+        ;;
+    "branch2")
+        CONTAINER="erpnext-branch2"
+        SITE="branch2.banking.local"
+        ;;
+esac
+
+# Copy backup file to container
+echo "Copying backup file to container..."
+docker cp $BACKUP_FILE $CONTAINER:/tmp/teller-config-restore.tar.gz
+
+# Restore configuration
+echo "Restoring Teller app configuration to $SITE on $CONTAINER..."
+docker exec $CONTAINER bash -c "mkdir -p /tmp/teller-restore && tar -xzf /tmp/teller-config-restore.tar.gz -C /tmp/teller-restore && cp -r /tmp/teller-restore/* /home/frappe/frappe-bench/sites/$SITE/"
+
+# Clean up
+docker exec $CONTAINER rm /tmp/teller-config-restore.tar.gz
+docker exec $CONTAINER rm -rf /tmp/teller-restore
+
+echo "Teller app configuration restored to $SITE on $CONTAINER"
+EOF
+
+chmod +x config/backup/restore-teller-config.sh
+```
+
 ## Next Steps
 
 After setting up backup and recovery procedures for the multi-branch banking system, proceed to [Part 7: Deployment to Production](setup_guide_part7_production.md) to prepare the system for production deployment. 

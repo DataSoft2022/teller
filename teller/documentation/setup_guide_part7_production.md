@@ -344,50 +344,115 @@ systemctl start grafana-server
 - Plan regular maintenance windows
 - Keep security patches up to date
 
-## 6. Troubleshooting Guide
+### 5.5 Production Network Security
 
-### 6.1 Common Issues
-1. Database Connection Issues
+### 5.6 Production Network Security
+
+## 6. Teller App Production Deployment
+
+For deploying the Teller app in a production environment, there are several specific considerations to keep in mind.
+
+### 6.1 Teller App Configuration for Production
+
+The Teller app requires specific configuration for production environments:
+
    ```bash
-   # Check PostgreSQL logs
-   docker-compose -f docker-compose.prod.yml logs postgres-hq
-   
-   # Verify PostgreSQL connection
-   docker exec -it postgres-hq psql -U erpnext -d erpnext_hq -c "\dl"
+# For HQ
+docker exec -it erpnext-hq bench --site hq.banking.local set-config teller_production_mode 1
+docker exec -it erpnext-hq bench --site hq.banking.local set-config branch_code "HQ"
+docker exec -it erpnext-hq bench --site hq.banking.local set-config enable_telemetry 0
+
+# For Branch 1
+docker exec -it erpnext-branch1 bench --site branch1.banking.local set-config teller_production_mode 1
+docker exec -it erpnext-branch1 bench --site branch1.banking.local set-config branch_code "BR01"
+docker exec -it erpnext-branch1 bench --site branch1.banking.local set-config enable_telemetry 0
+
+# For Branch 2
+docker exec -it erpnext-branch2 bench --site branch2.banking.local set-config teller_production_mode 1
+docker exec -it erpnext-branch2 bench --site branch2.banking.local set-config branch_code "BR02"
+docker exec -it erpnext-branch2 bench --site branch2.banking.local set-config enable_telemetry 0
    ```
 
-2. Sync Service Issues
-   ```bash
-   # Check sync service logs
-   docker-compose -f docker-compose.prod.yml logs sync-service
-   
-   # Verify RabbitMQ connection
-   docker exec -it rabbitmq rabbitmqctl list_connections
-   ```
+### 6.2 Teller App Load Balancing Considerations
 
-3. ERPNext Issues
-   ```bash
-   # Check ERPNext logs
-   docker-compose -f docker-compose.prod.yml logs erpnext-hq
-   
-   # Verify site status
-   docker exec -it erpnext-hq bench --site hq.banking.local status
-   ```
+When setting up load balancing for the Teller app, ensure that sticky sessions are configured for certain operations:
 
-### 6.2 Recovery Procedures
-1. Service Recovery
-   ```bash
-   # Restart specific service
-   docker-compose -f docker-compose.prod.yml restart [service-name]
-   
-   # Rebuild and restart service
-   docker-compose -f docker-compose.prod.yml up -d --build [service-name]
-   ```
+```nginx
+# Add to nginx-lb configuration
+upstream erpnext_backend {
+    server erpnext-hq-1:8000;
+    server erpnext-hq-2:8000;
+    hash $cookie_sid consistent;
+}
 
-2. Data Recovery
+server {
+    listen 80;
+    server_name hq.banking.local;
+
+    location / {
+        proxy_pass http://erpnext_backend;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        
+        # Needed for Teller app socket connections
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+    }
+    
+    # Specific handlers for Teller app endpoints
+    location /api/method/teller {
+        proxy_pass http://erpnext_backend;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        
+        # Increase timeouts for long-running operations
+        proxy_read_timeout 300s;
+    }
+}
+```
+
+### 6.3 Teller App Monitoring in Production
+
+Set up specific monitoring for Teller app operations:
+
    ```bash
-   # Restore from backup
-   ./scripts/restore-backup.sh [backup-file] [target-service]
+# Create dashboard for Teller app monitoring
+cat > monitoring/grafana/provisioning/dashboards/teller-app.json << 'EOF'
+{
+  "annotations": { ... },
+  "editable": true,
+  "gnetId": null,
+  "graphTooltip": 0,
+  "id": 2,
+  "links": [],
+  "panels": [
+    {
+      "title": "Teller Invoice Count",
+      // Dashboard configuration for Teller Invoice operations
+    },
+    {
+      "title": "Currency Exchange Rate Updates",
+      // Dashboard configuration for Currency Exchange operations
+    },
+    {
+      "title": "Interbank Transactions",
+      // Dashboard configuration for Interbank operations
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 26,
+  "style": "dark",
+  "tags": ["teller"],
+  "title": "Teller App Dashboard",
+  "uid": "teller-app",
+  "version": 1
+}
+EOF
    ```
 
 ## 7. Advanced Production Considerations

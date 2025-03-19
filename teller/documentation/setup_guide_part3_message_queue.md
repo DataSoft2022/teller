@@ -769,6 +769,30 @@ docker-compose -f docker-compose-sync.yml up -d
 cd ..
 ```
 
+## Teller App Integration with Message Queue
+
+The Teller app integrates with the RabbitMQ message queue system to facilitate real-time data synchronization between branches and headquarters. This section explains how the Teller app's doctypes interact with the message queue.
+
+### Event Handling in Teller App
+
+The Teller app includes event handlers for various doctypes that need to be synchronized:
+
+- **Teller Invoice**: When invoices are created, updated, or deleted
+- **Booking Interbank**: For tracking interbank transactions
+- **Branch Interbank Request**: For managing requests between branches
+- **Update Currency Exchange**: For synchronizing currency exchange rates
+
+### Queue Configuration for Teller App
+
+When setting up the Teller app with RabbitMQ, ensure the following queues are properly configured:
+
+```bash
+# Teller-specific queue configuration
+docker exec -it rabbitmq-hq rabbitmqadmin declare queue name=teller_invoice_updates durable=true
+docker exec -it rabbitmq-hq rabbitmqadmin declare queue name=currency_exchange_updates durable=true
+docker exec -it rabbitmq-hq rabbitmqadmin declare queue name=interbank_transactions durable=true
+```
+
 ## Next Steps
 
 After setting up the message queue and synchronization services, proceed to [Part 4: ERPNext Setup](setup_guide_part4_erpnext.md) to configure ERPNext with PostgreSQL for the banking system. 
