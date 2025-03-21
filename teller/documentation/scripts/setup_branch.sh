@@ -72,22 +72,37 @@ check_and_install_dependencies() {
     # If requirements file found, read system dependencies from it
     if [ -n "$requirements_file" ]; then
         echo "Using requirements from: $requirements_file"
-        # Extract system dependencies from requirements.txt (lines starting with # System Dependencies)
+        # Extract system dependencies from requirements.txt
         read_system_deps=false
+        read_python_deps=false
+        python_deps=()
+
         while IFS= read -r line; do
-            if [[ "$line" == "# System Dependencies" ]]; then
+            # Check for section headers
+            if [[ "$line" == *"System Dependencies"* ]]; then
                 read_system_deps=true
+                read_python_deps=false
                 continue
-            elif [[ "$line" == "#"* && "$line" != "# "* ]]; then
+            elif [[ "$line" == *"Python Dependencies"* ]]; then
                 read_system_deps=false
+                read_python_deps=true
+                continue
+            elif [[ "$line" == "##############################"* ]]; then
+                continue  # Skip section dividers
             fi
 
+            # Process system dependencies (uncommented lines only)
             if [ "$read_system_deps" = true ] && [[ "$line" != "#"* ]] && [ -n "$line" ]; then
                 # Extract package name (before >= or ==)
                 dep=$(echo "$line" | sed 's/\([a-zA-Z0-9_-]*\).*/\1/')
                 if [ -n "$dep" ]; then
                     system_deps+=("$dep")
                 fi
+            fi
+
+            # Collect Python dependencies for later installation
+            if [ "$read_python_deps" = true ] && [[ "$line" != "#"* ]] && [ -n "$line" ]; then
+                python_deps+=("$line")
             fi
         done < "$requirements_file"
     else
@@ -122,7 +137,7 @@ check_and_install_dependencies() {
         read -r answer
         if [[ "$answer" =~ ^[Yy]$ ]]; then
             if command_exists apt-get; then
-                echo "Installing missing dependencies..."
+                echo "Installing missing dependencies using apt-get (Debian/Ubuntu)..."
                 
                 for dep in "${missing_deps[@]}"; do
                     case "$dep" in
@@ -154,16 +169,69 @@ check_and_install_dependencies() {
                             ;;
                     esac
                 done
+            elif command_exists dnf; then
+                echo "Installing missing dependencies using dnf (Fedora/RHEL)..."
                 
-                echo "Dependencies installed. Checking again..."
-                # Recheck dependencies
                 for dep in "${missing_deps[@]}"; do
-                    if command_exists "$dep"; then
-                        echo "✓ $dep is now installed"
-                    else
-                        echo "⚠ $dep installation may have failed. Please install it manually."
-                        exit 1
-                    fi
+                    case "$dep" in
+                        docker)
+                            echo "Installing Docker..."
+                            sudo dnf -y install dnf-plugins-core
+                            sudo dnf config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo
+                            sudo dnf -y install docker-ce docker-ce-cli containerd.io
+                            sudo systemctl enable docker
+                            sudo systemctl start docker
+                            sudo usermod -aG docker $USER
+                            echo "Docker installed. You may need to log out and back in for group changes to take effect."
+                            ;;
+                        docker-compose)
+                            echo "Installing Docker Compose..."
+                            sudo curl -L "https://github.com/docker/compose/releases/download/v2.18.1/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+                            sudo chmod +x /usr/local/bin/docker-compose
+                            ;;
+                        git)
+                            sudo dnf -y install git
+                            ;;
+                        dos2unix)
+                            sudo dnf -y install dos2unix
+                            ;;
+                        *)
+                            # For other dependencies, try to install via dnf
+                            sudo dnf -y install "$dep"
+                            ;;
+                    esac
+                done
+            elif command_exists yum; then
+                echo "Installing missing dependencies using yum (RHEL/CentOS)..."
+                
+                for dep in "${missing_deps[@]}"; do
+                    case "$dep" in
+                        docker)
+                            echo "Installing Docker..."
+                            sudo yum install -y yum-utils
+                            sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+                            sudo yum install -y docker-ce docker-ce-cli containerd.io
+                            sudo systemctl enable docker
+                            sudo systemctl start docker
+                            sudo usermod -aG docker $USER
+                            echo "Docker installed. You may need to log out and back in for group changes to take effect."
+                            ;;
+                        docker-compose)
+                            echo "Installing Docker Compose..."
+                            sudo curl -L "https://github.com/docker/compose/releases/download/v2.18.1/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+                            sudo chmod +x /usr/local/bin/docker-compose
+                            ;;
+                        git)
+                            sudo yum install -y git
+                            ;;
+                        dos2unix)
+                            sudo yum install -y dos2unix
+                            ;;
+                        *)
+                            # For other dependencies, try to install via yum
+                            sudo yum install -y "$dep"
+                            ;;
+                    esac
                 done
             else
                 echo "Cannot automatically install dependencies. Please install them manually:"
@@ -177,6 +245,17 @@ check_and_install_dependencies() {
                 done
                 exit 1
             fi
+            
+            echo "Dependencies installed. Checking again..."
+            # Recheck dependencies
+            for dep in "${missing_deps[@]}"; do
+                if command_exists "$dep"; then
+                    echo "✓ $dep is now installed"
+                else
+                    echo "⚠ $dep installation may have failed. Please install it manually."
+                    exit 1
+                fi
+            done
         else
             echo "Dependencies must be installed to continue. Exiting."
             exit 1
@@ -184,13 +263,18 @@ check_and_install_dependencies() {
     fi
     
     # Install Python dependencies if requirements file is found
-    if [ -n "$requirements_file" ]; then
+    if [ -n "$requirements_file" ] && [ ${#python_deps[@]} -gt 0 ]; then
+        echo "Installing Python dependencies..."
         if command_exists pip; then
-            echo "Installing Python dependencies from requirements file..."
-            pip install -r "$requirements_file" || echo "Warning: Some Python dependencies could not be installed."
+            for dep in "${python_deps[@]}"; do
+                echo "Installing Python package: $dep"
+                pip install "$dep" || echo "Warning: Could not install $dep"
+            done
         elif command_exists pip3; then
-            echo "Installing Python dependencies from requirements file..."
-            pip3 install -r "$requirements_file" || echo "Warning: Some Python dependencies could not be installed."
+            for dep in "${python_deps[@]}"; do
+                echo "Installing Python package: $dep"
+                pip3 install "$dep" || echo "Warning: Could not install $dep"
+            done
         else
             echo "Warning: pip not found. Python dependencies will not be installed."
         fi
@@ -555,68 +639,114 @@ echo '[
 docker cp skip_patches.json erpnext-${BRANCH_ID,,}:/home/frappe/frappe-bench/
 docker exec -it erpnext-${BRANCH_ID,,} bash -c "chown frappe:frappe /home/frappe/frappe-bench/skip_patches.json"
 
-# Create a common_site_config.json file to ensure proper configuration
+# Create a enhanced common_site_config.json file to ensure proper configuration
 echo '{
   "socketio_port": 9000,
   "developer_mode": 1,
   "logging": 1,
-  "db_host": "postgres-branch",
+  "db_host": "postgres-${BRANCH_ID,,}",
   "db_port": 5432,
-  "db_name": "'${BRANCH_DB_NAME}'",
+  "db_name": "${BRANCH_DB_NAME}",
   "db_password": "'${BRANCH_DB_PASSWORD}'",
-  "auto_update": false
+  "auto_update": false,
+  "install_apps": ["frappe", "erpnext", "hrms", "payments"],
+  "skip_failing_patches": true,
+  "skip_setup_wizard": true
 }' > common_site_config.json
 # Ensure the sites directory exists
 docker exec -u 0 -it erpnext-${BRANCH_ID,,} bash -c "mkdir -p /home/frappe/frappe-bench/sites"
 docker cp common_site_config.json erpnext-${BRANCH_ID,,}:/home/frappe/frappe-bench/sites/common_site_config.json
 docker exec -it erpnext-${BRANCH_ID,,} bash -c "chown frappe:frappe /home/frappe/frappe-bench/sites/common_site_config.json"
 
-# Try installing HRMS with a more resilient approach
-docker exec -it erpnext-${BRANCH_ID,,} bash -c "cd /home/frappe/frappe-bench && bench get-app --branch version-15 hrms || echo 'App may already exist, continuing'"
+# Rebuild assets before installation
+docker exec -it erpnext-${BRANCH_ID,,} bash -c "cd /home/frappe/frappe-bench && bench build"
+
+# Try installing HRMS with a comprehensive approach
+echo "Getting HRMS app..."
+docker exec -it erpnext-${BRANCH_ID,,} bash -c "cd /home/frappe/frappe-bench && (bench get-app --branch version-15 hrms || echo 'App may already exist, continuing')"
+
+# Create HR Settings table if it doesn't exist to avoid the common error
+docker exec -it erpnext-${BRANCH_ID,,} bash -c "cd /home/frappe/frappe-bench && bench --site ${BRANCH_SITE_NAME} console << EOF
+try:
+    import frappe
+    if not frappe.db.table_exists('HR Settings'):
+        frappe.db.sql_ddl('CREATE TABLE IF NOT EXISTS \`tabHR Settings\` (name VARCHAR(140) PRIMARY KEY, hr_settings_field VARCHAR(140))')
+        frappe.db.commit()
+    print('HR Settings table checked/created')
+except Exception as e:
+    print(f'Error creating HR Settings table: {e}')
+EOF"
+
 # Try various fallback methods if installation fails
-docker exec -it erpnext-${BRANCH_ID,,} bash -c "cd /home/frappe/frappe-bench && (bench --site ${BRANCH_SITE_NAME} install-app hrms --skip-failing-patches || bench --site ${BRANCH_SITE_NAME} install-app hrms --force || echo 'HRMS installation had issues but continuing with setup')"
+echo "Installing HRMS app with multiple fallback strategies..."
+docker exec -it erpnext-${BRANCH_ID,,} bash -c "cd /home/frappe/frappe-bench && (bench --site ${BRANCH_SITE_NAME} install-app hrms --skip-failing-patches || bench --site ${BRANCH_SITE_NAME} install-app hrms --force || bench --site ${BRANCH_SITE_NAME} migrate || echo 'HRMS installation had issues but continuing with setup')"
+
+# Run a final migration to ensure all database changes are applied
+docker exec -it erpnext-${BRANCH_ID,,} bash -c "cd /home/frappe/frappe-bench && bench --site ${BRANCH_SITE_NAME} migrate"
 
 # Clone and install Teller app
 echo "[+] Installing Teller app..."
-if [ ! -d "./teller" ]; then
-    echo "Cloning Teller app repository..."
-    # Try cloning the repository
-    if ! git clone -b mustafa-development ${TELLER_REPO} ./teller; then
-        echo "Failed to clone repository automatically."
-        echo "This might be because the repository is private."
-        echo ""
-        echo "Options:"
-        echo "1. If using SSH key authentication, ensure your SSH key is set up properly."
-        echo "2. If using HTTPS, make sure your token is included in the repository URL."
-        echo "3. You can manually clone the repository and continue:"
-        echo "   git clone -b mustafa-development <your-repo-url> ./teller"
-        echo ""
-        read -p "Press enter to continue once you've manually cloned the repository, or Ctrl+C to cancel..." dummy
-        
-        if [ ! -d "./teller" ]; then
-            echo "Teller app directory still not found. Cannot proceed."
-            exit 1
-        fi
-    fi
-fi
 
-# Check if the apps directory exists in the container and create it if needed
-echo "Checking if apps directory exists in container..."
+# Run bench build to ensure all the requirements are properly built
+docker exec -it erpnext-${BRANCH_ID,,} bash -c "cd /home/frappe/frappe-bench && bench build"
+
+# Create temporary directory for app files
 docker exec -u 0 -it erpnext-${BRANCH_ID,,} bash -c "mkdir -p /home/frappe/frappe-bench/apps/teller_temp"
 
-# First copy the Teller app to a temporary location in the container
-echo "Copying Teller app to container..."
+# Copy the app files to the temporary directory
 docker cp ./teller erpnext-${BRANCH_ID,,}:/home/frappe/frappe-bench/apps/teller_temp/
+
+# Create the destination directory
 docker exec -u 0 -it erpnext-${BRANCH_ID,,} bash -c "mkdir -p /home/frappe/frappe-bench/apps/teller"
 
-# Fix directory structure - copy the actual module files to the proper location
+# Enhanced app directory structure handling
 echo "Fixing app directory structure..."
-docker exec -u 0 -it erpnext-${BRANCH_ID,,} bash -c "cp -r /home/frappe/frappe-bench/apps/teller_temp/teller/teller/* /home/frappe/frappe-bench/apps/teller/ && cp /home/frappe/frappe-bench/apps/teller_temp/teller/hooks.py /home/frappe/frappe-bench/apps/teller/ && cp /home/frappe/frappe-bench/apps/teller_temp/teller/modules.txt /home/frappe/frappe-bench/apps/teller/ 2>/dev/null || echo 'No modules.txt to copy'"
+# First copy all necessary files from teller/teller to the app directory
+docker exec -u 0 -it erpnext-${BRANCH_ID,,} bash -c "cp -r /home/frappe/frappe-bench/apps/teller_temp/teller/teller/* /home/frappe/frappe-bench/apps/teller/"
+# Copy top-level files that are needed
+docker exec -u 0 -it erpnext-${BRANCH_ID,,} bash -c "cp /home/frappe/frappe-bench/apps/teller_temp/teller/hooks.py /home/frappe/frappe-bench/apps/teller/"
+docker exec -u 0 -it erpnext-${BRANCH_ID,,} bash -c "cp /home/frappe/frappe-bench/apps/teller_temp/teller/__init__.py /home/frappe/frappe-bench/apps/teller/"
+docker exec -u 0 -it erpnext-${BRANCH_ID,,} bash -c "cp /home/frappe/frappe-bench/apps/teller_temp/teller/api.py /home/frappe/frappe-bench/apps/teller/ 2>/dev/null || echo 'No api.py to copy'"
+docker exec -u 0 -it erpnext-${BRANCH_ID,,} bash -c "cp /home/frappe/frappe-bench/apps/teller_temp/teller/modules.txt /home/frappe/frappe-bench/apps/teller/ 2>/dev/null || echo 'No modules.txt to copy'"
+docker exec -u 0 -it erpnext-${BRANCH_ID,,} bash -c "cp /home/frappe/frappe-bench/apps/teller_temp/teller/patches.txt /home/frappe/frappe-bench/apps/teller/ 2>/dev/null || echo 'No patches.txt to copy'"
 
-# Create the required files for a Frappe app
-docker exec -u 0 -it erpnext-${BRANCH_ID,,} bash -c "echo '__version__ = \"0.1.0\"' > /home/frappe/frappe-bench/apps/teller/__init__.py"
-docker exec -u 0 -it erpnext-${BRANCH_ID,,} bash -c "echo 'Teller' > /home/frappe/frappe-bench/apps/teller/modules.txt 2>/dev/null || true"
-docker exec -u 0 -it erpnext-${BRANCH_ID,,} bash -c "echo 'from setuptools import setup, find_packages\n\nsetup(\n    name=\"teller\",\n    version=\"0.1.0\",\n    packages=find_packages(),\n    install_requires=[],\n)' > /home/frappe/frappe-bench/apps/teller/setup.py"
+# Ensure the version is properly set
+docker exec -u 0 -it erpnext-${BRANCH_ID,,} bash -c "grep -q '__version__' /home/frappe/frappe-bench/apps/teller/__init__.py || echo '__version__ = \"0.1.0\"' > /home/frappe/frappe-bench/apps/teller/__init__.py"
+
+# Ensure the modules.txt exists and has correct content
+docker exec -u 0 -it erpnext-${BRANCH_ID,,} bash -c "[ -f /home/frappe/frappe-bench/apps/teller/modules.txt ] || echo 'Teller' > /home/frappe/frappe-bench/apps/teller/modules.txt"
+
+# Create proper setup.py with dependencies from requirements.txt if available
+docker exec -u 0 -it erpnext-${BRANCH_ID,,} bash -c "echo 'from setuptools import setup, find_packages
+
+# Get requirements
+with open(\"requirements.txt\", \"r\") as f:
+    install_requires = f.read().strip().split(\"\\n\")
+
+# Get version from __init__.py
+import re
+with open(\"__init__.py\", \"r\") as f:
+    content = f.read()
+    version_match = re.search(r\"__version__\s*=\s*[\'\\\"]([^\'\\\"]*)[\'\\\"]", content)
+    if version_match:
+        version = version_match.group(1)
+    else:
+        version = \"0.1.0\"
+
+setup(
+    name=\"teller\",
+    version=version,
+    description=\"Teller app for ERPNext\",
+    author=\"Your Company\",
+    author_email=\"your.email@example.com\",
+    packages=find_packages(),
+    zip_safe=False,
+    include_package_data=True,
+    install_requires=install_requires
+)' > /home/frappe/frappe-bench/apps/teller/setup.py"
+
+# Create an initial requirements.txt if it doesn't exist
+docker exec -u 0 -it erpnext-${BRANCH_ID,,} bash -c "[ -f /home/frappe/frappe-bench/apps/teller/requirements.txt ] || echo 'frappe' > /home/frappe/frappe-bench/apps/teller/requirements.txt"
 
 # Set correct ownership
 docker exec -u 0 -it erpnext-${BRANCH_ID,,} bash -c "chown -R frappe:frappe /home/frappe/frappe-bench/apps"
@@ -629,11 +759,13 @@ echo "Installing Teller app dependencies..."
 docker exec -it erpnext-${BRANCH_ID,,} bash -c "cd /home/frappe/frappe-bench && echo 'teller' >> sites/apps.txt"
 docker exec -it erpnext-${BRANCH_ID,,} bash -c "cd /home/frappe/frappe-bench/apps/teller && pip install -e ."
 
-# Install the app to the site with retry mechanism
+# Install the app to the site with multiple fallback options
 echo "Installing Teller app to site..."
 docker exec -it erpnext-${BRANCH_ID,,} bash -c "cd /home/frappe/frappe-bench && bench build"
-# Try multiple approaches and continue even if there are issues
 docker exec -it erpnext-${BRANCH_ID,,} bash -c "cd /home/frappe/frappe-bench && (bench --site ${BRANCH_SITE_NAME} install-app teller || bench --site ${BRANCH_SITE_NAME} install-app teller --force || bench --site ${BRANCH_SITE_NAME} migrate || echo 'Teller app installation had issues but continuing with setup')"
+
+# Always run migrate at the end to ensure database is updated
+docker exec -it erpnext-${BRANCH_ID,,} bash -c "cd /home/frappe/frappe-bench && bench --site ${BRANCH_SITE_NAME} migrate"
 
 # Configure Branch-specific settings
 docker exec -it erpnext-${BRANCH_ID,,} bench --site ${BRANCH_SITE_NAME} set-config branch_code "${BRANCH_CODE}"

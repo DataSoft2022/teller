@@ -3,21 +3,43 @@
 # This file lists the dependencies needed to run the Teller banking system.
 # It is used by the installation scripts to verify and install required dependencies.
 
+##############################
 # System Dependencies
-# These are required system packages
-docker
-docker-compose
-git
-curl
-wget
-dos2unix
+# These are required system packages, NOT to be installed by pip
+##############################
 
+## For Ubuntu/Debian-based distributions (using apt)
+# apt-transport-https
+# ca-certificates
+# curl
+# software-properties-common
+# docker-ce
+# docker-ce-cli
+# containerd.io
+# git
+
+## For Fedora/RHEL-based distributions (using dnf/yum)
+# dnf-plugins-core
+# docker-ce
+# docker-ce-cli
+# containerd.io
+# git
+# curl
+
+## Common dependencies regardless of platform
+# docker
+# docker-compose
+# git
+# curl
+
+##############################
 # Python Dependencies
-# These are required Python packages
+# These will be installed by pip
+##############################
 requests>=2.28.0
 python-dotenv>=0.20.0
 pyyaml>=6.0
 frappe-bench
 
-# Optional Tools
-# dos2unix>=7.4.0       # For line ending conversion (uncomment if needed) 
+# Optional Tools (system packages, not for pip)
+# dos2unix       # For line ending conversion (may be needed for scripts) 
