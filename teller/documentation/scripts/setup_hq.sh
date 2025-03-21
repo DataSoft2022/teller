@@ -17,6 +17,217 @@ echo "=========================================================="
 echo "         MULTI-BRANCH BANKING SYSTEM - HQ SETUP           "
 echo "=========================================================="
 
+# Function to check if a command exists
+command_exists() {
+    command -v "$1" &> /dev/null
+}
+
+# Function to check for Windows line endings
+check_line_endings() {
+    if grep -q $'\r' "$0"; then
+        echo "WARNING: This script has Windows-style line endings (CRLF) which may cause errors."
+        echo "Would you like to fix the line endings now? [y/N]"
+        read -r answer
+        if [[ "$answer" =~ ^[Yy]$ ]]; then
+            if command_exists dos2unix; then
+                dos2unix "$0"
+                echo "Line endings fixed. Please run the script again."
+                exit 0
+            else
+                if command_exists apt-get; then
+                    echo "Installing dos2unix tool..."
+                    sudo apt-get update && sudo apt-get install -y dos2unix
+                    dos2unix "$0"
+                    echo "Line endings fixed. Please run the script again."
+                    exit 0
+                else
+                    echo "Cannot automatically install dos2unix. Please install it manually or fix line endings."
+                    exit 1
+                fi
+            fi
+        fi
+    fi
+}
+
+# Find the requirements.txt file
+find_requirements_file() {
+    # Try to find the requirements.txt in various locations
+    local script_dir="$(dirname "$(readlink -f "$0")")"
+    local possible_locations=(
+        "./requirements.txt"
+        "../requirements.txt"
+        "${script_dir}/requirements.txt"
+        "${script_dir}/../requirements.txt"
+        "${script_dir}/../../requirements.txt"
+        "${script_dir}/../documentation/requirements.txt"
+    )
+
+    for location in "${possible_locations[@]}"; do
+        if [ -f "$location" ]; then
+            echo "$location"
+            return 0
+        fi
+    done
+
+    # If we can't find the file, return a default list of dependencies
+    echo ""
+    return 1
+}
+
+# Check and install dependencies
+check_and_install_dependencies() {
+    local missing_deps=()
+    local system_deps=("docker" "docker-compose" "git")
+    local requirements_file=$(find_requirements_file)
+
+    echo "Checking required dependencies..."
+    
+    # If requirements file found, read system dependencies from it
+    if [ -n "$requirements_file" ]; then
+        echo "Using requirements from: $requirements_file"
+        # Extract system dependencies from requirements.txt (lines starting with # System Dependencies)
+        read_system_deps=false
+        while IFS= read -r line; do
+            if [[ "$line" == "# System Dependencies" ]]; then
+                read_system_deps=true
+                continue
+            elif [[ "$line" == "#"* && "$line" != "# "* ]]; then
+                read_system_deps=false
+            fi
+
+            if [ "$read_system_deps" = true ] && [[ "$line" != "#"* ]] && [ -n "$line" ]; then
+                # Extract package name (before >= or ==)
+                dep=$(echo "$line" | sed 's/\([a-zA-Z0-9_-]*\).*/\1/')
+                if [ -n "$dep" ]; then
+                    system_deps+=("$dep")
+                fi
+            fi
+        done < "$requirements_file"
+    else
+        echo "Requirements file not found, using default dependencies."
+    fi
+    
+    # Check all dependencies
+    for dep in "${system_deps[@]}"; do
+        if ! command_exists "$dep"; then
+            missing_deps+=("$dep")
+        else
+            echo "✓ $dep is installed"
+            # Optionally check version if needed
+            if [ "$dep" = "docker" ]; then
+                docker_version=$(docker --version | awk '{print $3}' | sed 's/,//')
+                echo "  Version: $docker_version"
+            elif [ "$dep" = "docker-compose" ]; then
+                compose_version=$(docker-compose --version | awk '{print $3}' | sed 's/,//')
+                echo "  Version: $compose_version"
+            fi
+        fi
+    done
+    
+    # If there are missing dependencies
+    if [ ${#missing_deps[@]} -gt 0 ]; then
+        echo "The following required dependencies are missing:"
+        for dep in "${missing_deps[@]}"; do
+            echo "  - $dep"
+        done
+        
+        echo "Would you like to install the missing dependencies? [y/N]"
+        read -r answer
+        if [[ "$answer" =~ ^[Yy]$ ]]; then
+            if command_exists apt-get; then
+                echo "Installing missing dependencies..."
+                
+                for dep in "${missing_deps[@]}"; do
+                    case "$dep" in
+                        docker)
+                            echo "Installing Docker..."
+                            sudo apt-get update
+                            sudo apt-get install -y apt-transport-https ca-certificates curl gnupg lsb-release
+                            curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+                            echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+                            sudo apt-get update
+                            sudo apt-get install -y docker-ce docker-ce-cli containerd.io
+                            sudo usermod -aG docker $USER
+                            echo "Docker installed. You may need to log out and back in for group changes to take effect."
+                            ;;
+                        docker-compose)
+                            echo "Installing Docker Compose..."
+                            sudo curl -L "https://github.com/docker/compose/releases/download/v2.18.1/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+                            sudo chmod +x /usr/local/bin/docker-compose
+                            ;;
+                        git)
+                            sudo apt-get update && sudo apt-get install -y git
+                            ;;
+                        dos2unix)
+                            sudo apt-get update && sudo apt-get install -y dos2unix
+                            ;;
+                        *)
+                            # For other dependencies, try to install via apt-get
+                            sudo apt-get update && sudo apt-get install -y "$dep"
+                            ;;
+                    esac
+                done
+                
+                echo "Dependencies installed. Checking again..."
+                # Recheck dependencies
+                for dep in "${missing_deps[@]}"; do
+                    if command_exists "$dep"; then
+                        echo "✓ $dep is now installed"
+                    else
+                        echo "⚠ $dep installation may have failed. Please install it manually."
+                        exit 1
+                    fi
+                done
+            else
+                echo "Cannot automatically install dependencies. Please install them manually:"
+                echo "  - Docker: https://docs.docker.com/engine/install/"
+                echo "  - Docker Compose: https://docs.docker.com/compose/install/"
+                echo "  - Git: Install using your distribution's package manager"
+                for dep in "${missing_deps[@]}"; do
+                    if [ "$dep" != "docker" ] && [ "$dep" != "docker-compose" ] && [ "$dep" != "git" ]; then
+                        echo "  - $dep: Install using your distribution's package manager"
+                    fi
+                done
+                exit 1
+            fi
+        else
+            echo "Dependencies must be installed to continue. Exiting."
+            exit 1
+        fi
+    fi
+    
+    # Install Python dependencies if requirements file is found
+    if [ -n "$requirements_file" ]; then
+        if command_exists pip; then
+            echo "Installing Python dependencies from requirements file..."
+            pip install -r "$requirements_file" || echo "Warning: Some Python dependencies could not be installed."
+        elif command_exists pip3; then
+            echo "Installing Python dependencies from requirements file..."
+            pip3 install -r "$requirements_file" || echo "Warning: Some Python dependencies could not be installed."
+        else
+            echo "Warning: pip not found. Python dependencies will not be installed."
+        fi
+    fi
+    
+    # Check if Docker service is running
+    if ! systemctl is-active --quiet docker; then
+        echo "Docker service is not running. Starting it now..."
+        sudo systemctl start docker
+        if ! systemctl is-active --quiet docker; then
+            echo "Failed to start Docker service. Please start it manually with: sudo systemctl start docker"
+            exit 1
+        fi
+    fi
+    
+    echo "All dependencies are installed and ready."
+}
+
+# Check for line ending issues
+check_line_endings
+
+# Check and install dependencies
+check_and_install_dependencies
+
 # Check if Docker is installed
 if ! command -v docker &> /dev/null; then
     echo "Error: Docker is not installed. Please install Docker first."
