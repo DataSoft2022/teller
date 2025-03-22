@@ -5,32 +5,14 @@
 
 ##############################
 # System Dependencies
-# These are required system packages, NOT to be installed by pip
+# These are required system packages
 ##############################
 
-## For Ubuntu/Debian-based distributions (using apt)
-# apt-transport-https
-# ca-certificates
-# curl
-# software-properties-common
-# docker-ce
-# docker-ce-cli
-# containerd.io
-# git
-
-## For Fedora/RHEL-based distributions (using dnf/yum)
-# dnf-plugins-core
-# docker-ce
-# docker-ce-cli
-# containerd.io
-# git
-# curl
-
-## Common dependencies regardless of platform
-# docker
-# docker-compose
-# git
-# curl
+# Essential system packages
+docker
+docker-compose
+git
+curl
 
 ##############################
 # Python Dependencies

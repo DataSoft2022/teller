@@ -367,6 +367,13 @@ services:
     networks:
       - banking-network
 
+  redis-erpnext:
+    image: redis:7
+    container_name: redis-erpnext
+    restart: unless-stopped
+    networks:
+      - banking-network
+
   erpnext-hq:
     image: frappe/erpnext:v15
     container_name: erpnext-hq
@@ -377,6 +384,9 @@ services:
       - DB_PORT=5432
       - DB_NAME=erpnext_hq
       - DB_PASSWORD=${HQ_DB_PASSWORD}
+      - REDIS_CACHE=redis-erpnext:6379
+      - REDIS_QUEUE=redis-erpnext:6379
+      - REDIS_SOCKETIO=redis-erpnext:6379
       - FRAPPE_BENCH_DIR=/home/frappe/frappe-bench-hq
     command: tail -f /dev/null
     volumes:
@@ -385,6 +395,7 @@ services:
       - "8000:8000"
     depends_on:
       - postgres-hq
+      - redis-erpnext
     networks:
       - banking-network
 
@@ -634,9 +645,11 @@ echo '{
   "db_port": 5432,
   "db_name": "erpnext_hq",
   "db_password": "'${HQ_DB_PASSWORD}'",
+  "redis_cache": "redis-erpnext:6379",
+  "redis_queue": "redis-erpnext:6379",
+  "redis_socketio": "redis-erpnext:6379",
   "auto_update": false,
   "install_apps": ["frappe", "erpnext", "hrms", "payments"],
-  "skip_failing_patches": true,
   "skip_setup_wizard": true
 }' > common_site_config.json
 # Ensure the sites directory exists
@@ -665,89 +678,92 @@ EOF"
 
 # Try various fallback methods if installation fails
 echo "Installing HRMS app with multiple fallback strategies..."
-docker exec -it erpnext-hq bash -c "cd /home/frappe/frappe-bench && (bench --site ${HQ_SITE_NAME} install-app hrms --skip-failing-patches || bench --site ${HQ_SITE_NAME} install-app hrms --force || bench --site ${HQ_SITE_NAME} migrate || echo 'HRMS installation had issues but continuing with setup')"
+docker exec -it erpnext-hq bash -c "cd /home/frappe/frappe-bench && (bench --site ${HQ_SITE_NAME} install-app hrms --force || bench --site ${HQ_SITE_NAME} migrate || echo 'HRMS installation had issues but continuing with setup')"
 
 # Run a final migration to ensure all database changes are applied
 docker exec -it erpnext-hq bash -c "cd /home/frappe/frappe-bench && bench --site ${HQ_SITE_NAME} migrate"
 
 # Clone and install Teller app
 echo "[+] Installing Teller app..."
-
-# Run bench build to ensure all the requirements are properly built
-docker exec -it erpnext-hq bash -c "cd /home/frappe/frappe-bench && bench build"
+echo "Cloning Teller app from repository..."
+# Clone the repository locally to handle nested directory structure
+git clone ${TELLER_REPO} ./teller_temp || echo "Repository might already exist, continuing..."
 
 # Create temporary directory for app files
-docker exec -u 0 -it erpnext-hq bash -c "mkdir -p /home/frappe/frappe-bench/apps/teller_temp"
-
-# Copy the app files to the temporary directory
-docker cp ./teller erpnext-hq:/home/frappe/frappe-bench/apps/teller_temp/
-
-# Create the destination directory
 docker exec -u 0 -it erpnext-hq bash -c "mkdir -p /home/frappe/frappe-bench/apps/teller"
 
-# Enhanced app directory structure handling
-echo "Fixing app directory structure..."
-# First copy all necessary files from teller/teller to the app directory
-docker exec -u 0 -it erpnext-hq bash -c "cp -r /home/frappe/frappe-bench/apps/teller_temp/teller/teller/* /home/frappe/frappe-bench/apps/teller/"
-# Copy top-level files that are needed
-docker exec -u 0 -it erpnext-hq bash -c "cp /home/frappe/frappe-bench/apps/teller_temp/teller/hooks.py /home/frappe/frappe-bench/apps/teller/"
-docker exec -u 0 -it erpnext-hq bash -c "cp /home/frappe/frappe-bench/apps/teller_temp/teller/__init__.py /home/frappe/frappe-bench/apps/teller/"
-docker exec -u 0 -it erpnext-hq bash -c "cp /home/frappe/frappe-bench/apps/teller_temp/teller/api.py /home/frappe/frappe-bench/apps/teller/ 2>/dev/null || echo 'No api.py to copy'"
-docker exec -u 0 -it erpnext-hq bash -c "cp /home/frappe/frappe-bench/apps/teller_temp/teller/modules.txt /home/frappe/frappe-bench/apps/teller/ 2>/dev/null || echo 'No modules.txt to copy'"
-docker exec -u 0 -it erpnext-hq bash -c "cp /home/frappe/frappe-bench/apps/teller_temp/teller/patches.txt /home/frappe/frappe-bench/apps/teller/ 2>/dev/null || echo 'No patches.txt to copy'"
-
-# Ensure the version is properly set
-docker exec -u 0 -it erpnext-hq bash -c "grep -q '__version__' /home/frappe/frappe-bench/apps/teller/__init__.py || echo '__version__ = \"0.1.0\"' > /home/frappe/frappe-bench/apps/teller/__init__.py"
-
-# Ensure the modules.txt exists and has correct content
-docker exec -u 0 -it erpnext-hq bash -c "[ -f /home/frappe/frappe-bench/apps/teller/modules.txt ] || echo 'Teller' > /home/frappe/frappe-bench/apps/teller/modules.txt"
-
-# Create proper setup.py with dependencies from requirements.txt if available
-docker exec -u 0 -it erpnext-hq bash -c "echo 'from setuptools import setup, find_packages
-
-# Get requirements
-with open(\"requirements.txt\", \"r\") as f:
-    install_requires = f.read().strip().split(\"\\n\")
-
-# Get version from __init__.py
-import re
-with open(\"__init__.py\", \"r\") as f:
-    content = f.read()
-    version_match = re.search(r\"__version__\s*=\s*[\'\\\"]([^\'\\\"]*)[\'\\\"]", content)
-    if version_match:
-        version = version_match.group(1)
-    else:
-        version = \"0.1.0\"
-
-setup(
-    name=\"teller\",
-    version=version,
-    description=\"Teller app for ERPNext\",
-    author=\"Your Company\",
-    author_email=\"your.email@example.com\",
-    packages=find_packages(),
-    zip_safe=False,
-    include_package_data=True,
-    install_requires=install_requires
-)' > /home/frappe/frappe-bench/apps/teller/setup.py"
-
-# Create an initial requirements.txt if it doesn't exist
-docker exec -u 0 -it erpnext-hq bash -c "[ -f /home/frappe/frappe-bench/apps/teller/requirements.txt ] || echo 'frappe' > /home/frappe/frappe-bench/apps/teller/requirements.txt"
+# Copy directly from the properly organized structure
+docker cp ./teller_temp/teller erpnext-hq:/home/frappe/frappe-bench/apps/
 
 # Set correct ownership
 docker exec -u 0 -it erpnext-hq bash -c "chown -R frappe:frappe /home/frappe/frappe-bench/apps"
 
-# Remove temporary directory
-docker exec -u 0 -it erpnext-hq bash -c "rm -rf /home/frappe/frappe-bench/apps/teller_temp"
+# Clean up temporary directory
+rm -rf ./teller_temp
+
+# Create proper Python package structure with pyproject.toml
+echo "Creating proper Python package configuration..."
+docker exec -u 0 -it erpnext-hq bash -c "cat > /home/frappe/frappe-bench/apps/teller/pyproject.toml << 'EOF'
+[build-system]
+requires = [\"setuptools>=42\", \"wheel\"]
+build-backend = \"setuptools.build_meta\"
+
+[project]
+name = \"teller\"
+version = \"0.1.0\"
+description = \"Banking Application for ERPNext\"
+authors = [
+    {name = \"DataSoft\", email = \"info@datasoft.com\"},
+]
+requires-python = \">=3.10\"
+EOF"
+
+# Create proper __init__.py with version in nested teller directory
+docker exec -u 0 -it erpnext-hq bash -c "cat > /home/frappe/frappe-bench/apps/teller/teller/__init__.py << 'EOF'
+__version__ = '0.1.0'
+import os, sys
+sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+EOF"
+
+# Also ensure parent __init__.py has version
+docker exec -u 0 -it erpnext-hq bash -c "cat > /home/frappe/frappe-bench/apps/teller/__init__.py << 'EOF'
+__version__ = '0.1.0'
+# Add path configuration to handle nested structure
+import os, sys
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), \"teller\"))
+EOF"
+
+# Fix module structure by creating symbolic links
+echo "Fixing module structure..."
+docker exec -u 0 -it erpnext-hq bash -c "cd /home/frappe/frappe-bench/apps/teller/teller && \
+  [ ! -L controllers ] && ln -sf ../controllers . && \
+  [ ! -L validate_time.py ] && ln -sf ../validate_time.py ."
+
+# Create empty __init__.py files in all directories to make them proper packages
+docker exec -u 0 -it erpnext-hq bash -c "find /home/frappe/frappe-bench/apps/teller -type d -exec touch {}/__init__.py \; 2>/dev/null || true"
+
+# Verify Redis configuration and correct if needed
+echo "Verifying Redis configuration..."
+docker exec -u 0 -it erpnext-hq bash -c "cd /home/frappe/frappe-bench && \
+  sed -i 's/\"redis_cache\": \"redis:\/\/.*\"/\"redis_cache\": \"redis:\/\/redis-erpnext:6379\"/' sites/common_site_config.json && \
+  sed -i 's/\"redis_queue\": \"redis:\/\/.*\"/\"redis_queue\": \"redis:\/\/redis-erpnext:6379\"/' sites/common_site_config.json && \
+  sed -i 's/\"redis_socketio\": \"redis:\/\/.*\"/\"redis_socketio\": \"redis:\/\/redis-erpnext:6379\"/' sites/common_site_config.json"
 
 # Install the app's dependencies
 echo "Installing Teller app dependencies..."
 docker exec -it erpnext-hq bash -c "cd /home/frappe/frappe-bench && echo 'teller' >> sites/apps.txt"
 docker exec -it erpnext-hq bash -c "cd /home/frappe/frappe-bench/apps/teller && pip install -e ."
 
+# Set default site properly (replaces deprecated currentsite.txt method)
+echo "Setting proper default site..."
+docker exec -it erpnext-hq bash -c "cd /home/frappe/frappe-bench && bench use ${HQ_SITE_NAME}"
+
+# Build all assets including HRMS bundles
+echo "Building application assets..."
+docker exec -it erpnext-hq bash -c "cd /home/frappe/frappe-bench && bench build --force"
+
 # Install the app to the site with multiple fallback options
 echo "Installing Teller app to site..."
-docker exec -it erpnext-hq bash -c "cd /home/frappe/frappe-bench && bench build"
 docker exec -it erpnext-hq bash -c "cd /home/frappe/frappe-bench && (bench --site ${HQ_SITE_NAME} install-app teller || bench --site ${HQ_SITE_NAME} install-app teller --force || bench --site ${HQ_SITE_NAME} migrate || echo 'Teller app installation had issues but continuing with setup')"
 
 # Always run migrate at the end to ensure database is updated
@@ -760,8 +776,41 @@ docker exec -it erpnext-hq bench --site ${HQ_SITE_NAME} set-config sync_service_
 # Create a Procfile for bench start
 docker exec -u 0 -it erpnext-hq bash -c "echo 'web: bench serve --port 8000' > /home/frappe/frappe-bench/Procfile && chown frappe:frappe /home/frappe/frappe-bench/Procfile"
 
+# Validate installation with Python tests
+echo "Validating installation..."
+docker exec -it erpnext-hq bash -c "cd /home/frappe/frappe-bench && python -c 'import teller; print(f\"Teller version: {teller.__version__}\")'"
+
+# Test importing key modules that previously had issues
+docker exec -it erpnext-hq bash -c "cd /home/frappe/frappe-bench && python -c 'from teller import validate_time, controllers; print(\"Module imports successful\")'"
+
+# Verify API endpoints are responding and fix HRMS assets if needed
+echo "Checking HRMS assets..."
+docker exec -it erpnext-hq bash -c "cd /home/frappe/frappe-bench && \
+  curl -s -I http://localhost:8000/hrms.bundle.js | grep -q '200 OK' || \
+  (echo 'HRMS assets not found, rebuilding...' && \
+   bench build --force)"
+
+# Restart all services with proper wait times
+echo "Restarting services..."
+docker exec -it erpnext-hq bash -c "cd /home/frappe/frappe-bench && bench restart"
+echo "Waiting for services to initialize (15 seconds)..."
+sleep 15
+
 # Start the bench process
 docker exec -d erpnext-hq bash -c "cd /home/frappe/frappe-bench && bench start"
+
+# Final validation check after restart
+echo "Performing final validation check..."
+docker exec -it erpnext-hq bash -c "cd /home/frappe/frappe-bench && bench --site ${HQ_SITE_NAME} list-apps"
+if [ $? -eq 0 ]; then
+  echo "============================================="
+  echo "   ERPNext HQ installation is complete!     "
+  echo "   Access your ERPNext instance at:         "
+  echo "   http://localhost:8000                    "
+  echo "============================================="
+else
+  echo "WARNING: Final validation check failed. Please review logs for errors."
+fi
 
 echo "HQ post-setup configuration complete!"
 echo "You can now access the ERPNext instance at: http://\$(hostname -I | awk '{print \$1}'):8000"
